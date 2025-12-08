@@ -28,19 +28,19 @@ public class MainActivity extends AppCompatActivity {
 
         ////////////////////////////////////////////////////////////////////////////////////////////// Data population, prompt engine should change these
         subjectList = new ArrayList<>();
-        subjectList.add(new Subject(1, "Jetbrains Academy", "Example Description 1"));
-        subjectList.add(new Subject(2, "Databases", "Example Description 2"));
-        subjectList.add(new Subject(3, "Programming Languages", "Example Description 3"));
-        subjectList.add(new Subject(4, "Other", "Example Description 4"));
-        subjectList.add(new Subject(5, "Other", "Example Description 5"));
-        subjectList.add(new Subject(6, "Other", "Example Description 6"));
-        subjectList.add(new Subject(7, "Jetbrains Academy", "Example Description 1"));
-        subjectList.add(new Subject(8, "Databases", "Example Description 2"));
-        subjectList.add(new Subject(9, "Jetbrains Academy", "Example Description 1"));
-        subjectList.add(new Subject(10, "Databases", "Example Description 2"));
-        subjectList.add(new Subject(11, "Programming Languages", "Example Description 3"));
-        subjectList.add(new Subject(12, "Other", "Example Description 4"));
-        subjectList.add(new Subject(13, "Other", "Example Description 5"));
+        subjectList.add(new Subject(0).setTitle("Jetbrains Academy").setDescription("Example Description 1"));
+        subjectList.add(new Subject(2).setTitle("Databases").setDescription("Example Description 2")); // This was already chained
+        subjectList.add(new Subject(3).setTitle("Programming Languages").setDescription("Example Description 3"));
+        subjectList.add(new Subject(4).setTitle("Other").setDescription("Example Description 4"));
+        subjectList.add(new Subject(5).setTitle("Other").setDescription("Example Description 5"));
+        subjectList.add(new Subject(6).setTitle("Other").setDescription("Example Description 6"));
+        subjectList.add(new Subject(7).setTitle("Jetbrains Academy").setDescription("Example Description 1"));
+        subjectList.add(new Subject(8).setTitle("Databases").setDescription("Example Description 2"));
+        subjectList.add(new Subject(9).setTitle("Jetbrains Academy").setDescription("Example Description 1"));
+        subjectList.add(new Subject(10).setTitle("Databases").setDescription("Example Description 2"));
+        subjectList.add(new Subject(11).setTitle("Programming Languages").setDescription("Example Description 3"));
+        subjectList.add(new Subject(12).setTitle("Other").setDescription("Example Description 4"));
+        subjectList.add(new Subject(13).setTitle("Other").setDescription("Example Description 5"));
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         /*// Use an ExecutorService for the background thread.

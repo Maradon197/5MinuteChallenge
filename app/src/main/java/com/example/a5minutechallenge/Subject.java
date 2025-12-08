@@ -9,21 +9,67 @@ public class Subject {
     private String description;
     private ArrayList<Topic> topics;
 
-    public Subject(Integer id, String title, String description) {
+    public Subject(Integer id) {
         this.subjectId = id;
-        this.title = title;
-        this.description = description;
     }
 
-    public ArrayList<Topic> getTopics() {return topics;}
-    public Integer getSubjectId() {return subjectId;}
-    public String getTitle() {return title;}
-    public String getDescription() {return description;}
-
-    public void addTopic(Topic topic) {
-        if (topics == null) {
-            topics = new ArrayList<>();
+    public Integer getSubjectId() {
+        return subjectId;
+    }
+    public String getTitle() {
+        if(title == null) {
+            //Fetch from DB
         }
-        topics.add(topic);
+        return title;
+    }
+
+    public Subject setTitle(String newTitle) {
+        title = newTitle;
+        return this;
+    }
+
+    public String getDescription() {
+        if(description == null) {
+            //Fetch from DB
+        }
+        return description;
+    }
+
+    public Subject setDescription(String newDescription) {
+        description = newDescription;
+        return this;
+    }
+
+    public void setTopics(ArrayList<Topic> newtopics) {
+        topics = newtopics;
+    }
+
+    public ArrayList<Topic> getTopics() {
+        if (topics == null) {
+            ArrayList<Topic> topics = new ArrayList<>();
+            switch (subjectId) {                                            //but i dont see how it would be possible to initialize everything
+                case 1:                                                     //within separate arraylists
+                    topics.add(new Topic("Jetpack Compose"));           //anyway this is a list population, will later be prompt engineered
+                    topics.add(new Topic("Kotlin"));
+                    topics.add(new Topic("Coroutines"));
+                    break;
+                case 2:
+                    topics.add(new Topic("ORDB"));
+                    topics.add(new Topic("SQL - Statements"));
+                    topics.add(new Topic("Why are you lurking in my code?"));
+                    break;
+                case 3:
+                    topics.add(new Topic("HTML"));
+                    topics.add(new Topic("CSS"));
+                    topics.add(new Topic("JavaScript"));
+                    break;
+                default:
+                    topics.add(new Topic("Topic 1"));
+                    topics.add(new Topic("Topic 2"));
+                    topics.add(new Topic("Topic 3"));           //if you can fix this, please do so
+                    break;
+            }
+        }
+        return topics;
     }
 }
