@@ -1,11 +1,21 @@
 package com.example.a5minutechallenge;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.ai.client.generativeai.common.client.GenerationConfig;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentResponse;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,13 +43,46 @@ public class MainActivity extends AppCompatActivity {
         subjectList.add(new Subject(13, "Other", "Example Description 5"));
         //////////////////////////////////////////////////////////////////////////////////////////////
 
+        // Use an ExecutorService for the background thread.
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        // Get a Handler that is associated with the main UI thread's Looper.
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try (Client gemini = Client.builder().apiKey(getString(R.string.api_key)).build()) {
+
+                    GenerateContentResponse response =
+                            gemini.models.generateContent("gemini-2.5-flash", "How does AI work?", null);
+
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, response.text(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            }
+        }).start();
 
         //subjects erstellen, bearbeiten und entfernen
         //container and extending classes
         //5 minute view erstellen
 
         //später: Speicherverwaltung
-        
+
         RecyclerView subjectRecyclerView = findViewById(R.id.subject_recycler_view);
         SubjectListManager subjectListAdapter = new SubjectListManager(this, subjectList);
         subjectRecyclerView.setAdapter(subjectListAdapter);
