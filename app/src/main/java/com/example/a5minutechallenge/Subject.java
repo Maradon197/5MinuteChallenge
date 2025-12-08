@@ -19,4 +19,11 @@ public class Subject {
     public Integer getSubjectId() {return subjectId;}
     public String getTitle() {return title;}
     public String getDescription() {return description;}
+
+    public void addTopic(Topic topic) {
+        if (topics == null) {
+            topics = new ArrayList<>();
+        }
+        topics.add(topic);
+    }
 }

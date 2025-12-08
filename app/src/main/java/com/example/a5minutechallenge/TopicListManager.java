@@ -1,6 +1,9 @@
 package com.example.a5minutechallenge;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -28,5 +31,16 @@ public class TopicListManager extends AppCompatActivity {
 
         TopicListAdapter adapter = new TopicListAdapter(this, topicList);
         topicListView.setAdapter(adapter);
+
+        topicListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Topic selectedTopic = topicList.get(position);
+                Intent intent = new Intent(TopicListManager.this, FiveMinuteActivity.class);
+                intent.putExtra("SUBJECT_ID", subjectId);
+                intent.putExtra("TOPIC_NAME", selectedTopic.getTitle());
+                startActivity(intent);
+            }
+        });
     }
 }

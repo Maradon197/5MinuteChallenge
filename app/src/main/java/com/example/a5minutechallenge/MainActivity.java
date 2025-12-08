@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         subjectList.add(new Subject(13, "Other", "Example Description 5"));
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        // Use an ExecutorService for the background thread.
+        /*// Use an ExecutorService for the background thread.
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         // Get a Handler that is associated with the main UI thread's Looper.
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
             }
-        }).start();
+        }).start(); */
 
         //subjects erstellen, bearbeiten und entfernen
         //container and extending classes
