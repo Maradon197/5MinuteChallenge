@@ -46,10 +46,10 @@ public class Subject {
 
     public ArrayList<Topic> getTopics() {
         if (topics == null) {
-            ArrayList<Topic> topics = new ArrayList<>();
-            switch (subjectId) {                                            //but i dont see how it would be possible to initialize everything
-                case 1:                                                     //within separate arraylists
-                    topics.add(new Topic("Jetpack Compose"));           //anyway this is a list population, will later be prompt engineered
+            topics = new ArrayList<>();
+            switch (subjectId) {
+                case 0:
+                    topics.add(new Topic("Jetpack Compose"));           //list population, will later be prompt engineered
                     topics.add(new Topic("Kotlin"));
                     topics.add(new Topic("Coroutines"));
                     break;
@@ -66,7 +66,7 @@ public class Subject {
                 default:
                     topics.add(new Topic("Topic 1"));
                     topics.add(new Topic("Topic 2"));
-                    topics.add(new Topic("Topic 3"));           //if you can fix this, please do so
+                    topics.add(new Topic("Topic 3"));
                     break;
             }
         }
