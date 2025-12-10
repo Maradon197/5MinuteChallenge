@@ -17,10 +17,16 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
 
     private final Context context;
     private final ArrayList<Subject> subjects;
+    private final OnItemLongClickListener longClickListener;
 
-    public SubjectListManager(Context context, ArrayList<Subject> subjects) {
+    public interface OnItemLongClickListener {
+        void onItemLongClick(int position);
+    }
+
+    public SubjectListManager(Context context, ArrayList<Subject> subjects, OnItemLongClickListener longClickListener) {
         this.context = context;
         this.subjects = subjects;
+        this.longClickListener = longClickListener;
     }
 
     @NonNull
@@ -35,13 +41,20 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
         Subject subject = subjects.get(position);
         holder.title.setText(subject.getTitle());
 
-        holder.itemView.setOnClickListener(v -> {//whoa a debugging lambda
+        holder.itemView.setOnClickListener(v -> {
             Toast.makeText(context, "Subject ID: " + subject.getSubjectId(), Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(context, TopicListManager.class);
             intent.putExtra("SUBJECT_ID", subject.getSubjectId());
             intent.putExtra("SUBJECT_TITLE", subject.getTitle());
-            context.startActivity(intent);//crazy shit
-        });//i bet you cant do that in C
+            context.startActivity(intent);
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(position);
+            }
+            return true;
+        });
     }
 
     @Override

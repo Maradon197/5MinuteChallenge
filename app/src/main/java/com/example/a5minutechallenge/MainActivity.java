@@ -3,12 +3,17 @@ package com.example.a5minutechallenge;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.ai.client.generativeai.common.client.GenerationConfig;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 
@@ -20,6 +25,7 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Subject> subjectList;
+    private SubjectListManager subjectListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +90,77 @@ public class MainActivity extends AppCompatActivity {
         //später: Speicherverwaltung
 
         RecyclerView subjectRecyclerView = findViewById(R.id.subject_recycler_view);
-        SubjectListManager subjectListAdapter = new SubjectListManager(this, subjectList);
+        subjectListAdapter = new SubjectListManager(this, subjectList, this::showEditOptionsDialog);
         subjectRecyclerView.setAdapter(subjectListAdapter);
+
+        FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_fab);
+        addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());
+    }
+
+    private void showAddSubjectDialog() {
+        showEditDialog("Add New Subject", "", "Add", (newName) -> {
+            int newId = subjectList.size(); // Simple ID generation
+            subjectList.add(new Subject(newId).setTitle(newName));
+            subjectListAdapter.notifyDataSetChanged();
+        });
+    }
+
+    private void showEditOptionsDialog(int position) {
+        final CharSequence[] options = {"Rename", "Delete"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose an option");
+        builder.setItems(options, (dialog, item) -> {
+            if (options[item].equals("Rename")) {
+                showRenameDialog(position);
+            } else if (options[item].equals("Delete")) {
+                showDeleteConfirmationDialog(position);
+            }
+        });
+        builder.show();
+    }
+
+    private void showRenameDialog(int position) {
+        Subject subject = subjectList.get(position);
+        showEditDialog("Rename Subject", subject.getTitle(), "Rename", (newName) -> {
+            subject.setTitle(newName);
+            subjectListAdapter.notifyItemChanged(position);
+        });
+    }
+
+    private void showDeleteConfirmationDialog(int position) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Subject")
+                .setMessage("Are you sure you want to delete this subject?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    subjectList.remove(position);
+                    subjectListAdapter.notifyItemRemoved(position);
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
+    }
+
+    private void showEditDialog(String title, String currentName, String positiveButtonText, OnNameEnteredListener listener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_input, null);
+        final EditText input = view.findViewById(R.id.edit_text_input);
+        input.setText(currentName);
+        builder.setView(view);
+
+        builder.setPositiveButton(positiveButtonText, (dialog, which) -> {
+            String newName = input.getText().toString();
+            if (!newName.isEmpty()) {
+                listener.onNameEntered(newName);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    interface OnNameEnteredListener {
+        void onNameEntered(String name);
     }
 }

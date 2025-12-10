@@ -44,13 +44,17 @@ public class Subject {
         topics = newtopics;
     }
 
+    public void addTopic(String topicName) {
+        getTopics().add(new Topic(topicName));
+    }
+
     public ArrayList<Topic> getTopics() {
         if (topics == null) {
             topics = new ArrayList<>();
             switch (subjectId) {
                 case 0:
-                    topics.add(new Topic("Jetpack Compose"));           //list population, will later be prompt engineered
-                    topics.add(new Topic("Kotlin"));
+                    topics.add(new Topic("Jetpack Compose"));           //list population, later fetched form DB
+                    topics.add(new Topic("Kotlin"));                    //
                     topics.add(new Topic("Coroutines"));
                     break;
                 case 2:
