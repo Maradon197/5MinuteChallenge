@@ -1,67 +1,46 @@
 package com.example.a5minutechallenge;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 
-public class TopicListManager extends AppCompatActivity {
+public class StorageActivity extends AppCompatActivity {
 
-    private ArrayList<Topic> topicList;
-    private TopicListAdapter adapter;
-    private Subject subject;
+    private ArrayList<StorageItem> storageList;
+    private StorageListManager storageListAdapter;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.topic_list);
+        setContentView(R.layout.storage_screen);
 
-        String subjectTitle = getIntent().getStringExtra("SUBJECT_TITLE");
-        int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
+        storageList = new ArrayList<>();
+        // Example data
+        storageList.add(new StorageItem("File 1"));
+        storageList.add(new StorageItem("File 2"));
+        storageList.add(new StorageItem("File 3"));
 
-        TextView titleTextView = findViewById(R.id.subject_screen_title);
-        titleTextView.setText(subjectTitle);
+        RecyclerView storageRecyclerView = findViewById(R.id.storage_recycler_view);
+        storageListAdapter = new StorageListManager(this, storageList, this::showEditOptionsDialog);
+        storageRecyclerView.setAdapter(storageListAdapter);
 
-        ListView topicListView = findViewById(R.id.topic_list_view);
-
-        subject = new Subject(subjectId);
-        topicList = subject.getTopics();
-        adapter = new TopicListAdapter(this, topicList);
-        topicListView.setAdapter(adapter);
-
-        topicListView.setOnItemClickListener((parent, view, position, id) -> {
-            Topic selectedTopic = topicList.get(position);
-            Intent intent = new Intent(TopicListManager.this, FiveMinuteActivity.class);
-            intent.putExtra("SUBJECT_ID", subjectId);
-            intent.putExtra("TOPIC_NAME", selectedTopic.getTitle());
-            startActivity(intent);
-        });
-
-        topicListView.setOnItemLongClickListener((parent, view, position, id) -> {
-            showEditOptionsDialog(position);
-            return true;
-        });
-
-        FloatingActionButton addTopicFab = findViewById(R.id.add_topic_fab);
-        addTopicFab.setOnClickListener(v -> showAddTopicDialog());
+        FloatingActionButton addFileFab = findViewById(R.id.add_file_fab);
+        addFileFab.setOnClickListener(v -> showAddFileDialog());
     }
 
-    private void showAddTopicDialog() {
-        showEditDialog(getString(R.string.add_new_topic), "", getString(R.string.add), (newName) -> {
-            subject.addTopic(newName);
-            adapter.notifyDataSetChanged();
+    private void showAddFileDialog() {
+        showEditDialog(getString(R.string.add_new_file), "", getString(R.string.add), (newName) -> {
+            storageList.add(new StorageItem(newName));
+            storageListAdapter.notifyDataSetChanged();
         });
     }
 
@@ -81,20 +60,20 @@ public class TopicListManager extends AppCompatActivity {
     }
 
     private void showRenameDialog(int position) {
-        Topic topic = topicList.get(position);
-        showEditDialog(getString(R.string.rename_topic), topic.getTitle(), getString(R.string.rename), (newName) -> {
-            topic.setTitle(newName);
-            adapter.notifyDataSetChanged();
+        StorageItem item = storageList.get(position);
+        showEditDialog(getString(R.string.rename_file), item.getTitle(), getString(R.string.rename), (newName) -> {
+            item.setTitle(newName);
+            storageListAdapter.notifyItemChanged(position);
         });
     }
 
     private void showDeleteConfirmationDialog(int position) {
         new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.delete_topic))
-                .setMessage(getString(R.string.confirm_delete_topic))
+                .setTitle(getString(R.string.delete_file))
+                .setMessage(getString(R.string.confirm_delete_file))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
-                    topicList.remove(position);
-                    adapter.notifyDataSetChanged();
+                    storageList.remove(position);
+                    storageListAdapter.notifyItemRemoved(position);
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();

@@ -1,26 +1,24 @@
 package com.example.a5minutechallenge;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.ai.client.generativeai.common.client.GenerationConfig;
+//import com.google.ai.client.generativeai.common.client.GenerationConfig;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.genai.Client;
-import com.google.genai.types.GenerateContentResponse;
+//import com.google.genai.Client;
+//import com.google.genai.types.GenerateContentResponse;
 
 import java.util.ArrayList;
-import java.util.Collections;
+/*import java.util.Collections;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executors;*/
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
         subjectList.add(new Subject(13).setTitle("Other").setDescription("Example Description 5"));
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        /*// Use an ExecutorService for the background thread.
+        /* THIS HAS TO STAY FOR LATER; DO NOT DELETE!!!!!
+        // Use an ExecutorService for the background thread.
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         // Get a Handler that is associated with the main UI thread's Looper.
@@ -93,12 +92,18 @@ public class MainActivity extends AppCompatActivity {
         subjectListAdapter = new SubjectListManager(this, subjectList, this::showEditOptionsDialog);
         subjectRecyclerView.setAdapter(subjectListAdapter);
 
-        FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_fab);
+        FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_button);
         addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());
+
+        FloatingActionButton storageFab = findViewById(R.id.storage_button);
+        storageFab.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, StorageActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void showAddSubjectDialog() {
-        showEditDialog("Add New Subject", "", "Add", (newName) -> {
+        showEditDialog(getString(R.string.add_new_subject), "", getString(R.string.add), (newName) -> {
             int newId = subjectList.size(); // Simple ID generation
             subjectList.add(new Subject(newId).setTitle(newName));
             subjectListAdapter.notifyDataSetChanged();
@@ -106,14 +111,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showEditOptionsDialog(int position) {
-        final CharSequence[] options = {"Rename", "Delete"};
+        final CharSequence[] options = {getString(R.string.rename), getString(R.string.delete)};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Choose an option");
+        builder.setTitle(getString(R.string.choose_option));
         builder.setItems(options, (dialog, item) -> {
-            if (options[item].equals("Rename")) {
+            if (options[item].equals(getString(R.string.rename))) {
                 showRenameDialog(position);
-            } else if (options[item].equals("Delete")) {
+            } else if (options[item].equals(getString(R.string.delete))) {
                 showDeleteConfirmationDialog(position);
             }
         });
@@ -122,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showRenameDialog(int position) {
         Subject subject = subjectList.get(position);
-        showEditDialog("Rename Subject", subject.getTitle(), "Rename", (newName) -> {
+        showEditDialog(getString(R.string.rename_subject), subject.getTitle(), getString(R.string.rename), (newName) -> {
             subject.setTitle(newName);
             subjectListAdapter.notifyItemChanged(position);
         });
@@ -130,13 +135,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void showDeleteConfirmationDialog(int position) {
         new AlertDialog.Builder(this)
-                .setTitle("Delete Subject")
-                .setMessage("Are you sure you want to delete this subject?")
-                .setPositiveButton("Delete", (dialog, which) -> {
+                .setTitle(getString(R.string.delete_subject))
+                .setMessage(getString(R.string.confirm_delete_subject))
+                .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                     subjectList.remove(position);
                     subjectListAdapter.notifyItemRemoved(position);
                 })
-                .setNegativeButton(android.R.string.no, null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -155,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
                 listener.onNameEntered(newName);
             }
         });
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.cancel());
 
         builder.show();
     }

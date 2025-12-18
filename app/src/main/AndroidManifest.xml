@@ -27,6 +27,7 @@
         <activity android:name=".MainActivity" />
         <activity android:name=".TopicListManager" />
         <activity android:name=".FiveMinuteActivity" />
+        <activity android:name=".StorageActivity" />
     </application>
 
 </manifest>
