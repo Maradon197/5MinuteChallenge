@@ -1,10 +1,16 @@
 package com.example.a5minutechallenge;
 
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,6 +23,7 @@ public class StorageActivity extends AppCompatActivity {
 
     private ArrayList<StorageItem> storageList;
     private StorageListManager storageListAdapter;
+    private ActivityResultLauncher<Intent> filePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,15 +40,54 @@ public class StorageActivity extends AppCompatActivity {
         storageListAdapter = new StorageListManager(this, storageList, this::showEditOptionsDialog);
         storageRecyclerView.setAdapter(storageListAdapter);
 
+        filePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+
+                        /// //////////////////////////////////////////
+                        Uri uri = result.getData().getData();       //hier ist die URI
+                        /// //////////////////////////////////////////
+                        if (uri != null) {
+                            String fileName = getFileName(uri);
+                            storageList.add(new StorageItem(fileName));
+                            storageListAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+        );
+
         FloatingActionButton addFileFab = findViewById(R.id.add_file_fab);
-        addFileFab.setOnClickListener(v -> showAddFileDialog());
+        addFileFab.setOnClickListener(v -> openFilePicker());
     }
 
-    private void showAddFileDialog() {
-        showEditDialog(getString(R.string.add_new_file), "", getString(R.string.add), (newName) -> {
-            storageList.add(new StorageItem(newName));
-            storageListAdapter.notifyDataSetChanged();
-        });
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); //open file picker with this syscall
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        filePickerLauncher.launch(intent);
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
     }
 
     private void showEditOptionsDialog(int position) {
