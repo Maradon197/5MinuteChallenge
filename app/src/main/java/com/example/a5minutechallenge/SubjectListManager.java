@@ -1,3 +1,4 @@
+/** RecyclerView that displays Subjects in subject_list.xml */
 package com.example.a5minutechallenge;
 
 import android.content.Context;

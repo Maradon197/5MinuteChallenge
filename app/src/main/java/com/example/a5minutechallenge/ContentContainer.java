@@ -1,3 +1,7 @@
+/** Abstract container class for single display containers in the 5-minute-screen.
+ * Different types (c. enum Types) can be created to display different single containers.
+ **/
+
 package com.example.a5minutechallenge;
 
 public abstract class ContentContainer {

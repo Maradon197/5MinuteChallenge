@@ -1,3 +1,7 @@
+/** The first launched activity (not MainActivity!) that displays a simple startup screen.
+ *  From here, the MainActivity is launched (primarily for debugging reasons).
+ *  AndroidManifest.xml contains the refrence you have to change to MainActivity to remove this.
+ */
 package com.example.a5minutechallenge;
 
 import android.content.Intent;

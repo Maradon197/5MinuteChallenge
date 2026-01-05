@@ -1,3 +1,7 @@
+/** Activity for the Subject-specific Storage screen. Calls StorageListManager (A recyclerview)
+ *  for content creation and display.
+ */
+
 package com.example.a5minutechallenge;
 
 import android.content.Intent;
@@ -22,7 +26,7 @@ import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
 
-    private ArrayList<StorageItem> storageList;
+    private ArrayList<StorageListItem> storageList;
     private StorageListManager storageListAdapter;
     private ActivityResultLauncher<Intent> filePickerLauncher;
     private Subject subject;
@@ -117,7 +121,7 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void showRenameDialog(int position) {
-        StorageItem item = storageList.get(position);
+        StorageListItem item = storageList.get(position);
         showEditDialog(getString(R.string.rename_file), item.getTitle(), getString(R.string.rename), (newName) -> {
             // Find and rename the corresponding file in storage
             ArrayList<SubjectFile> files = subject.getFiles(this);
@@ -138,7 +142,7 @@ public class StorageActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.delete_file))
                 .setMessage(getString(R.string.confirm_delete_file))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
-                    StorageItem item = storageList.get(position);
+                    StorageListItem item = storageList.get(position);
                     // Find and delete the corresponding file from storage
                     ArrayList<SubjectFile> files = subject.getFiles(this);
                     for (SubjectFile file : files) {

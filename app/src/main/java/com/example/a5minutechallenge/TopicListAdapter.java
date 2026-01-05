@@ -1,3 +1,4 @@
+/** ArrayAdapter to display topic containers in the subject specific screen **/
 package com.example.a5minutechallenge;
 
 import android.content.Context;

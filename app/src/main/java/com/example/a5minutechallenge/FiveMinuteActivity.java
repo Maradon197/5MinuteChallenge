@@ -1,3 +1,6 @@
+/** Activity for the 5-minute-screen opened by the user. Calls ContentContainerAdapter
+ *  for content creation and display.
+ */
 package com.example.a5minutechallenge;
 
 import android.os.Bundle;

@@ -1,9 +1,13 @@
+/** Single Storage item that is displayed on the list. This may become
+ * unnecessary in the future
+ * This is the displayed container, not the actual file!
+ */
 package com.example.a5minutechallenge;
 
-public class StorageItem {
+public class StorageListItem {
     private String title;
 
-    public StorageItem(String title) {
+    public StorageListItem(String title) {
         this.title = title;
     }
 

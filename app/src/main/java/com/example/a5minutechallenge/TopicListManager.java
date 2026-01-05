@@ -1,3 +1,4 @@
+/** Main class for the subject specific screen*/
 package com.example.a5minutechallenge;
 
 import android.content.Intent;

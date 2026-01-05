@@ -1,3 +1,4 @@
+/** ArrayAdapter to display containers in the 5-minute-challenge screen **/
 package com.example.a5minutechallenge;
 
 import android.content.Context;

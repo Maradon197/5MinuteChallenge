@@ -1,3 +1,7 @@
+/** The main subject class
+ *
+ */
+
 package com.example.a5minutechallenge;
 
 import android.content.Context;
@@ -14,7 +18,7 @@ public class Subject {
     private String title;
     private String description;
     private ArrayList<Topic> topics;
-    private ArrayList<StorageItem> storageItems;
+    private ArrayList<StorageListItem> storageItems;
     private ArrayList<SubjectFile> subjectFiles;
 
     public Subject(Integer id) {
@@ -85,17 +89,17 @@ public class Subject {
         return topics;
     }
 
-    public ArrayList<StorageItem> getStorageItems() {
+    public ArrayList<StorageListItem> getStorageItems() {
         if (storageItems == null) {
             storageItems = new ArrayList<>();
             //dummies
-            storageItems.add(new StorageItem("Subject test file " + subjectId));
+            storageItems.add(new StorageListItem("Subject test file " + subjectId));
         }
         return storageItems;
     }
 
     public void addStorageItem(String itemName) {
-        getStorageItems().add(new StorageItem(itemName));
+        getStorageItems().add(new StorageListItem(itemName));
     }
 
     /**

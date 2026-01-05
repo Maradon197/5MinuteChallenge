@@ -1,3 +1,4 @@
+/** RecyclerView that displays storage items. */
 package com.example.a5minutechallenge;
 
 import android.content.Context;
@@ -15,14 +16,14 @@ import java.util.ArrayList;
 public class StorageListManager extends RecyclerView.Adapter<StorageListManager.ViewHolder> {
 
     private final Context context;
-    private final ArrayList<StorageItem> storageItems;
+    private final ArrayList<StorageListItem> storageItems;
     private final OnItemLongClickListener longClickListener;
 
     public interface OnItemLongClickListener {
         void onItemLongClick(int position);
     }
 
-    public StorageListManager(Context context, ArrayList<StorageItem> storageItems, OnItemLongClickListener longClickListener) {
+    public StorageListManager(Context context, ArrayList<StorageListItem> storageItems, OnItemLongClickListener longClickListener) {
         this.context = context;
         this.storageItems = storageItems;
         this.longClickListener = longClickListener;
@@ -37,7 +38,7 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        StorageItem item = storageItems.get(position);
+        StorageListItem item = storageItems.get(position);
         holder.title.setText(item.getTitle());
 
         holder.itemView.setOnClickListener(v -> {

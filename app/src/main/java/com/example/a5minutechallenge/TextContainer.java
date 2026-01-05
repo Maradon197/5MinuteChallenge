@@ -1,3 +1,4 @@
+/** Content Container for a simple text box in the 5-minute-challenge screen **/
 package com.example.a5minutechallenge;
 
 public class TextContainer extends ContentContainer {

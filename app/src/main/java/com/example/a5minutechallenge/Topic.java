@@ -1,3 +1,4 @@
+/** The main class for topics that stores all information every topic must have */
 package com.example.a5minutechallenge;
 
 public class Topic {

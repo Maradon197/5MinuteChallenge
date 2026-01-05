@@ -1,3 +1,4 @@
+/** Content Container for the title of a 5-minute-challenge screen **/
 package com.example.a5minutechallenge;
 
 public class TitleContainer extends ContentContainer {
