@@ -121,14 +121,17 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
             case "pdf":
                 return "application/pdf";
             case "doc":
-            case "docx":
                 return "application/msword";
+            case "docx":
+                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
             case "xls":
-            case "xlsx":
                 return "application/vnd.ms-excel";
+            case "xlsx":
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             case "ppt":
-            case "pptx":
                 return "application/vnd.ms-powerpoint";
+            case "pptx":
+                return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
             case "txt":
                 return "text/plain";
             case "jpg":
