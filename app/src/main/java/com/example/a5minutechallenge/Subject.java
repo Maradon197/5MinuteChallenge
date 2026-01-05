@@ -92,14 +92,12 @@ public class Subject {
     public ArrayList<StorageListItem> getStorageItems() {
         if (storageItems == null) {
             storageItems = new ArrayList<>();
-            //dummies
-            storageItems.add(new StorageListItem("Subject test file " + subjectId));
         }
         return storageItems;
     }
 
-    public void addStorageItem(String itemName) {
-        getStorageItems().add(new StorageListItem(itemName));
+    public void addStorageItem(String itemName, SubjectFile file) {
+        getStorageItems().add(new StorageListItem(itemName, file));
     }
 
     /**

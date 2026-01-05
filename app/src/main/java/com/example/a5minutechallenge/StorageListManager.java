@@ -11,6 +11,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class StorageListManager extends RecyclerView.Adapter<StorageListManager.ViewHolder> {
@@ -43,6 +49,8 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
         holder.itemView.setOnClickListener(v -> {
             Toast.makeText(context, "Clicked: " + item.getTitle(), Toast.LENGTH_SHORT).show();
+            
+
         });//placeholder, open file here ig
 
         holder.itemView.setOnLongClickListener(v -> {

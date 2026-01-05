@@ -7,16 +7,25 @@ package com.example.a5minutechallenge;
 public class StorageListItem {
     private String title;
 
-    public StorageListItem(String title) {
+    private SubjectFile file;
+
+    public StorageListItem(String title, SubjectFile file) {
         this.title = title;
+        this.file = file;
     }
 
     public String getTitle() {
         return title;
     }
+    public SubjectFile getFile() {
+        return file;
+    }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+    public void setFile(SubjectFile file) {
+        this.file = file;
     }
     //some data shit
 }

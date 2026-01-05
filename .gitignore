@@ -16,3 +16,4 @@ local.properties
 gradle/libs.versions.toml
 .idea/deploymentTargetSelector.xml
 .idea/deviceManager.xml
+.idea/deploymentTargetSelector.xml

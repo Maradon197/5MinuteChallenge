@@ -60,7 +60,7 @@ public class StorageActivity extends AppCompatActivity {
                                     if (savedFile != null) {
                                         // File saved successfully and is accessible via subject.getFiles()
                                         // Add to display list
-                                        subject.addStorageItem(fileName);
+                                        subject.addStorageItem(fileName, savedFile);
                                         storageListAdapter.notifyDataSetChanged();
                                     }
                                 }
