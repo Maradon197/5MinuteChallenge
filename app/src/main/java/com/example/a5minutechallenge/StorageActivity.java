@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
@@ -46,8 +47,22 @@ public class StorageActivity extends AppCompatActivity {
                         Uri uri = result.getData().getData();
                         if (uri != null) {
                             String fileName = getFileName(uri);
-                            subject.addStorageItem(fileName);
-                            storageListAdapter.notifyDataSetChanged();
+                            try {
+                                // Get input stream from URI
+                                InputStream inputStream = getContentResolver().openInputStream(uri);
+                                if (inputStream != null) {
+                                    // Save file to internal storage via Subject
+                                    SubjectFile savedFile = subject.saveFileToStorage(this, inputStream, fileName);
+                                    if (savedFile != null) {
+                                        // File saved successfully and is accessible via subject.getFiles()
+                                        // Add to display list
+                                        subject.addStorageItem(fileName);
+                                        storageListAdapter.notifyDataSetChanged();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -104,8 +119,17 @@ public class StorageActivity extends AppCompatActivity {
     private void showRenameDialog(int position) {
         StorageItem item = storageList.get(position);
         showEditDialog(getString(R.string.rename_file), item.getTitle(), getString(R.string.rename), (newName) -> {
-            item.setTitle(newName);
-            storageListAdapter.notifyItemChanged(position);
+            // Find and rename the corresponding file in storage
+            ArrayList<SubjectFile> files = subject.getFiles(this);
+            for (SubjectFile file : files) {
+                if (file.getFileName().equals(item.getTitle())) {
+                    if (subject.renameFile(file, newName)) {
+                        item.setTitle(newName);
+                        storageListAdapter.notifyItemChanged(position);
+                    }
+                    break;
+                }
+            }
         });
     }
 
@@ -114,6 +138,15 @@ public class StorageActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.delete_file))
                 .setMessage(getString(R.string.confirm_delete_file))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
+                    StorageItem item = storageList.get(position);
+                    // Find and delete the corresponding file from storage
+                    ArrayList<SubjectFile> files = subject.getFiles(this);
+                    for (SubjectFile file : files) {
+                        if (file.getFileName().equals(item.getTitle())) {
+                            subject.deleteFile(file);
+                            break;
+                        }
+                    }
                     storageList.remove(position);
                     storageListAdapter.notifyItemRemoved(position);
                 })
