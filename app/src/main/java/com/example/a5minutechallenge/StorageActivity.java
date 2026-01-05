@@ -24,17 +24,16 @@ public class StorageActivity extends AppCompatActivity {
     private ArrayList<StorageItem> storageList;
     private StorageListManager storageListAdapter;
     private ActivityResultLauncher<Intent> filePickerLauncher;
+    private Subject subject;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.storage_screen);
 
-        storageList = new ArrayList<>();
-        // Example data
-        storageList.add(new StorageItem("File 1"));
-        storageList.add(new StorageItem("File 2"));
-        storageList.add(new StorageItem("File 3"));
+        int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
+        subject = new Subject(subjectId);
+        storageList = subject.getStorageItems();
 
         RecyclerView storageRecyclerView = findViewById(R.id.storage_recycler_view);
         storageListAdapter = new StorageListManager(this, storageList, this::showEditOptionsDialog);
@@ -44,13 +43,10 @@ public class StorageActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-
-                        /// //////////////////////////////////////////
-                        Uri uri = result.getData().getData();       //hier ist die URI
-                        /// //////////////////////////////////////////
+                        Uri uri = result.getData().getData();
                         if (uri != null) {
                             String fileName = getFileName(uri);
-                            storageList.add(new StorageItem(fileName));
+                            subject.addStorageItem(fileName);
                             storageListAdapter.notifyDataSetChanged();
                         }
                     }
@@ -62,7 +58,7 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void openFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); //open file picker with this syscall
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
         filePickerLauncher.launch(intent);

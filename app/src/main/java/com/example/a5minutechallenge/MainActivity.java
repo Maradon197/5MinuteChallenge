@@ -94,12 +94,6 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_button);
         addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());
-
-        FloatingActionButton storageFab = findViewById(R.id.storage_button);
-        storageFab.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, StorageActivity.class);
-            startActivity(intent);
-        });
     }
 
     private void showAddSubjectDialog() {

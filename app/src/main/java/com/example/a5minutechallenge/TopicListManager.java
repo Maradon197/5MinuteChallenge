@@ -56,6 +56,13 @@ public class TopicListManager extends AppCompatActivity {
 
         FloatingActionButton addTopicFab = findViewById(R.id.add_topic_fab);
         addTopicFab.setOnClickListener(v -> showAddTopicDialog());
+
+        FloatingActionButton storageFab = findViewById(R.id.storage_fab);
+        storageFab.setOnClickListener(v -> {
+            Intent intent = new Intent(TopicListManager.this, StorageActivity.class);
+            intent.putExtra("SUBJECT_ID", subjectId);
+            startActivity(intent);
+        });
     }
 
     private void showAddTopicDialog() {

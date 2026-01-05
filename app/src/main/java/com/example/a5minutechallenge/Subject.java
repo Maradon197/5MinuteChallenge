@@ -8,6 +8,7 @@ public class Subject {
     private String title;
     private String description;
     private ArrayList<Topic> topics;
+    private ArrayList<StorageItem> storageItems;
 
     public Subject(Integer id) {
         this.subjectId = id;
@@ -75,5 +76,18 @@ public class Subject {
             }
         }
         return topics;
+    }
+
+    public ArrayList<StorageItem> getStorageItems() {
+        if (storageItems == null) {
+            storageItems = new ArrayList<>();
+            //dummies
+            storageItems.add(new StorageItem("Subject test file " + subjectId));
+        }
+        return storageItems;
+    }
+
+    public void addStorageItem(String itemName) {
+        getStorageItems().add(new StorageItem(itemName));
     }
 }
