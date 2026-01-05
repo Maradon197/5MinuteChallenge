@@ -53,7 +53,7 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
         holder.itemView.setOnClickListener(v -> {
             SubjectFile subjectFile = item.getFile();
-            //placeholder, open file here ig
+            openFile(subjectFile);
         });
 
         holder.itemView.setOnLongClickListener(v -> {
@@ -67,6 +67,89 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
     @Override
     public int getItemCount() {
         return storageItems.size();
+    }
+
+    /**
+     * Opens a file using the appropriate application
+     * @param subjectFile The SubjectFile to open
+     */
+    private void openFile(SubjectFile subjectFile) {
+        if (subjectFile == null || !subjectFile.exists()) {
+            Toast.makeText(context, "File not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File file = subjectFile.getFile();
+        Uri fileUri = FileProvider.getUriForFile(
+                context,
+                context.getPackageName() + ".fileprovider",
+                file
+        );
+
+        // Determine MIME type based on file extension
+        String mimeType = getMimeType(subjectFile.getFileName());
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(fileUri, mimeType);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, "No application found to open this file", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Determines MIME type based on file extension
+     * @param fileName The file name
+     * @return The MIME type as a string
+     */
+    private String getMimeType(String fileName) {
+        if (fileName == null) {
+            return "*/*";
+        }
+
+        String extension = "";
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex > 0 && lastDotIndex < fileName.length() - 1) {
+            extension = fileName.substring(lastDotIndex + 1).toLowerCase();
+        }
+
+        // Common MIME types
+        switch (extension) {
+            case "pdf":
+                return "application/pdf";
+            case "doc":
+                return "application/msword";
+            case "docx":
+                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "xls":
+                return "application/vnd.ms-excel";
+            case "xlsx":
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case "ppt":
+                return "application/vnd.ms-powerpoint";
+            case "pptx":
+                return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            case "txt":
+                return "text/plain";
+            case "jpg":
+            case "jpeg":
+                return "image/jpeg";
+            case "png":
+                return "image/png";
+            case "gif":
+                return "image/gif";
+            case "mp4":
+                return "video/mp4";
+            case "mp3":
+                return "audio/mpeg";
+            case "zip":
+                return "application/zip";
+            default:
+                return "*/*";
+        }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
