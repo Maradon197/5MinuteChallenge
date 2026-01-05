@@ -3,7 +3,6 @@ package com.example.a5minutechallenge;
 import android.content.Context;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -124,6 +123,12 @@ public class Subject {
             return null;
         }
 
+        // Sanitize filename to prevent directory traversal attacks
+        String sanitizedFileName = sanitizeFileName(fileName);
+        if (sanitizedFileName.isEmpty()) {
+            return null;
+        }
+
         try {
             // Create subject-specific directory
             File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
@@ -132,7 +137,7 @@ public class Subject {
             }
 
             // Create the file
-            File file = new File(subjectDir, fileName);
+            File file = new File(subjectDir, sanitizedFileName);
             
             // Copy the file content
             try (FileOutputStream outputStream = new FileOutputStream(file)) {
@@ -143,7 +148,7 @@ public class Subject {
                 }
             }
 
-            SubjectFile subjectFile = new SubjectFile(fileName, file.getAbsolutePath());
+            SubjectFile subjectFile = new SubjectFile(sanitizedFileName, file.getAbsolutePath());
             if (subjectFiles == null) {
                 subjectFiles = new ArrayList<>();
             }
@@ -214,18 +219,55 @@ public class Subject {
             return false;
         }
 
+        // Sanitize filename to prevent directory traversal attacks
+        String sanitizedFileName = sanitizeFileName(newFileName);
+        if (sanitizedFileName.isEmpty()) {
+            return false;
+        }
+
         File oldFile = new File(subjectFile.getFilePath());
         if (!oldFile.exists()) {
             return false;
         }
 
-        File newFile = new File(oldFile.getParent(), newFileName);
+        File newFile = new File(oldFile.getParent(), sanitizedFileName);
+        
+        // Check if target file already exists
+        if (newFile.exists()) {
+            return false;
+        }
+
         if (oldFile.renameTo(newFile)) {
-            subjectFile.setFileName(newFileName);
+            subjectFile.setFileName(sanitizedFileName);
             subjectFile.setFilePath(newFile.getAbsolutePath());
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Sanitizes a filename by removing path separators and other dangerous characters
+     * @param fileName The filename to sanitize
+     * @return The sanitized filename
+     */
+    private String sanitizeFileName(String fileName) {
+        if (fileName == null) {
+            return "";
+        }
+        
+        // Remove path separators and other dangerous characters
+        String sanitized = fileName.replaceAll("[/\\\\:*?\"<>|]", "_");
+        
+        // Remove leading/trailing dots and spaces
+        sanitized = sanitized.replaceAll("^\\.+", "").replaceAll("\\.+$", "");
+        sanitized = sanitized.trim();
+        
+        // Ensure filename is not empty after sanitization
+        if (sanitized.isEmpty()) {
+            return "";
+        }
+        
+        return sanitized;
     }
 }
