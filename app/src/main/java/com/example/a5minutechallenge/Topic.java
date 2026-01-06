@@ -14,4 +14,5 @@ public class Topic {
     public void setTitle(String newTitle) {
         title = newTitle;
     }
+
 }

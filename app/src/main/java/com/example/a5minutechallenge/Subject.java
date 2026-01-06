@@ -96,8 +96,8 @@ public class Subject {
         return storageItems;
     }
 
-    public void addStorageItem(String itemName, SubjectFile file) {
-        getStorageItems().add(new StorageListItem(itemName, file));
+    public void addStorageItem(SubjectFile file) {
+        getStorageItems().add(new StorageListItem(file.getFileName(), file));
     }
 
     /**

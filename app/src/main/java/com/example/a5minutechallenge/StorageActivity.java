@@ -4,6 +4,7 @@
 
 package com.example.a5minutechallenge;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
 
+
     private ArrayList<StorageListItem> storageList;
     private StorageListManager storageListAdapter;
     private ActivityResultLauncher<Intent> filePickerLauncher;
@@ -44,6 +46,13 @@ public class StorageActivity extends AppCompatActivity {
         storageListAdapter = new StorageListManager(this, storageList, this::showEditOptionsDialog);
         storageRecyclerView.setAdapter(storageListAdapter);
 
+        Subject s = new Subject(subjectId);
+        ArrayList<SubjectFile> subjectfiles = s.getFiles(getApplicationContext());
+        for(SubjectFile currentFile: subjectfiles) {
+            subject.addStorageItem(currentFile);
+            storageListAdapter.notifyDataSetChanged();
+        }
+
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -51,6 +60,7 @@ public class StorageActivity extends AppCompatActivity {
                         Uri uri = result.getData().getData();
                         if (uri != null) {
                             String fileName = getFileName(uri);
+                            //case handling for duplicate files (popup)?
                             try {
                                 // Get input stream from URI
                                 InputStream inputStream = getContentResolver().openInputStream(uri);
@@ -60,7 +70,7 @@ public class StorageActivity extends AppCompatActivity {
                                     if (savedFile != null) {
                                         // File saved successfully and is accessible via subject.getFiles()
                                         // Add to display list
-                                        subject.addStorageItem(fileName, savedFile);
+                                        subject.addStorageItem(savedFile);
                                         storageListAdapter.notifyDataSetChanged();
                                     }
                                 }
