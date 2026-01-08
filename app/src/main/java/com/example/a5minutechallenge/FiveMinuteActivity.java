@@ -1,16 +1,19 @@
-/** Activity for the 5-minute-screen opened by the user. Calls ContentContainerAdapter
- *  for content creation and display. Includes gamification with timer, scoring, and swipe gestures.
+/** Activity for the 5-minute-screen opened by the user.
+ *  Displays content containers one at a time with a preview of the next container.
+ *  Includes gamification with timer, scoring, and swipe gestures.
  */
 package com.example.a5minutechallenge;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ListView;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -22,7 +25,10 @@ import java.util.List;
 
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener {
 
-    private ListView contentListView;
+    private FrameLayout currentContainerLayout;
+    private FrameLayout nextContainerLayout;
+    private FrameLayout nextContainerPreview;
+    private Button checkButton;
     private TextView timerText;
     private TextView scoreDisplay;
     private TextView streakIndicator;
@@ -34,7 +40,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private GestureDetector gestureDetector;
     
     private List<ContentContainer> contentContainers;
-    private ContentContainerAdapter adapter;
     private int currentContainerIndex = 0;
     
     private String topicName;
@@ -56,12 +61,17 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Initializes all view references.
      */
     private void initViews() {
-        contentListView = findViewById(R.id.box_list);
+        currentContainerLayout = findViewById(R.id.current_container);
+        nextContainerLayout = findViewById(R.id.next_container);
+        nextContainerPreview = findViewById(R.id.next_container_preview);
+        checkButton = findViewById(R.id.check_button);
         timerText = findViewById(R.id.timer_text);
         scoreDisplay = findViewById(R.id.score_display);
         streakIndicator = findViewById(R.id.streak_indicator);
         scorePopup = findViewById(R.id.score_popup);
         timerProgress = findViewById(R.id.timer_progress);
+        
+        checkButton.setOnClickListener(v -> onCheckButtonClicked());
     }
 
     /**
@@ -116,7 +126,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             }
         });
 
-        contentListView.setOnTouchListener((v, event) -> {
+        View contentArea = findViewById(R.id.content_container_area);
+        contentArea.setOnTouchListener((v, event) -> {
             gestureDetector.onTouchEvent(event);
             return false;
         });
@@ -128,36 +139,188 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void loadContent() {
         // Load content from ContentLoader based on subject and topic
         contentContainers = ContentLoader.loadContent(subjectId, topicName);
+        
+        // Display the first container
+        if (contentContainers != null && !contentContainers.isEmpty()) {
+            displayContainer(currentContainerIndex);
+        }
+    }
 
-        adapter = new ContentContainerAdapter(this, contentContainers);
-        contentListView.setAdapter(adapter);
+    /**
+     * Displays the content container at the specified index.
+     * @param index The index of the container to display
+     */
+    private void displayContainer(int index) {
+        if (index < 0 || index >= contentContainers.size()) {
+            return;
+        }
+        
+        ContentContainer container = contentContainers.get(index);
+        
+        // Inflate and display the current container
+        currentContainerLayout.removeAllViews();
+        View containerView = inflateContainerView(container);
+        currentContainerLayout.addView(containerView);
+        
+        // Display preview of next container if available
+        if (index + 1 < contentContainers.size()) {
+            ContentContainer nextContainer = contentContainers.get(index + 1);
+            nextContainerLayout.removeAllViews();
+            View nextView = inflateContainerView(nextContainer);
+            nextContainerLayout.addView(nextView);
+            nextContainerPreview.setVisibility(View.VISIBLE);
+        } else {
+            nextContainerPreview.setVisibility(View.GONE);
+        }
+        
+        // Update button text based on container type
+        updateCheckButtonText(container);
+    }
+
+    /**
+     * Inflates the appropriate view for a content container.
+     * @param container The content container
+     * @return The inflated view
+     */
+    private View inflateContainerView(ContentContainer container) {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View view = null;
+        
+        switch (container.getType()) {
+            case TITLE:
+                view = inflater.inflate(R.layout.title_container, currentContainerLayout, false);
+                TextView titleView = view.findViewById(R.id.title_text);
+                TitleContainer titleContainer = (TitleContainer) container;
+                titleView.setText(titleContainer.getTitle());
+                break;
+            case TEXT:
+                view = inflater.inflate(R.layout.text_container, currentContainerLayout, false);
+                TextView textView = view.findViewById(R.id.text_content);
+                TextContainer textContainer = (TextContainer) container;
+                textView.setText(textContainer.getText());
+                break;
+            case MULTIPLE_CHOICE_QUIZ:
+                view = inflater.inflate(R.layout.multiple_choice_quiz_container, currentContainerLayout, false);
+                TextView questionText = view.findViewById(R.id.question_text);
+                MultipleChoiceQuizContainer mcqContainer = (MultipleChoiceQuizContainer) container;
+                questionText.setText(mcqContainer.getQuestion());
+                break;
+            case REVERSE_QUIZ:
+                view = inflater.inflate(R.layout.reverse_quiz_container, currentContainerLayout, false);
+                TextView answerText = view.findViewById(R.id.answer_text);
+                ReverseQuizContainer reverseQuizContainer = (ReverseQuizContainer) container;
+                answerText.setText(reverseQuizContainer.getAnswer());
+                break;
+            case WIRE_CONNECTING:
+                view = inflater.inflate(R.layout.wire_connecting_container, currentContainerLayout, false);
+                TextView wireInstructions = view.findViewById(R.id.instructions_text);
+                WireConnectingContainer wireContainer = (WireConnectingContainer) container;
+                wireInstructions.setText(wireContainer.getInstructions());
+                break;
+            case FILL_IN_THE_GAPS:
+                view = inflater.inflate(R.layout.fill_in_gaps_container, currentContainerLayout, false);
+                TextView gapsText = view.findViewById(R.id.text_with_gaps);
+                FillInTheGapsContainer gapsContainer = (FillInTheGapsContainer) container;
+                gapsText.setText(gapsContainer.getDisplayText());
+                break;
+            case SORTING_TASK:
+                view = inflater.inflate(R.layout.sorting_task_container, currentContainerLayout, false);
+                TextView sortInstructions = view.findViewById(R.id.instructions_text);
+                SortingTaskContainer sortContainer = (SortingTaskContainer) container;
+                sortInstructions.setText(sortContainer.getInstructions());
+                break;
+            case ERROR_SPOTTING:
+                view = inflater.inflate(R.layout.error_spotting_container, currentContainerLayout, false);
+                TextView errorInstructions = view.findViewById(R.id.instructions_text);
+                ErrorSpottingContainer errorContainer = (ErrorSpottingContainer) container;
+                errorInstructions.setText(errorContainer.getInstructions());
+                break;
+            case RECAP:
+                view = inflater.inflate(R.layout.recap_container, currentContainerLayout, false);
+                TextView recapTitle = view.findViewById(R.id.recap_title);
+                RecapContainer recapContainer = (RecapContainer) container;
+                recapTitle.setText(recapContainer.getRecapTitle());
+                break;
+            case VIDEO:
+                view = inflater.inflate(R.layout.video_container, currentContainerLayout, false);
+                break;
+            case QUIZ:
+                view = inflater.inflate(R.layout.quiz_container, currentContainerLayout, false);
+                break;
+        }
+        
+        return view;
+    }
+
+    /**
+     * Updates the check button text based on container type.
+     * @param container The current content container
+     */
+    private void updateCheckButtonText(ContentContainer container) {
+        switch (container.getType()) {
+            case TEXT:
+            case TITLE:
+            case VIDEO:
+                checkButton.setText(R.string.next_question);
+                break;
+            default:
+                checkButton.setText(R.string.check_answer);
+                break;
+        }
+    }
+
+    /**
+     * Handles the check button click event.
+     */
+    private void onCheckButtonClicked() {
+        ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
+        
+        // For interactive containers (quizzes, etc.), validation would happen here
+        // For now, we just progress to the next container
+        // Answer validation can be added in a follow-up based on container type:
+        // - MultipleChoiceQuizContainer: check selected options
+        // - FillInTheGapsContainer: validate filled gaps
+        // - SortingTaskContainer: verify order
+        // - etc.
+        
+        progressToNextContainer();
     }
 
     /**
      * Handles swipe up gesture to progress to next container.
      */
     private void onSwipeUp() {
+        progressToNextContainer();
+    }
+
+    /**
+     * Progresses to the next content container with animation.
+     */
+    private void progressToNextContainer() {
         if (currentContainerIndex < contentContainers.size() - 1) {
-            currentContainerIndex++;
-            
-            // Animate current container sliding up
-            View currentView = contentListView.getChildAt(0);
-            if (currentView != null) {
-                Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_out);
-                slideUp.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {}
+            // Animate current container sliding up and fading out
+            Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_out);
+            slideUp.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    checkButton.setEnabled(false);
+                }
 
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        contentListView.smoothScrollToPosition(currentContainerIndex);
-                    }
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    currentContainerIndex++;
+                    displayContainer(currentContainerIndex);
+                    
+                    // Animate new container sliding in
+                    Animation slideIn = AnimationUtils.loadAnimation(FiveMinuteActivity.this, R.anim.slide_up_in);
+                    currentContainerLayout.startAnimation(slideIn);
+                    checkButton.setEnabled(true);
+                }
 
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {}
-                });
-                currentView.startAnimation(slideUp);
-            }
+                @Override
+                public void onAnimationRepeat(Animation animation) {}
+            });
+            currentContainerLayout.startAnimation(slideUp);
             
             checkLessonComplete();
         }

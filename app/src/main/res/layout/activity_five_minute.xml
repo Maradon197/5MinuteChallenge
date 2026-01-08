@@ -105,18 +105,61 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Content List View -->
-    <ListView
-        android:id="@+id/box_list"
+    <!-- Content Container Area -->
+    <FrameLayout
+        android:id="@+id/content_container_area"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="16dp"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="10dp"
-        android:clipToPadding="false"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/check_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/timer_container" />
+        app:layout_constraintTop_toBottomOf="@+id/timer_container">
+
+        <!-- Current Content Container -->
+        <FrameLayout
+            android:id="@+id/current_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:elevation="@dimen/elevation_md" />
+
+        <!-- Next Content Preview (with fadeout) -->
+        <FrameLayout
+            android:id="@+id/next_container_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="80dp"
+            android:alpha="0.3"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:id="@+id/next_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Fadeout overlay -->
+            <View
+                android:id="@+id/fadeout_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/fadeout_gradient" />
+
+        </FrameLayout>
+
+    </FrameLayout>
+
+    <!-- Check/Next Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/check_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_md"
+        android:text="@string/check_answer"
+        android:textSize="@dimen/text_size_md"
+        app:icon="@android:drawable/ic_menu_upload"
+        app:iconGravity="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
