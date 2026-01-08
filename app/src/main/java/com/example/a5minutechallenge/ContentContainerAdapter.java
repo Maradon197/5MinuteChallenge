@@ -114,6 +114,7 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 TextView explanationText = convertView.findViewById(R.id.explanation_text);
                 if (mcqContainer.getExplanationText() != null && !mcqContainer.getExplanationText().isEmpty()) {
                     explanationText.setText(mcqContainer.getExplanationText());
+                    explanationText.setVisibility(View.VISIBLE);
                 }
                 // Additional setup for options would be handled by RecyclerView adapter
                 break;
@@ -150,6 +151,7 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 TextView errorExplanationText = convertView.findViewById(R.id.explanation_text);
                 if (errorContainer.getExplanationText() != null && !errorContainer.getExplanationText().isEmpty()) {
                     errorExplanationText.setText(errorContainer.getExplanationText());
+                    errorExplanationText.setVisibility(View.VISIBLE);
                 }
                 // Additional setup for items would be handled by RecyclerView adapter
                 break;
