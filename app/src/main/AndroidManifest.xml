@@ -28,6 +28,8 @@
         <activity android:name=".TopicListManager" />
         <activity android:name=".FiveMinuteActivity" />
         <activity android:name=".StorageActivity" />
+        <activity android:name=".LessonOverActivity" />
+        <activity android:name=".TimeOverActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
