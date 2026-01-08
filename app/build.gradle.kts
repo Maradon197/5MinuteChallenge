@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.example.a5minutechallenge"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.a5minutechallenge"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -57,7 +57,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("com.google.genai:google-genai:1.29.0")
-    implementation("org.json:json:20250517")
-    implementation("com.fasterxml.jackson.core:jackson-core:2.20.1")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+    implementation("org.json:json:20231013")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 }

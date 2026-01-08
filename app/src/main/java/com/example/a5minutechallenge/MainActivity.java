@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         ////////////////////////////////////////////////////////////////////////////////////////////// Data population, prompt engine should change these
         subjectList = new ArrayList<>();
-        subjectList.add(new Subject(0).setTitle("Jetbrains Academy").setDescription("Example Description 1"));
+        subjectList.add(new Subject(0).setTitle("Jetbrains IDE").setDescription("Master the IDE"));
         subjectList.add(new Subject(2).setTitle("Databases").setDescription("Example Description 2")); // This was already chained
         subjectList.add(new Subject(3).setTitle("Programming Languages").setDescription("Example Description 3"));
         subjectList.add(new Subject(4).setTitle("Other").setDescription("Example Description 4"));
@@ -87,11 +87,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start(); */
 
-        //subjects erstellen, bearbeiten und entfernen
-        //container and extending classes
-        //5 minute view erstellen
 
-        //später: Speicherverwaltung
 
         RecyclerView subjectRecyclerView = findViewById(R.id.subject_recycler_view);
         subjectListAdapter = new SubjectListManager(this, subjectList, this::showEditOptionsDialog);

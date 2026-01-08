@@ -64,10 +64,12 @@ public class Subject {
         if (topics == null) {
             topics = new ArrayList<>();
             switch (subjectId) {
-                case 0:
-                    topics.add(new Topic("Jetpack Compose"));           //list population, later fetched form DB
-                    topics.add(new Topic("Kotlin"));                    //
-                    topics.add(new Topic("Coroutines"));
+                case 0: // Jetbrains IDE
+                    topics.add(new Topic("Shortcuts"));
+                    topics.add(new Topic("Navigation"));
+                    topics.add(new Topic("Code Generation"));
+                    topics.add(new Topic("Refactoring"));
+                    topics.add(new Topic("Debugging"));
                     break;
                 case 2:
                     topics.add(new Topic("ORDB"));
