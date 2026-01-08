@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/general_list_item_background"
+    android:padding="@dimen/spacing_lg">
+
+    <TextView
+        android:id="@+id/instructions_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/fill_the_gaps"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_size_lg"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/hint_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:text="@string/tap_word_to_fill"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/text_size_sm"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/instructions_text" />
+
+    <ScrollView
+        android:id="@+id/text_scroll_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:maxHeight="200dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hint_text">
+
+        <TextView
+            android:id="@+id/text_with_gaps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_size_md"
+            android:lineSpacingMultiplier="1.5" />
+
+    </ScrollView>
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/word_options_chip_group"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_md"
+        app:chipSpacingHorizontal="@dimen/spacing_sm"
+        app:chipSpacingVertical="@dimen/spacing_xs"
+        app:singleLine="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_scroll_view" />
+
+    <Button
+        android:id="@+id/check_button"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/button_height"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:background="@drawable/button_primary"
+        android:text="@string/check_answer"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size_md"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/word_options_chip_group" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

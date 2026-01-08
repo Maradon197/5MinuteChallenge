@@ -10,7 +10,14 @@ public abstract class ContentContainer {
         TEXT,
         VIDEO,
         QUIZ,
-        TITLE
+        TITLE,
+        MULTIPLE_CHOICE_QUIZ,
+        REVERSE_QUIZ,
+        WIRE_CONNECTING,
+        FILL_IN_THE_GAPS,
+        SORTING_TASK,
+        ERROR_SPOTTING,
+        RECAP
     }
     private Types type;
 

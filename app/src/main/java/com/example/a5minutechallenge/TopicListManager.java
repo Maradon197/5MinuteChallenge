@@ -24,6 +24,11 @@ public class TopicListManager extends AppCompatActivity {
     private TopicListAdapter adapter;
     private Subject subject;
 
+    /**
+     * Initializes the TopicListManager activity with a topic list for the selected subject.
+     * Sets up the ListView with topics and configures FABs for adding topics and accessing storage.
+     * @param savedInstanceState Bundle containing the activity's previously saved state
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +71,9 @@ public class TopicListManager extends AppCompatActivity {
         });
     }
 
+    /**
+     * Displays a dialog to add a new topic to the current subject.
+     */
     private void showAddTopicDialog() {
         showEditDialog(getString(R.string.add_new_topic), "", getString(R.string.add), (newName) -> {
             subject.addTopic(newName);
@@ -73,6 +81,10 @@ public class TopicListManager extends AppCompatActivity {
         });
     }
 
+    /**
+     * Displays a dialog with edit options (rename/delete) for a topic at the given position.
+     * @param position The position of the topic in the list to edit
+     */
     private void showEditOptionsDialog(int position) {
         final CharSequence[] options = {getString(R.string.rename), getString(R.string.delete)};
 
@@ -88,6 +100,10 @@ public class TopicListManager extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Displays a dialog to rename a topic at the given position.
+     * @param position The position of the topic to rename
+     */
     private void showRenameDialog(int position) {
         Topic topic = topicList.get(position);
         showEditDialog(getString(R.string.rename_topic), topic.getTitle(), getString(R.string.rename), (newName) -> {
@@ -96,6 +112,10 @@ public class TopicListManager extends AppCompatActivity {
         });
     }
 
+    /**
+     * Displays a confirmation dialog before deleting a topic.
+     * @param position The position of the topic to delete
+     */
     private void showDeleteConfirmationDialog(int position) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.delete_topic))
@@ -108,6 +128,13 @@ public class TopicListManager extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Generic dialog for editing text input (add/rename operations).
+     * @param title Dialog title
+     * @param currentName Current text value to display in the input field
+     * @param positiveButtonText Text for the positive action button
+     * @param listener Callback listener invoked when user enters a valid name
+     */
     private void showEditDialog(String title, String currentName, String positiveButtonText, OnNameEnteredListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);

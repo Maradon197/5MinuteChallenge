@@ -15,20 +15,42 @@ import java.util.List;
 
 public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
 
+    /**
+     * Constructs a ContentContainerAdapter with context and content container data.
+     * @param context The application context
+     * @param contentContainers The list of content containers to display
+     */
     public ContentContainerAdapter(@NonNull Context context, List<ContentContainer> contentContainers) {
         super(context, 0, contentContainers);
     }
 
+    /**
+     * Returns the number of different view types supported by this adapter.
+     * @return The number of view types (equal to number of ContentContainer.Types)
+     */
     @Override
     public int getViewTypeCount() {
         return ContentContainer.Types.values().length;
     }
 
+    /**
+     * Returns the view type for the item at the specified position.
+     * @param position The position of the item
+     * @return The ordinal of the ContentContainer.Types enum for this position
+     */
     @Override
     public int getItemViewType(int position) {
         return getItem(position).getType().ordinal();
     }
 
+    /**
+     * Creates and returns the appropriate view for the content container at the specified position.
+     * Inflates the correct layout based on container type and binds data to the view.
+     * @param position The position of the item in the list
+     * @param convertView The recycled view to reuse, if available
+     * @param parent The parent ViewGroup
+     * @return The View for the content container
+     */
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
