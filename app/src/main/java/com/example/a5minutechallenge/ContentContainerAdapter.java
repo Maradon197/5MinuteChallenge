@@ -109,6 +109,12 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 TextView questionText = convertView.findViewById(R.id.question_text);
                 MultipleChoiceQuizContainer mcqContainer = (MultipleChoiceQuizContainer) contentContainer;
                 questionText.setText(mcqContainer.getQuestion());
+                
+                // Set explanation text if available
+                TextView explanationText = convertView.findViewById(R.id.explanation_text);
+                if (mcqContainer.getExplanationText() != null && !mcqContainer.getExplanationText().isEmpty()) {
+                    explanationText.setText(mcqContainer.getExplanationText());
+                }
                 // Additional setup for options would be handled by RecyclerView adapter
                 break;
             case REVERSE_QUIZ:
@@ -139,6 +145,12 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 TextView errorInstructions = convertView.findViewById(R.id.instructions_text);
                 ErrorSpottingContainer errorContainer = (ErrorSpottingContainer) contentContainer;
                 errorInstructions.setText(errorContainer.getInstructions());
+                
+                // Set explanation text if available
+                TextView errorExplanationText = convertView.findViewById(R.id.explanation_text);
+                if (errorContainer.getExplanationText() != null && !errorContainer.getExplanationText().isEmpty()) {
+                    errorExplanationText.setText(errorContainer.getExplanationText());
+                }
                 // Additional setup for items would be handled by RecyclerView adapter
                 break;
             case RECAP:
