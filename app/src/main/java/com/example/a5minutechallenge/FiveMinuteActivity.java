@@ -127,7 +127,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private void loadContent() {
         // Load content from ContentLoader based on subject and topic
-        contentContainers = (List<ContentContainer>) ContentLoader.loadContent(subjectId, topicName);
+        contentContainers = ContentLoader.loadContent(subjectId, topicName);
 
         adapter = new ContentContainerAdapter(this, contentContainers);
         contentListView.setAdapter(adapter);

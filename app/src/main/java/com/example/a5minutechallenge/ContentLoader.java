@@ -147,8 +147,9 @@ public class ContentLoader {
         // RECAP container with TEXT inside
         RecapContainer recap = new RecapContainer(id++);
         recap.setRecapTitle("Shortcuts Recap");
-        recap.setWrappedContainer(new TextContainer(id++)
-            .setText("Great job! You learned the essential IntelliJ IDEA shortcuts including Search Everywhere (Double Shift), Find in Files (Ctrl+Shift+F), and common refactoring shortcuts."));
+        TextContainer recapText = new TextContainer(id++);
+        recapText.setText("Great job! You learned the essential IntelliJ IDEA shortcuts including Search Everywhere (Double Shift), Find in Files (Ctrl+Shift+F), and common refactoring shortcuts.");
+        recap.setWrappedContainer(recapText);
         containers.add(recap);
     }
     
@@ -291,7 +292,8 @@ public class ContentLoader {
      */
     private static List<ContentContainer> loadDefaultContent(String topicName) {
         List<ContentContainer> containers = new ArrayList<>();
-        loadDefaultContent(containers, 0);
+        containers.add(new TitleContainer(0).setTitle(topicName));
+        loadDefaultContent(containers, 1);
         return containers;
     }
     
