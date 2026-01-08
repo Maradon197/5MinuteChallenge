@@ -126,29 +126,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Loads and displays the content containers for this lesson.
      */
     private void loadContent() {
-        contentContainers = new ArrayList<>();
-        
-        // Add title
-        contentContainers.add(new TitleContainer(0).setTitle(topicName));
-        
-        // Add sample content (in real app, this would come from backend)
-        contentContainers.add(new TextContainer(1).setText("Welcome to this 5-minute challenge! Let's learn something new."));
-        contentContainers.add(new TextContainer(2).setText("You'll be quizzed on the content. Answer correctly to earn points!"));
-        
-        // Example: Add a multiple choice quiz
-        MultipleChoiceQuizContainer quiz = new MultipleChoiceQuizContainer(3);
-        quiz.setQuestion("What is the purpose of this challenge?");
-        List<String> options = new ArrayList<>();
-        options.add("To learn in 5 minutes");
-        options.add("To waste time");
-        options.add("To play games");
-        quiz.setOptions(options);
-        List<Integer> correctAnswers = new ArrayList<>();
-        correctAnswers.add(0);
-        quiz.setCorrectAnswerIndices(correctAnswers);
-        contentContainers.add(quiz);
-        
-        contentContainers.add(new TextContainer(4).setText("Great job! Keep going to complete the challenge."));
+        // Load content from ContentLoader based on subject and topic
+        contentContainers = ContentLoader.loadContent(subjectId, topicName);
 
         adapter = new ContentContainerAdapter(this, contentContainers);
         contentListView.setAdapter(adapter);

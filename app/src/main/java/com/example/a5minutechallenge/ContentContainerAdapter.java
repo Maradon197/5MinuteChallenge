@@ -70,6 +70,27 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 case QUIZ:
                     convertView = LayoutInflater.from(getContext()).inflate(R.layout.quiz_container, parent, false);
                     break;
+                case MULTIPLE_CHOICE_QUIZ:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.multiple_choice_quiz_container, parent, false);
+                    break;
+                case REVERSE_QUIZ:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.reverse_quiz_container, parent, false);
+                    break;
+                case WIRE_CONNECTING:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.wire_connecting_container, parent, false);
+                    break;
+                case FILL_IN_THE_GAPS:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.fill_in_gaps_container, parent, false);
+                    break;
+                case SORTING_TASK:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.sorting_task_container, parent, false);
+                    break;
+                case ERROR_SPOTTING:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.error_spotting_container, parent, false);
+                    break;
+                case RECAP:
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.recap_container, parent, false);
+                    break;
             }
         }
 
@@ -83,6 +104,48 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 TextView textView = convertView.findViewById(R.id.text_content);
                 TextContainer textContainer = (TextContainer) contentContainer;
                 textView.setText(textContainer.getText());
+                break;
+            case MULTIPLE_CHOICE_QUIZ:
+                TextView questionText = convertView.findViewById(R.id.question_text);
+                MultipleChoiceQuizContainer mcqContainer = (MultipleChoiceQuizContainer) contentContainer;
+                questionText.setText(mcqContainer.getQuestion());
+                // Additional setup for options would be handled by RecyclerView adapter
+                break;
+            case REVERSE_QUIZ:
+                TextView answerText = convertView.findViewById(R.id.answer_text);
+                ReverseQuizContainer reverseQuizContainer = (ReverseQuizContainer) contentContainer;
+                answerText.setText(reverseQuizContainer.getAnswer());
+                // Additional setup for question options would be handled by RecyclerView adapter
+                break;
+            case WIRE_CONNECTING:
+                TextView wireInstructions = convertView.findViewById(R.id.instructions_text);
+                WireConnectingContainer wireContainer = (WireConnectingContainer) contentContainer;
+                wireInstructions.setText(wireContainer.getInstructions());
+                // Additional setup for items would be handled by RecyclerView adapters
+                break;
+            case FILL_IN_THE_GAPS:
+                TextView gapsText = convertView.findViewById(R.id.text_with_gaps);
+                FillInTheGapsContainer gapsContainer = (FillInTheGapsContainer) contentContainer;
+                gapsText.setText(gapsContainer.getDisplayText());
+                // Additional setup for word chips would be handled by ChipGroup
+                break;
+            case SORTING_TASK:
+                TextView sortInstructions = convertView.findViewById(R.id.instructions_text);
+                SortingTaskContainer sortContainer = (SortingTaskContainer) contentContainer;
+                sortInstructions.setText(sortContainer.getInstructions());
+                // Additional setup for sortable items would be handled by RecyclerView adapter
+                break;
+            case ERROR_SPOTTING:
+                TextView errorInstructions = convertView.findViewById(R.id.instructions_text);
+                ErrorSpottingContainer errorContainer = (ErrorSpottingContainer) contentContainer;
+                errorInstructions.setText(errorContainer.getInstructions());
+                // Additional setup for items would be handled by RecyclerView adapter
+                break;
+            case RECAP:
+                TextView recapTitle = convertView.findViewById(R.id.recap_title);
+                RecapContainer recapContainer = (RecapContainer) contentContainer;
+                recapTitle.setText(recapContainer.getRecapTitle());
+                // The wrapped container would need additional handling
                 break;
             case VIDEO:
             case QUIZ:
