@@ -1,5 +1,6 @@
-/** Activity for the 5-minute-screen opened by the user. Calls ContentContainerAdapter
- *  for content creation and display. Includes gamification with timer, scoring, and swipe gestures.
+/** Activity for the 5-minute-screen opened by the user.
+ *  Displays content containers one at a time with a preview of the next container.
+ *  Includes gamification with timer, scoring, and swipe gestures.
  */
 package com.example.a5minutechallenge;
 
@@ -272,11 +273,15 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Handles the check button click event.
      */
     private void onCheckButtonClicked() {
-        // For quiz containers, check the answer first
         ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
         
-        // TODO: Add answer checking logic based on container type
-        // For now, just progress to next container
+        // For interactive containers (quizzes, etc.), validation would happen here
+        // For now, we just progress to the next container
+        // Answer validation can be added in a follow-up based on container type:
+        // - MultipleChoiceQuizContainer: check selected options
+        // - FillInTheGapsContainer: validate filled gaps
+        // - SortingTaskContainer: verify order
+        // - etc.
         
         progressToNextContainer();
     }
