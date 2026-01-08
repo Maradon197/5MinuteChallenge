@@ -24,12 +24,24 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
         void onItemLongClick(int position);
     }
 
+    /**
+     * Constructs a SubjectListManager with context, subject data, and click listeners.
+     * @param context The application context
+     * @param subjects The list of subjects to display
+     * @param longClickListener Callback for long-click events on items
+     */
     public SubjectListManager(Context context, ArrayList<Subject> subjects, OnItemLongClickListener longClickListener) {
         this.context = context;
         this.subjects = subjects;
         this.longClickListener = longClickListener;
     }
 
+    /**
+     * Creates a new ViewHolder for subject list items by inflating the layout.
+     * @param parent The parent ViewGroup
+     * @param viewType The view type of the new View
+     * @return A new ViewHolder instance
+     */
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -37,6 +49,12 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
         return new ViewHolder(view);
     }
 
+    /**
+     * Binds subject data to the ViewHolder at the specified position.
+     * Sets up click and long-click listeners for navigation and edit operations.
+     * @param holder The ViewHolder to bind data to
+     * @param position The position of the item in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Subject subject = subjects.get(position);

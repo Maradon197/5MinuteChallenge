@@ -25,6 +25,11 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Subject> subjectList;
     private SubjectListManager subjectListAdapter;
 
+    /**
+     * Initializes the MainActivity with subject list display and adds a FAB for creating new subjects.
+     * Sets up the RecyclerView with SubjectListManager adapter and configures click listeners.
+     * @param savedInstanceState Bundle containing the activity's previously saved state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,6 +101,10 @@ public class MainActivity extends AppCompatActivity {
         addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());
     }
 
+    /**
+     * Displays a dialog to add a new subject to the list.
+     * Creates a new Subject with auto-generated ID and adds it to the subject list.
+     */
     private void showAddSubjectDialog() {
         showEditDialog(getString(R.string.add_new_subject), "", getString(R.string.add), (newName) -> {
             int newId = subjectList.size(); // Simple ID generation
@@ -104,6 +113,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Displays a dialog with edit options (rename/delete) for a subject at the given position.
+     * @param position The position of the subject in the list to edit
+     */
     private void showEditOptionsDialog(int position) {
         final CharSequence[] options = {getString(R.string.rename), getString(R.string.delete)};
 
@@ -119,6 +132,10 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Displays a dialog to rename a subject at the given position.
+     * @param position The position of the subject to rename
+     */
     private void showRenameDialog(int position) {
         Subject subject = subjectList.get(position);
         showEditDialog(getString(R.string.rename_subject), subject.getTitle(), getString(R.string.rename), (newName) -> {
@@ -127,6 +144,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Displays a confirmation dialog before deleting a subject.
+     * @param position The position of the subject to delete
+     */
     private void showDeleteConfirmationDialog(int position) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.delete_subject))
@@ -139,6 +160,13 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Generic dialog for editing text input (add/rename operations).
+     * @param title Dialog title
+     * @param currentName Current text value to display in the input field
+     * @param positiveButtonText Text for the positive action button
+     * @param listener Callback listener invoked when user enters a valid name
+     */
     private void showEditDialog(String title, String currentName, String positiveButtonText, OnNameEnteredListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);
