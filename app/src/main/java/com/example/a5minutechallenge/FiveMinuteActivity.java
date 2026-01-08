@@ -1,10 +1,18 @@
 /** Activity for the 5-minute-screen opened by the user. Calls ContentContainerAdapter
- *  for content creation and display.
+ *  for content creation and display. Includes gamification with timer, scoring, and swipe gestures.
  */
 package com.example.a5minutechallenge;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,31 +20,345 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FiveMinuteActivity extends AppCompatActivity {
+public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener {
+
+    private ListView contentListView;
+    private TextView timerText;
+    private TextView scoreDisplay;
+    private TextView streakIndicator;
+    private TextView scorePopup;
+    private ProgressBar timerProgress;
+    
+    private ScoreManager scoreManager;
+    private TimerManager timerManager;
+    private GestureDetector gestureDetector;
+    
+    private List<ContentContainer> contentContainers;
+    private ContentContainerAdapter adapter;
+    private int currentContainerIndex = 0;
+    
+    private String topicName;
+    private int subjectId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_five_minute);
 
-        ListView contentListView = findViewById(R.id.box_list);
+        initViews();
+        initData();
+        initGamification();
+        setupGestureDetector();
+        loadContent();
+    }
 
-        String topicName = getIntent().getStringExtra("TOPIC_NAME");
+    /**
+     * Initializes all view references.
+     */
+    private void initViews() {
+        contentListView = findViewById(R.id.box_list);
+        timerText = findViewById(R.id.timer_text);
+        scoreDisplay = findViewById(R.id.score_display);
+        streakIndicator = findViewById(R.id.streak_indicator);
+        scorePopup = findViewById(R.id.score_popup);
+        timerProgress = findViewById(R.id.timer_progress);
+    }
+
+    /**
+     * Initializes data from intent extras.
+     */
+    private void initData() {
+        topicName = getIntent().getStringExtra("TOPIC_NAME");
+        subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
+        
         if (topicName == null) {
             topicName = "Default Topic";
         }
+    }
 
-        List<ContentContainer> contentContainers = new ArrayList<>();
+    /**
+     * Initializes the gamification systems (scoring and timer).
+     */
+    private void initGamification() {
+        scoreManager = new ScoreManager();
+        timerManager = new TimerManager(this);
+        
+        updateScoreDisplay();
+        updateTimerDisplay();
+        
+        // Start timer after a short delay
+        timerText.postDelayed(() -> timerManager.start(), 1000);
+    }
+
+    /**
+     * Sets up the swipe gesture detector for container progression.
+     */
+    private void setupGestureDetector() {
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                float diffY = e2.getY() - e1.getY();
+                float diffX = e2.getX() - e1.getX();
+                
+                if (Math.abs(diffY) > Math.abs(diffX)) {
+                    if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY < 0) {
+                            // Swipe up
+                            onSwipeUp();
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+
+        contentListView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false;
+        });
+    }
+
+    /**
+     * Loads and displays the content containers for this lesson.
+     */
+    private void loadContent() {
+        contentContainers = new ArrayList<>();
+        
+        // Add title
         contentContainers.add(new TitleContainer(0).setTitle(topicName));
-        contentContainers.add(new TextContainer(1).setText("This is the first paragraph of the 5-minute challenge."));
-        contentContainers.add(new TextContainer(2).setText("This is the second paragraph. You should read this quickly!"));
-        contentContainers.add(new TextContainer(3).setText("This is the final paragraph. Time is almost up! It is very long though. In fact, I pasted a whole wikipedia article: \n Filler text (also placeholder text or dummy text) is text that shares some characteristics of a real written text, but is random or otherwise generated. \nIt may be used to display a sample of fonts, generate text for testing, or to spoof an e-mail spam filter. The process of using filler text is sometimes called greeking, although the text itself may be nonsense, or largely Latin, as in Lorem ipsum.\n" +
-                "\n" +
-                "Asdf\n" +
-                "ASDF is the sequence of letters that appear on the first four keys on the home row of a QWERTY or QWERTZ keyboard. They are often used as a sample or test case or as random, meaningless nonsense. It is also a common learning tool for keyboard classes, since all four keys are located on the home row."));
+        
+        // Add sample content (in real app, this would come from backend)
+        contentContainers.add(new TextContainer(1).setText("Welcome to this 5-minute challenge! Let's learn something new."));
+        contentContainers.add(new TextContainer(2).setText("You'll be quizzed on the content. Answer correctly to earn points!"));
+        
+        // Example: Add a multiple choice quiz
+        MultipleChoiceQuizContainer quiz = new MultipleChoiceQuizContainer(3);
+        quiz.setQuestion("What is the purpose of this challenge?");
+        List<String> options = new ArrayList<>();
+        options.add("To learn in 5 minutes");
+        options.add("To waste time");
+        options.add("To play games");
+        quiz.setOptions(options);
+        List<Integer> correctAnswers = new ArrayList<>();
+        correctAnswers.add(0);
+        quiz.setCorrectAnswerIndices(correctAnswers);
+        contentContainers.add(quiz);
+        
+        contentContainers.add(new TextContainer(4).setText("Great job! Keep going to complete the challenge."));
 
-
-        ContentContainerAdapter adapter = new ContentContainerAdapter(this, contentContainers);
+        adapter = new ContentContainerAdapter(this, contentContainers);
         contentListView.setAdapter(adapter);
+    }
+
+    /**
+     * Handles swipe up gesture to progress to next container.
+     */
+    private void onSwipeUp() {
+        if (currentContainerIndex < contentContainers.size() - 1) {
+            currentContainerIndex++;
+            
+            // Animate current container sliding up
+            View currentView = contentListView.getChildAt(0);
+            if (currentView != null) {
+                Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_out);
+                slideUp.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {}
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        contentListView.smoothScrollToPosition(currentContainerIndex);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {}
+                });
+                currentView.startAnimation(slideUp);
+            }
+            
+            checkLessonComplete();
+        }
+    }
+
+    /**
+     * Records a correct answer and updates score with animations.
+     * @param answerTimeMs Time taken to answer in milliseconds
+     */
+    public void onCorrectAnswer(long answerTimeMs) {
+        int points = scoreManager.recordCorrectAnswer(answerTimeMs);
+        timerManager.addCorrectAnswerBonus();
+        
+        updateScoreDisplay();
+        showScorePopup(points, scoreManager.wasQuickAnswer(answerTimeMs));
+        updateStreakDisplay();
+        
+        // Play bounce animation on score display
+        Animation bounce = AnimationUtils.loadAnimation(this, R.anim.bounce);
+        scoreDisplay.startAnimation(bounce);
+    }
+
+    /**
+     * Records an incorrect answer and updates UI.
+     */
+    public void onIncorrectAnswer() {
+        scoreManager.recordIncorrectAnswer();
+        updateStreakDisplay();
+        
+        // Shake animation for incorrect answer
+        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);
+        scoreDisplay.startAnimation(shake);
+    }
+
+    /**
+     * Displays a score popup animation with the points earned.
+     * @param points Points to display
+     * @param isQuickAnswer Whether this was a quick answer bonus
+     */
+    private void showScorePopup(int points, boolean isQuickAnswer) {
+        String text = "+" + points;
+        if (isQuickAnswer) {
+            text += " ⚡";
+        }
+        
+        scorePopup.setText(text);
+        scorePopup.setVisibility(View.VISIBLE);
+        
+        Animation popupAnim = AnimationUtils.loadAnimation(this, R.anim.score_popup);
+        popupAnim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                scorePopup.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        scorePopup.startAnimation(popupAnim);
+    }
+
+    /**
+     * Updates the score display text.
+     */
+    private void updateScoreDisplay() {
+        scoreDisplay.setText("Score: " + scoreManager.getTotalScore());
+    }
+
+    /**
+     * Updates the timer display text.
+     */
+    private void updateTimerDisplay() {
+        timerText.setText(timerManager.getFormattedTime());
+    }
+
+    /**
+     * Updates the streak indicator visibility and text.
+     */
+    private void updateStreakDisplay() {
+        int streak = scoreManager.getCurrentStreak();
+        if (streak > 1) {
+            streakIndicator.setText("🔥 Streak: " + streak);
+            streakIndicator.setVisibility(View.VISIBLE);
+            
+            Animation pulse = AnimationUtils.loadAnimation(this, R.anim.pulse);
+            streakIndicator.startAnimation(pulse);
+        } else {
+            streakIndicator.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Checks if the lesson is complete and navigates to result screen.
+     */
+    private void checkLessonComplete() {
+        if (currentContainerIndex >= contentContainers.size() - 1) {
+            timerManager.stop();
+            
+            int timeBonus = scoreManager.addTimeBonus(timerManager.getRemainingTimeSeconds());
+            int accuracyBonus = scoreManager.addAccuracyBonus();
+            
+            Intent intent = new Intent(this, LessonOverActivity.class);
+            intent.putExtra("TOTAL_SCORE", scoreManager.getTotalScore());
+            intent.putExtra("ACCURACY", scoreManager.getAccuracy());
+            intent.putExtra("MAX_STREAK", scoreManager.getMaxStreak());
+            intent.putExtra("TIME_BONUS", timeBonus);
+            intent.putExtra("ACCURACY_BONUS", accuracyBonus);
+            intent.putExtra("SUBJECT_ID", subjectId);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    // TimerListener implementation
+
+    @Override
+    public void onTimeUpdate(int remainingSeconds, float percentage) {
+        runOnUiThread(() -> {
+            updateTimerDisplay();
+            timerProgress.setProgress((int) (percentage * 100));
+            
+            // Change timer color based on remaining time
+            if (timerManager.isCritical()) {
+                timerText.setTextColor(getColor(R.color.timer_low));
+                
+                // Pulse animation when critical
+                if (remainingSeconds % 2 == 0 && timerText.getAnimation() == null) {
+                    Animation pulse = AnimationUtils.loadAnimation(this, R.anim.pulse);
+                    timerText.startAnimation(pulse);
+                }
+            } else if (timerManager.isWarning()) {
+                timerText.setTextColor(getColor(R.color.timer_medium));
+            } else {
+                timerText.setTextColor(getColor(R.color.text_primary));
+            }
+        });
+    }
+
+    @Override
+    public void onTimeOver() {
+        runOnUiThread(() -> {
+            Intent intent = new Intent(this, TimeOverActivity.class);
+            intent.putExtra("FINAL_SCORE", scoreManager.getTotalScore());
+            intent.putExtra("ACCURACY", scoreManager.getAccuracy());
+            intent.putExtra("MAX_STREAK", scoreManager.getMaxStreak());
+            intent.putExtra("CORRECT_ANSWERS", scoreManager.getCorrectAnswers());
+            intent.putExtra("SUBJECT_ID", subjectId);
+            intent.putExtra("TOPIC_NAME", topicName);
+            startActivity(intent);
+            finish();
+        });
+    }
+
+    @Override
+    public void onTimerStateChanged(boolean isRunning) {
+        // Could add pause/resume UI feedback here
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        timerManager.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (timerManager != null && timerManager.getRemainingTimeSeconds() > 0) {
+            timerManager.start();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (timerManager != null) {
+            timerManager.stop();
+        }
     }
 }

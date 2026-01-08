@@ -1,16 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background">
 
+    <!-- Timer Container -->
+    <LinearLayout
+        android:id="@+id/timer_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/surface"
+        android:elevation="@dimen/elevation_md"
+        android:padding="@dimen/spacing_md"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/timer_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="5:00"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_lg"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/score_display"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Score: 0"
+                android:textColor="@color/score_gold"
+                android:textSize="@dimen/text_size_lg"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+        </LinearLayout>
+
+        <!-- Timer Progress Bar -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/timer_height_thick"
+            android:layout_marginTop="@dimen/spacing_sm">
+
+            <ProgressBar
+                android:id="@+id/timer_progress_background"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="100"
+                android:progress="100"
+                android:progressDrawable="@drawable/timer_background" />
+
+            <ProgressBar
+                android:id="@+id/timer_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:max="100"
+                android:progress="100"
+                android:progressDrawable="@drawable/timer_progress_gradient" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <!-- Streak Indicator -->
+    <TextView
+        android:id="@+id/streak_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_md"
+        android:background="@drawable/card_elevated"
+        android:padding="@dimen/spacing_sm"
+        android:text="Streak: 0"
+        android:textColor="@color/streak_fire"
+        android:textSize="@dimen/text_size_sm"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/timer_container" />
+
+    <!-- Score Popup Overlay -->
+    <TextView
+        android:id="@+id/score_popup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:textColor="@color/score_gold"
+        android:textSize="@dimen/text_size_xxl"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Content List View -->
     <ListView
         android:id="@+id/box_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:padding="16dp"
         android:divider="@android:color/transparent"
         android:dividerHeight="10dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/timer_container" />
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
