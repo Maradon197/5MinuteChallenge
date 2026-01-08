@@ -124,6 +124,7 @@
             android:elevation="@dimen/elevation_md" />
 
         <!-- Next Content Preview (with fadeout) -->
+        <!--
         <FrameLayout
             android:id="@+id/next_container_preview"
             android:layout_width="match_parent"
@@ -137,7 +138,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
-            <!-- Fadeout overlay -->
             <View
                 android:id="@+id/fadeout_overlay"
                 android:layout_width="match_parent"
@@ -145,6 +145,7 @@
                 android:background="@drawable/fadeout_gradient" />
 
         </FrameLayout>
+        -->
 
     </FrameLayout>
 
