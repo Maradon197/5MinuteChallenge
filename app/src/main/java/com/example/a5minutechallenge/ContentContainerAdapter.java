@@ -112,7 +112,7 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 
                 // Set explanation text if available
                 TextView explanationText = convertView.findViewById(R.id.explanation_text);
-                if (mcqContainer.getExplanationText() != null && !mcqContainer.getExplanationText().isEmpty()) {
+                if (explanationText != null && mcqContainer.getExplanationText() != null && !mcqContainer.getExplanationText().isEmpty()) {
                     explanationText.setText(mcqContainer.getExplanationText());
                     explanationText.setVisibility(View.VISIBLE);
                 }
@@ -149,7 +149,7 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 
                 // Set explanation text if available
                 TextView errorExplanationText = convertView.findViewById(R.id.explanation_text);
-                if (errorContainer.getExplanationText() != null && !errorContainer.getExplanationText().isEmpty()) {
+                if (errorExplanationText != null && errorContainer.getExplanationText() != null && !errorContainer.getExplanationText().isEmpty()) {
                     errorExplanationText.setText(errorContainer.getExplanationText());
                     errorExplanationText.setVisibility(View.VISIBLE);
                 }
