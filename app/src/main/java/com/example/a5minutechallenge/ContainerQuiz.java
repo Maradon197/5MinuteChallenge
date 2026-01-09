@@ -3,7 +3,7 @@ package com.example.a5minutechallenge;
 
 public class ContainerQuiz extends ContentContainer {
 
-    //JSON
+    //not in use
 
     public ContainerQuiz(int id) {
         super(id, Types.QUIZ);

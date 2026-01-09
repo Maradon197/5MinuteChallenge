@@ -222,6 +222,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         }
     }
 
+
+    //HERE IS THE CHECK IF ANSWER CORRECT PART
     /**
      * Handles the check button click event.
      */
@@ -270,10 +272,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     }
 
     /**
-     * Forwards swipe up gesture to "progress to next container".
+     * Forwards swipe up gesture to handle answer checking and progression.
+     * This now matches the behavior of clicking the check button.
      */
     private void onSwipeUp() {
-        progressToNextContainer();
+        onCheckButtonClicked();
     }
 
     /**
