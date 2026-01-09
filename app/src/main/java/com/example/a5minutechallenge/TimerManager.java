@@ -6,11 +6,12 @@ import android.os.Handler;
 import android.os.Looper;
 
 public class TimerManager {
-    
-    private static final int INITIAL_TIME_SECONDS = 300; // 5 minutes
+
+    private static final int INITIAL_TIME_SECONDS = 30; // 5 minutes
     private static final int CORRECT_ANSWER_BONUS_SECONDS = 10;
     private static final int UPDATE_INTERVAL_MS = 100; // Update 10 times per second for smooth animation
-    
+    public static final int LOW_TIME = 30;
+
     private int remainingTimeSeconds;
     private long lastUpdateTime;
     private boolean isRunning;
@@ -144,7 +145,7 @@ public class TimerManager {
      * @return true if less than 30 seconds remaining
      */
     public boolean isCritical() {
-        return remainingTimeSeconds < 30;
+        return remainingTimeSeconds < LOW_TIME;
     }
     
     /**
