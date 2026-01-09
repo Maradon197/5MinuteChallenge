@@ -10,7 +10,6 @@ import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -19,7 +18,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -60,11 +58,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_five_minute);
 
-        initViews();
-        initData();
-        initGamification();
-        setupGestureDetector();
-        loadContent();
+        initViews();//realize all view instances needed for the screen
+        initData();//get topic, subject name from intent
+        initGamification();//init scoremanager and timermanager, start timer
+        initGestureDetector();//init swipe detection
+        loadContent();//display first container
     }
     
     private void initViews() {
@@ -107,7 +105,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     /**
      * Sets up the swipe gesture detector for container progression.
      */
-    private void setupGestureDetector() {
+    private void initGestureDetector() {
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             private static final int SWIPE_THRESHOLD = 100;
             private static final int SWIPE_VELOCITY_THRESHOLD = 100;
@@ -174,12 +172,12 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         // Track when question containers are displayed
         lastQuestionStartTime = System.currentTimeMillis();
         
-        // Inflate and display the current container
+        // Inflate and display vurrent container
         currentContainerLayout.removeAllViews();
         View containerView = inflateContainerView(container);
         currentContainerLayout.addView(containerView);
         
-        /*// Display preview of next container if available
+        /*// Display preview of next container if available, broken rn
         if (index + 1 < contentContainers.size()) {
             ContentContainer nextContainer = contentContainers.get(index + 1);
             nextContainerLayout.removeAllViews();
@@ -190,170 +188,25 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             nextContainerPreview.setVisibility(View.GONE);
         }*/
         
-        // Update button text based on container type
+        // Update button text based on container type -> "check" or "next", hoping to make this unnecessary
         updateCheckButtonText(container);
     }
 
     /**
      * Inflates the appropriate view for a content container.
+     * Since its an outragingly long switchcase, i moved it to a new class
      * @param container The content container
      * @return The inflated view
      */
     private View inflateContainerView(ContentContainer container) {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View view = null;
-        
-        switch (container.getType()) {
-            case TITLE:
-                // view = inflater.inflate(R.layout.title_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.title_container, null);
-                TextView titleView = view.findViewById(R.id.title_text);
-                ContainerTitle titleContainer = (ContainerTitle) container;
-                titleView.setText(titleContainer.getTitle());
-                break;
-            case TEXT:
-                // view = inflater.inflate(R.layout.text_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.text_container, null);
-                TextView textView = view.findViewById(R.id.text_content);
-                ContainerText textContainer = (ContainerText) container;
-                textView.setText(textContainer.getText());
-                break;
-            case MULTIPLE_CHOICE_QUIZ:
-                // view = inflater.inflate(R.layout.multiple_choice_quiz_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.multiple_choice_quiz_container, null);
-                TextView questionText = view.findViewById(R.id.question_text);
-                ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
-                questionText.setText(mcqContainer.getQuestion());
-                
-                // Setup options RecyclerView
-                RecyclerView optionsRecyclerView = view.findViewById(R.id.options_recycler_view);
-                if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {
-                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions());
-                    optionsRecyclerView.setAdapter(optionsAdapter);
-                    optionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                }
-                break;
-            case REVERSE_QUIZ:
-                // view = inflater.inflate(R.layout.reverse_quiz_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.reverse_quiz_container, null);
-                TextView answerText = view.findViewById(R.id.answer_text);
-                ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
-                answerText.setText(reverseQuizContainer.getAnswer());
-                
-                // Setup question options RecyclerView
-                RecyclerView questionOptionsRecyclerView = view.findViewById(R.id.question_options_recycler_view);
-                if (questionOptionsRecyclerView != null && reverseQuizContainer.getQuestionOptions() != null && !reverseQuizContainer.getQuestionOptions().isEmpty()) {
-                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions());
-                    questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
-                    questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                }
-                break;
-            case WIRE_CONNECTING:
-                // view = inflater.inflate(R.layout.wire_connecting_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.wire_connecting_container, null);
-                TextView wireInstructions = view.findViewById(R.id.instructions_text);
-                ContainerWireConnecting wireContainer = (ContainerWireConnecting) container;
-                wireInstructions.setText(wireContainer.getInstructions());
-                
-                // Setup left items RecyclerView
-                RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
-                if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
-                    SimpleTextAdapter leftItemsAdapter = new SimpleTextAdapter(wireContainer.getLeftItems());
-                    leftItemsRecyclerView.setAdapter(leftItemsAdapter);
-                    leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                }
-                
-                // Setup right items RecyclerView
-                RecyclerView rightItemsRecyclerView = view.findViewById(R.id.right_items_recycler_view);
-                if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
-                    SimpleTextAdapter rightItemsAdapter = new SimpleTextAdapter(wireContainer.getRightItems());
-                    rightItemsRecyclerView.setAdapter(rightItemsAdapter);
-                    rightItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                }
-                break;
-            case FILL_IN_THE_GAPS:
-                // view = inflater.inflate(R.layout.fill_in_gaps_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.fill_in_gaps_container, null);
-                TextView gapsText = view.findViewById(R.id.text_with_gaps);
-                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
-                gapsText.setText(gapsContainer.getDisplayText());
-                
-                // Setup word options ChipGroup
-                ChipGroup wordOptionsChipGroup = view.findViewById(R.id.word_options_chip_group);
-                if (wordOptionsChipGroup != null && gapsContainer.getWordOptions() != null && !gapsContainer.getWordOptions().isEmpty()) {
-                    wordOptionsChipGroup.removeAllViews();
-                    for (String word : gapsContainer.getWordOptions()) {
-                        Chip chip = new Chip(this);
-                        chip.setText(word);
-                        chip.setClickable(true);
-                        chip.setCheckable(false);
-                        wordOptionsChipGroup.addView(chip);
-                    }
-                }
-                break;
-            case SORTING_TASK:
-                // view = inflater.inflate(R.layout.sorting_task_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.sorting_task_container, null);
-                TextView sortInstructions = view.findViewById(R.id.instructions_text);
-                ContainerSortingTask sortContainer = (ContainerSortingTask) container;
-                sortInstructions.setText(sortContainer.getInstructions());
-                
-                // Setup sortable items RecyclerView
-                RecyclerView sortableItemsRecyclerView = view.findViewById(R.id.sortable_items_recycler_view);
-                if (sortableItemsRecyclerView != null && sortContainer.getCurrentOrder() != null && !sortContainer.getCurrentOrder().isEmpty()) {
-                    SimpleTextAdapter sortableItemsAdapter = new SimpleTextAdapter(sortContainer.getCurrentOrder());
-                    sortableItemsRecyclerView.setAdapter(sortableItemsAdapter);
-                    sortableItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                }
-                break;
-            case ERROR_SPOTTING:
-                // view = inflater.inflate(R.layout.error_spotting_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.error_spotting_container, null);
-                TextView errorInstructions = view.findViewById(R.id.instructions_text);
-                ContainerErrorSpotting errorContainer = (ContainerErrorSpotting) container;
-                errorInstructions.setText(errorContainer.getInstructions());
-                
-                // Setup items RecyclerView
-                RecyclerView itemsRecyclerView = view.findViewById(R.id.items_recycler_view);
-                if (itemsRecyclerView != null && errorContainer.getItems() != null && !errorContainer.getItems().isEmpty()) {
-                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems());
-                    itemsRecyclerView.setAdapter(itemsAdapter);
-                    itemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                }
-                break;
-            case RECAP:
-                // view = inflater.inflate(R.layout.recap_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.recap_container, null);
-                TextView recapTitle = view.findViewById(R.id.recap_title);
-                FrameLayout wrappedFrame = view.findViewById(R.id.wrapped_container_frame);
-                
-                ContainerRecap recapContainer = (ContainerRecap) container;
-                recapTitle.setText(recapContainer.getRecapTitle());
-                
-                // Handle nested container logic
-                ContentContainer wrapped = recapContainer.getWrappedContainer();
-                if (wrapped != null) {
-                    View wrappedView = inflateContainerView(wrapped);
-                    if (wrappedView != null) {
-                        wrappedFrame.addView(wrappedView);
-                    }
-                }
-                break;
-            case VIDEO:
-                // view = inflater.inflate(R.layout.video_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.video_container, null);
-                break;
-            case QUIZ:
-                // view = inflater.inflate(R.layout.quiz_container, currentContainerLayout, false);
-                view = inflater.inflate(R.layout.quiz_container, null);
-                break;
-        }
-        
-        return view;
+        ContainerInflater containerInflater = new ContainerInflater();
+        return containerInflater.inflateContainerView(container, this);
     }
 
     /**
      * Updates the check button text based on container type.
+     *  Im also hoping to make this redundant by automatically checking responses
+     *  and swiping up to progress to the next container
      * @param container The current content container
      */
     private void updateCheckButtonText(ContentContainer container) {
@@ -389,14 +242,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case QUIZ:
                 // These containers need validation
                 needsValidation = true;
-                // NOTE: Simplified validation for demonstration purposes
-                // In a full implementation, this would check user selections:
+                // NOTE: Simplified for demonstration purposes
+                // this must check user selections:
                 // - For MULTIPLE_CHOICE_QUIZ: verify selected option matches correct answer
                 // - For FILL_IN_THE_GAPS: validate filled words against correct words
                 // - For SORTING_TASK: check if items are in correct order
                 // - etc.
                 // For now, treating all answers as correct to demonstrate scoring animations
-                isCorrect = true;
+                isCorrect = true;//THIS IS WRONG
                 break;
             default:
                 // TEXT, TITLE, VIDEO, RECAP don't need validation
@@ -406,21 +259,18 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         
         if (needsValidation) {
             // Calculate answer time since question was displayed
-            // Clamp to minimum to ensure reasonable scoring
-            long clampedAnswerTimeMs = Math.max(MIN_ANSWER_TIME_MS, System.currentTimeMillis() - lastQuestionStartTime);
-            
-            if (isCorrect) {
-                onCorrectAnswer(clampedAnswerTimeMs);
-            } else {
-                onIncorrectAnswer();
-            }
+            //minimum value to ensure reasonable scoring
+            long minAnswerTimeMs = Math.max(MIN_ANSWER_TIME_MS, System.currentTimeMillis() - lastQuestionStartTime);
+
+
+            onAnswer(minAnswerTimeMs, isCorrect);
         }
         
         progressToNextContainer();
     }
 
     /**
-     * Handles swipe up gesture to progress to next container.
+     * Forwards swipe up gesture to "progress to next container".
      */
     private void onSwipeUp() {
         progressToNextContainer();
@@ -428,9 +278,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
     /**
      * Progresses to the next content container with animation.
+     * Calls checkLessonComplete() if there are no more containers
      */
     private void progressToNextContainer() {
-        if (currentContainerIndex < contentContainers.size() - 1) {
+        if (currentContainerIndex < contentContainers.size() - 1) {//if there are more containers to show
             // Animate current container sliding up and fading out
             Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_out);
             slideUp.setAnimationListener(new Animation.AnimationListener() {
@@ -444,7 +295,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                     currentContainerIndex++;
                     displayContainer(currentContainerIndex);
                     
-                    // Animate new container sliding in
+                    // Animate new container sliding into our DMs
                     Animation slideIn = AnimationUtils.loadAnimation(FiveMinuteActivity.this, R.anim.slide_up_in);
                     currentContainerLayout.startAnimation(slideIn);
                     checkButton.setEnabled(true);
@@ -454,39 +305,37 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 public void onAnimationRepeat(Animation animation) {}
             });
             currentContainerLayout.startAnimation(slideUp);
-        } else {
-            // We are on the last container, finish the lesson
-            checkLessonComplete();
+        } else { //last container, finish lesson
+            checkLessonComplete(false);
         }
     }
 
     /**
-     * Records a correct answer and updates score with animations.
+     * Records an answer and updates the score display.
      * @param answerTimeMs Time taken to answer in milliseconds
+     * @param isCorrect Wether the answer was correct or not
      */
-    public void onCorrectAnswer(long answerTimeMs) {
-        int points = scoreManager.recordCorrectAnswer(answerTimeMs);
-        timerManager.addCorrectAnswerBonus();
-        
-        updateScoreDisplay();
-        showScorePopup(points, scoreManager.wasQuickAnswer(answerTimeMs));
-        updateStreakDisplay();
-        
-        // Play bounce animation on score display
-        Animation bounce = AnimationUtils.loadAnimation(this, R.anim.bounce);
-        scoreDisplay.startAnimation(bounce);
-    }
+    public void onAnswer(long answerTimeMs, boolean isCorrect) {
+        if (isCorrect) {
+            int points = scoreManager.recordCorrectAnswer(answerTimeMs);
+            timerManager.addCorrectAnswerBonus();
 
-    /**
-     * Records an incorrect answer and updates UI.
-     */
-    public void onIncorrectAnswer() {
-        scoreManager.recordIncorrectAnswer();
-        updateStreakDisplay();
-        
-        // Shake animation for incorrect answer
-        Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);
-        scoreDisplay.startAnimation(shake);
+            updateScoreDisplay();
+            showScorePopup(points, scoreManager.wasQuickAnswer(answerTimeMs));
+            updateStreakDisplay();
+
+            // Play bounce animation on score display
+            Animation bounce = AnimationUtils.loadAnimation(this, R.anim.bounce);
+            scoreDisplay.startAnimation(bounce);
+        }
+        else {// !isCorrect
+            scoreManager.recordIncorrectAnswer();
+            updateStreakDisplay();
+
+            // Shake animation for incorrect answer
+            Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);
+            scoreDisplay.startAnimation(shake);
+        }
     }
 
     /**
@@ -502,7 +351,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         
         scorePopup.setText(text);
         scorePopup.setVisibility(View.VISIBLE);
-        
+
+        //animate score popup
         Animation popupAnim = AnimationUtils.loadAnimation(this, R.anim.score_popup);
         popupAnim.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -522,16 +372,12 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     /**
      * Updates the score display text.
      */
-    private void updateScoreDisplay() {
-        scoreDisplay.setText("Score: " + scoreManager.getTotalScore());
-    }
+    private void updateScoreDisplay() {scoreDisplay.setText("Score: " + scoreManager.getTotalScore());}
 
     /**
      * Updates the timer display text.
      */
-    private void updateTimerDisplay() {
-        timerText.setText(timerManager.getFormattedTime());
-    }
+    private void updateTimerDisplay() {timerText.setText(timerManager.getFormattedTime());}
 
     /**
      * Updates the streak indicator visibility and text.
@@ -552,12 +398,17 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     /**
      * Checks if the lesson is complete and navigates to result screen.
      */
-    private void checkLessonComplete() {
+    private void checkLessonComplete(boolean timeOver) {
         timerManager.stop();
         
         int timeBonus = scoreManager.addTimeBonus(timerManager.getRemainingTimeSeconds());
         int accuracyBonus = scoreManager.addAccuracyBonus();
-        Toast.makeText(this, "Lesson Complete!", Toast.LENGTH_SHORT).show();
+        if(timeOver) {
+            Toast.makeText(this, "Time's up!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(this, "Lesson Complete!", Toast.LENGTH_SHORT).show();
+        }
         
         Intent intent = new Intent(this, LessonOverActivity.class);
         intent.putExtra("TOTAL_SCORE", scoreManager.getTotalScore());
@@ -596,17 +447,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
     @Override
     public void onTimeOver() {
-        runOnUiThread(() -> {
-            Intent intent = new Intent(this, TimeOverActivity.class);
-            intent.putExtra("FINAL_SCORE", scoreManager.getTotalScore());
-            intent.putExtra("ACCURACY", scoreManager.getAccuracy());
-            intent.putExtra("MAX_STREAK", scoreManager.getMaxStreak());
-            intent.putExtra("CORRECT_ANSWERS", scoreManager.getCorrectAnswers());
-            intent.putExtra("SUBJECT_ID", subjectId);
-            intent.putExtra("TOPIC_NAME", topicName);
-            startActivity(intent);
-            finish();
-        });
+        checkLessonComplete(true);
     }
 
     @Override
