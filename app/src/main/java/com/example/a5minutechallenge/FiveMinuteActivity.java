@@ -369,7 +369,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private void onCheckButtonClicked() {
         ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
-        long questionStartTime = System.currentTimeMillis();
         
         // For interactive containers (quizzes, etc.), validate the answer
         boolean isCorrect = false;
@@ -396,8 +395,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         }
         
         if (needsValidation) {
-            // Record answer time (simulate question was shown for at least 1 second)
-            long answerTimeMs = Math.max(1000, questionStartTime - lastQuestionStartTime);
+            // Calculate answer time since question was displayed
+            long answerTimeMs = Math.max(1000, System.currentTimeMillis() - lastQuestionStartTime);
             
             if (isCorrect) {
                 onCorrectAnswer(answerTimeMs);

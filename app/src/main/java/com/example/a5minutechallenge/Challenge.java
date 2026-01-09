@@ -59,6 +59,9 @@ public class Challenge {
     }
     
     public int getProgressPercentage() {
+        // Simple binary progress: 0 if not completed, 100 if completed
+        // In a more sophisticated implementation, this could track partial progress
+        // based on score thresholds, question completion, or other milestones
         if (!completed) {
             return 0;
         }

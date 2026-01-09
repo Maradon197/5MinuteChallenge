@@ -106,7 +106,12 @@ public class ChallengeListActivity extends AppCompatActivity {
         TextView countdownNumber = dialogView.findViewById(R.id.countdown_number);
         TextView countdownTitle = dialogView.findViewById(R.id.countdown_title);
         
-        countdownTitle.setText(challenge.getTitle());
+        // Truncate title if too long to prevent layout issues
+        String title = challenge.getTitle();
+        if (title.length() > 30) {
+            title = title.substring(0, 27) + "...";
+        }
+        countdownTitle.setText(title);
 
         countdownDialog = builder.create();
         countdownDialog.show();
