@@ -20,6 +20,10 @@ import java.util.ArrayList;
 
 public class ChallengeListActivity extends AppCompatActivity {
 
+    private static final int COUNTDOWN_ANIMATION_DELAY_MS = 500;
+    private static final int MAX_TITLE_LENGTH = 30;
+    private static final int TRUNCATED_TITLE_LENGTH = 27;
+    
     private ArrayList<Challenge> challengeList;
     private ChallengeListAdapter adapter;
     private String topicName;
@@ -108,8 +112,8 @@ public class ChallengeListActivity extends AppCompatActivity {
         
         // Truncate title if too long to prevent layout issues
         String title = challenge.getTitle();
-        if (title.length() > 30) {
-            title = title.substring(0, 27) + "...";
+        if (title.length() > MAX_TITLE_LENGTH) {
+            title = title.substring(0, TRUNCATED_TITLE_LENGTH) + "...";
         }
         countdownTitle.setText(title);
 
@@ -154,7 +158,7 @@ public class ChallengeListActivity extends AppCompatActivity {
                     public void onAnimationRepeat(Animation animation) {}
                 });
                 textView.startAnimation(scaleOut);
-            }, 500);
+            }, COUNTDOWN_ANIMATION_DELAY_MS);
         } else {
             // Show "GO!" before starting
             textView.setText("GO!");
@@ -162,7 +166,7 @@ public class ChallengeListActivity extends AppCompatActivity {
             Animation scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in);
             textView.startAnimation(scaleIn);
             
-            countdownHandler.postDelayed(onComplete, 500);
+            countdownHandler.postDelayed(onComplete, COUNTDOWN_ANIMATION_DELAY_MS);
         }
     }
 

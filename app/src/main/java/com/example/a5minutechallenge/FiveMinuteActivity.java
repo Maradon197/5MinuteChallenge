@@ -32,6 +32,8 @@ import java.util.List;
 
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener {
 
+    private static final long MIN_ANSWER_TIME_MS = 1000;
+
     private FrameLayout currentContainerLayout;
     private FrameLayout nextContainerLayout;
     private FrameLayout nextContainerPreview;
@@ -384,8 +386,13 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case QUIZ:
                 // These containers need validation
                 needsValidation = true;
-                // Simplified validation - in real implementation, check actual user input
-                // For demo purposes, treating as correct answer
+                // NOTE: Simplified validation for demonstration purposes
+                // In a full implementation, this would check user selections:
+                // - For MULTIPLE_CHOICE_QUIZ: verify selected option matches correct answer
+                // - For FILL_IN_THE_GAPS: validate filled words against correct words
+                // - For SORTING_TASK: check if items are in correct order
+                // - etc.
+                // For now, treating all answers as correct to demonstrate scoring animations
                 isCorrect = true;
                 break;
             default:
@@ -396,7 +403,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         
         if (needsValidation) {
             // Calculate answer time since question was displayed
-            long answerTimeMs = Math.max(1000, System.currentTimeMillis() - lastQuestionStartTime);
+            long answerTimeMs = Math.max(MIN_ANSWER_TIME_MS, System.currentTimeMillis() - lastQuestionStartTime);
             
             if (isCorrect) {
                 onCorrectAnswer(answerTimeMs);
