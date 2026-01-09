@@ -6,10 +6,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 
 import java.util.List;
 
@@ -116,31 +122,79 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                     explanationText.setText(mcqContainer.getExplanationText());
                     explanationText.setVisibility(View.VISIBLE);
                 }
-                // Additional setup for options would be handled by RecyclerView adapter
+                
+                // Setup options RecyclerView
+                RecyclerView optionsRecyclerView = convertView.findViewById(R.id.options_recycler_view);
+                if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {
+                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions());
+                    optionsRecyclerView.setAdapter(optionsAdapter);
+                    optionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
                 break;
             case REVERSE_QUIZ:
                 TextView answerText = convertView.findViewById(R.id.answer_text);
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) contentContainer;
                 answerText.setText(reverseQuizContainer.getAnswer());
-                // Additional setup for question options would be handled by RecyclerView adapter
+                
+                // Setup question options RecyclerView
+                RecyclerView questionOptionsRecyclerView = convertView.findViewById(R.id.question_options_recycler_view);
+                if (questionOptionsRecyclerView != null && reverseQuizContainer.getQuestionOptions() != null && !reverseQuizContainer.getQuestionOptions().isEmpty()) {
+                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions());
+                    questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
+                    questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
                 break;
             case WIRE_CONNECTING:
                 TextView wireInstructions = convertView.findViewById(R.id.instructions_text);
                 ContainerWireConnecting wireContainer = (ContainerWireConnecting) contentContainer;
                 wireInstructions.setText(wireContainer.getInstructions());
-                // Additional setup for items would be handled by RecyclerView adapters
+                
+                // Setup left items RecyclerView
+                RecyclerView leftItemsRecyclerView = convertView.findViewById(R.id.left_items_recycler_view);
+                if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
+                    SimpleTextAdapter leftItemsAdapter = new SimpleTextAdapter(wireContainer.getLeftItems());
+                    leftItemsRecyclerView.setAdapter(leftItemsAdapter);
+                    leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
+                
+                // Setup right items RecyclerView
+                RecyclerView rightItemsRecyclerView = convertView.findViewById(R.id.right_items_recycler_view);
+                if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
+                    SimpleTextAdapter rightItemsAdapter = new SimpleTextAdapter(wireContainer.getRightItems());
+                    rightItemsRecyclerView.setAdapter(rightItemsAdapter);
+                    rightItemsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
                 break;
             case FILL_IN_THE_GAPS:
                 TextView gapsText = convertView.findViewById(R.id.text_with_gaps);
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) contentContainer;
                 gapsText.setText(gapsContainer.getDisplayText());
-                // Additional setup for word chips would be handled by ChipGroup
+                
+                // Setup word options ChipGroup
+                ChipGroup wordOptionsChipGroup = convertView.findViewById(R.id.word_options_chip_group);
+                if (wordOptionsChipGroup != null && gapsContainer.getWordOptions() != null && !gapsContainer.getWordOptions().isEmpty()) {
+                    wordOptionsChipGroup.removeAllViews();
+                    for (String word : gapsContainer.getWordOptions()) {
+                        Chip chip = new Chip(getContext());
+                        chip.setText(word);
+                        chip.setClickable(true);
+                        chip.setCheckable(false);
+                        wordOptionsChipGroup.addView(chip);
+                    }
+                }
                 break;
             case SORTING_TASK:
                 TextView sortInstructions = convertView.findViewById(R.id.instructions_text);
                 ContainerSortingTask sortContainer = (ContainerSortingTask) contentContainer;
                 sortInstructions.setText(sortContainer.getInstructions());
-                // Additional setup for sortable items would be handled by RecyclerView adapter
+                
+                // Setup sortable items RecyclerView
+                RecyclerView sortableItemsRecyclerView = convertView.findViewById(R.id.sortable_items_recycler_view);
+                if (sortableItemsRecyclerView != null && sortContainer.getCurrentOrder() != null && !sortContainer.getCurrentOrder().isEmpty()) {
+                    SimpleTextAdapter sortableItemsAdapter = new SimpleTextAdapter(sortContainer.getCurrentOrder());
+                    sortableItemsRecyclerView.setAdapter(sortableItemsAdapter);
+                    sortableItemsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
                 break;
             case ERROR_SPOTTING:
                 TextView errorInstructions = convertView.findViewById(R.id.instructions_text);
@@ -153,7 +207,14 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                     errorExplanationText.setText(errorContainer.getExplanationText());
                     errorExplanationText.setVisibility(View.VISIBLE);
                 }
-                // Additional setup for items would be handled by RecyclerView adapter
+                
+                // Setup items RecyclerView
+                RecyclerView itemsRecyclerView = convertView.findViewById(R.id.items_recycler_view);
+                if (itemsRecyclerView != null && errorContainer.getItems() != null && !errorContainer.getItems().isEmpty()) {
+                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems());
+                    itemsRecyclerView.setAdapter(itemsAdapter);
+                    itemsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
                 break;
             case RECAP:
                 TextView recapTitle = convertView.findViewById(R.id.recap_title);
@@ -168,5 +229,44 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
         }
 
         return convertView;
+    }
+    
+    /**
+     * Simple RecyclerView adapter for displaying text items in a list.
+     * Used internally by ContentContainerAdapter to populate RecyclerViews.
+     */
+    private static class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.ViewHolder> {
+        private final List<String> items;
+        
+        SimpleTextAdapter(List<String> items) {
+            this.items = items;
+        }
+        
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.quiz_option_item, parent, false);
+            return new ViewHolder(view);
+        }
+        
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            holder.textView.setText(items.get(position));
+        }
+        
+        @Override
+        public int getItemCount() {
+            return items != null ? items.size() : 0;
+        }
+        
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+            
+            ViewHolder(View itemView) {
+                super(itemView);
+                textView = itemView.findViewById(R.id.option_text);
+            }
+        }
     }
 }
