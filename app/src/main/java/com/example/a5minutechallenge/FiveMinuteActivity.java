@@ -10,6 +10,7 @@ import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -18,8 +19,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 
 import java.util.List;
 
@@ -208,6 +215,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 TextView questionText = view.findViewById(R.id.question_text);
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
                 questionText.setText(mcqContainer.getQuestion());
+                
+                // Setup options RecyclerView
+                RecyclerView optionsRecyclerView = view.findViewById(R.id.options_recycler_view);
+                if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {
+                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions());
+                    optionsRecyclerView.setAdapter(optionsAdapter);
+                    optionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                }
                 break;
             case REVERSE_QUIZ:
                 // view = inflater.inflate(R.layout.reverse_quiz_container, currentContainerLayout, false);
@@ -215,6 +230,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 TextView answerText = view.findViewById(R.id.answer_text);
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
                 answerText.setText(reverseQuizContainer.getAnswer());
+                
+                // Setup question options RecyclerView
+                RecyclerView questionOptionsRecyclerView = view.findViewById(R.id.question_options_recycler_view);
+                if (questionOptionsRecyclerView != null && reverseQuizContainer.getQuestionOptions() != null && !reverseQuizContainer.getQuestionOptions().isEmpty()) {
+                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions());
+                    questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
+                    questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                }
                 break;
             case WIRE_CONNECTING:
                 // view = inflater.inflate(R.layout.wire_connecting_container, currentContainerLayout, false);
@@ -222,6 +245,22 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 TextView wireInstructions = view.findViewById(R.id.instructions_text);
                 ContainerWireConnecting wireContainer = (ContainerWireConnecting) container;
                 wireInstructions.setText(wireContainer.getInstructions());
+                
+                // Setup left items RecyclerView
+                RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
+                if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
+                    SimpleTextAdapter leftItemsAdapter = new SimpleTextAdapter(wireContainer.getLeftItems());
+                    leftItemsRecyclerView.setAdapter(leftItemsAdapter);
+                    leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                }
+                
+                // Setup right items RecyclerView
+                RecyclerView rightItemsRecyclerView = view.findViewById(R.id.right_items_recycler_view);
+                if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
+                    SimpleTextAdapter rightItemsAdapter = new SimpleTextAdapter(wireContainer.getRightItems());
+                    rightItemsRecyclerView.setAdapter(rightItemsAdapter);
+                    rightItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                }
                 break;
             case FILL_IN_THE_GAPS:
                 // view = inflater.inflate(R.layout.fill_in_gaps_container, currentContainerLayout, false);
@@ -229,6 +268,19 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 TextView gapsText = view.findViewById(R.id.text_with_gaps);
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
                 gapsText.setText(gapsContainer.getDisplayText());
+                
+                // Setup word options ChipGroup
+                ChipGroup wordOptionsChipGroup = view.findViewById(R.id.word_options_chip_group);
+                if (wordOptionsChipGroup != null && gapsContainer.getWordOptions() != null && !gapsContainer.getWordOptions().isEmpty()) {
+                    wordOptionsChipGroup.removeAllViews();
+                    for (String word : gapsContainer.getWordOptions()) {
+                        Chip chip = new Chip(this);
+                        chip.setText(word);
+                        chip.setClickable(true);
+                        chip.setCheckable(false);
+                        wordOptionsChipGroup.addView(chip);
+                    }
+                }
                 break;
             case SORTING_TASK:
                 // view = inflater.inflate(R.layout.sorting_task_container, currentContainerLayout, false);
@@ -236,6 +288,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 TextView sortInstructions = view.findViewById(R.id.instructions_text);
                 ContainerSortingTask sortContainer = (ContainerSortingTask) container;
                 sortInstructions.setText(sortContainer.getInstructions());
+                
+                // Setup sortable items RecyclerView
+                RecyclerView sortableItemsRecyclerView = view.findViewById(R.id.sortable_items_recycler_view);
+                if (sortableItemsRecyclerView != null && sortContainer.getCurrentOrder() != null && !sortContainer.getCurrentOrder().isEmpty()) {
+                    SimpleTextAdapter sortableItemsAdapter = new SimpleTextAdapter(sortContainer.getCurrentOrder());
+                    sortableItemsRecyclerView.setAdapter(sortableItemsAdapter);
+                    sortableItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                }
                 break;
             case ERROR_SPOTTING:
                 // view = inflater.inflate(R.layout.error_spotting_container, currentContainerLayout, false);
@@ -243,6 +303,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 TextView errorInstructions = view.findViewById(R.id.instructions_text);
                 ContainerErrorSpotting errorContainer = (ContainerErrorSpotting) container;
                 errorInstructions.setText(errorContainer.getInstructions());
+                
+                // Setup items RecyclerView
+                RecyclerView itemsRecyclerView = view.findViewById(R.id.items_recycler_view);
+                if (itemsRecyclerView != null && errorContainer.getItems() != null && !errorContainer.getItems().isEmpty()) {
+                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems());
+                    itemsRecyclerView.setAdapter(itemsAdapter);
+                    itemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                }
                 break;
             case RECAP:
                 // view = inflater.inflate(R.layout.recap_container, currentContainerLayout, false);
