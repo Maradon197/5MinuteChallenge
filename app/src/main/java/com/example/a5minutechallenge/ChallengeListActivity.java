@@ -176,6 +176,11 @@ public class ChallengeListActivity extends AppCompatActivity {
      * @param position The position of the challenge in the list
      */
     private void startChallenge(Challenge challenge, int position) {
+        if (countdownDialog != null) {
+            countdownDialog.dismiss();
+            countdownDialog = null;
+        }
+        
         challenge.incrementAttempts();
         adapter.notifyDataSetChanged();
         
@@ -201,6 +206,7 @@ public class ChallengeListActivity extends AppCompatActivity {
         if (countdownDialog != null && countdownDialog.isShowing()) {
             countdownDialog.dismiss();
         }
+        countdownDialog = null;
         if (countdownHandler != null) {
             countdownHandler.removeCallbacksAndMessages(null);
         }

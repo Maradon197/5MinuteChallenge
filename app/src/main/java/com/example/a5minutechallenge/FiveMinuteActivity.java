@@ -403,10 +403,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         
         if (needsValidation) {
             // Calculate answer time since question was displayed
-            long answerTimeMs = Math.max(MIN_ANSWER_TIME_MS, System.currentTimeMillis() - lastQuestionStartTime);
+            // Clamp to minimum to ensure reasonable scoring
+            long clampedAnswerTimeMs = Math.max(MIN_ANSWER_TIME_MS, System.currentTimeMillis() - lastQuestionStartTime);
             
             if (isCorrect) {
-                onCorrectAnswer(answerTimeMs);
+                onCorrectAnswer(clampedAnswerTimeMs);
             } else {
                 onIncorrectAnswer();
             }
