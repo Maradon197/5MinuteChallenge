@@ -14,8 +14,8 @@ public class ContentLoader {
     
     /**
      * Loads content containers for a specific subject and topic.
-     * In a real application, this would fetch data from a backend API or database.
-     * 
+     * This is example population and for reference
+     * subject to LOTS of change
      * @param subjectId The ID of the subject
      * @param topicName The name of the topic
      * @return List of ContentContainer objects for the lesson

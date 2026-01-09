@@ -40,16 +40,6 @@ public class MainActivity extends AppCompatActivity {
         subjectList.add(new Subject(0).setTitle("Jetbrains IDE").setDescription("Master the IDE"));
         subjectList.add(new Subject(2).setTitle("Databases").setDescription("Example Description 2")); // This was already chained
         subjectList.add(new Subject(3).setTitle("Programming Languages").setDescription("Example Description 3"));
-        subjectList.add(new Subject(4).setTitle("Other").setDescription("Example Description 4"));
-        subjectList.add(new Subject(5).setTitle("Other").setDescription("Example Description 5"));
-        subjectList.add(new Subject(6).setTitle("Other").setDescription("Example Description 6"));
-        subjectList.add(new Subject(7).setTitle("Jetbrains Academy").setDescription("Example Description 1"));
-        subjectList.add(new Subject(8).setTitle("Databases").setDescription("Example Description 2"));
-        subjectList.add(new Subject(9).setTitle("Jetbrains Academy").setDescription("Example Description 1"));
-        subjectList.add(new Subject(10).setTitle("Databases").setDescription("Example Description 2"));
-        subjectList.add(new Subject(11).setTitle("Programming Languages").setDescription("Example Description 3"));
-        subjectList.add(new Subject(12).setTitle("Other").setDescription("Example Description 4"));
-        subjectList.add(new Subject(13).setTitle("Other").setDescription("Example Description 5"));
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         /* THIS HAS TO STAY FOR LATER; DO NOT DELETE!!!!!
