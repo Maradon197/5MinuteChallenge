@@ -1,6 +1,3 @@
-/** Simple RecyclerView adapter for displaying text items in a list.
- * Used by content containers to populate RecyclerViews with string data.
- */
 package com.example.a5minutechallenge;
 
 import android.view.LayoutInflater;
@@ -13,6 +10,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+/**
+ * Simple RecyclerView adapter for displaying text items in a list.
+ * Used by content containers to populate RecyclerViews with string data.
+ */
 public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.ViewHolder> {
     private final List<String> items;
     
@@ -35,7 +36,7 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
     
     @Override
     public int getItemCount() {
-        return items != null ? items.size() : 0;
+        return items.size();
     }
     
     static class ViewHolder extends RecyclerView.ViewHolder {
