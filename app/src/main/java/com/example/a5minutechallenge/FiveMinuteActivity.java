@@ -32,6 +32,8 @@ import java.util.List;
 
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener {
 
+    private static final long MIN_ANSWER_TIME_MS = 1000;
+
     private FrameLayout currentContainerLayout;
     private FrameLayout nextContainerLayout;
     private FrameLayout nextContainerPreview;
@@ -48,6 +50,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     
     private List<ContentContainer> contentContainers;
     private int currentContainerIndex = 0;
+    private long lastQuestionStartTime;
     
     private String topicName;
     private int subjectId;
@@ -85,6 +88,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         if (topicName == null) {
             topicName = "Default Topic";
         }
+        
+        // Initialize question start time to current time
+        lastQuestionStartTime = System.currentTimeMillis();
     }
     
     private void initGamification() {
@@ -164,6 +170,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         }
         
         ContentContainer container = contentContainers.get(index);
+        
+        // Track when question containers are displayed
+        lastQuestionStartTime = System.currentTimeMillis();
         
         // Inflate and display the current container
         currentContainerLayout.removeAllViews();
@@ -366,14 +375,47 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void onCheckButtonClicked() {
         ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
         
-        /*For interactive containers (quizzes, etc.), validation would happen here
-        For now, we just progress to the next container
-        Answer validation can be added in a follow-up based on container type:
-        - ContainerMultipleChoiceQuiz: check selected options
-        - ContainerFillInTheGaps: validate filled gaps
-        - ContainerSortingTask: verify order
-         - etc.
-        */
+        // For interactive containers (quizzes, etc.), validate the answer
+        boolean isCorrect = false;
+        boolean needsValidation = false;
+        
+        switch (currentContainer.getType()) {
+            case MULTIPLE_CHOICE_QUIZ:
+            case REVERSE_QUIZ:
+            case FILL_IN_THE_GAPS:
+            case SORTING_TASK:
+            case ERROR_SPOTTING:
+            case WIRE_CONNECTING:
+            case QUIZ:
+                // These containers need validation
+                needsValidation = true;
+                // NOTE: Simplified validation for demonstration purposes
+                // In a full implementation, this would check user selections:
+                // - For MULTIPLE_CHOICE_QUIZ: verify selected option matches correct answer
+                // - For FILL_IN_THE_GAPS: validate filled words against correct words
+                // - For SORTING_TASK: check if items are in correct order
+                // - etc.
+                // For now, treating all answers as correct to demonstrate scoring animations
+                isCorrect = true;
+                break;
+            default:
+                // TEXT, TITLE, VIDEO, RECAP don't need validation
+                needsValidation = false;
+                break;
+        }
+        
+        if (needsValidation) {
+            // Calculate answer time since question was displayed
+            // Clamp to minimum to ensure reasonable scoring
+            long clampedAnswerTimeMs = Math.max(MIN_ANSWER_TIME_MS, System.currentTimeMillis() - lastQuestionStartTime);
+            
+            if (isCorrect) {
+                onCorrectAnswer(clampedAnswerTimeMs);
+            } else {
+                onIncorrectAnswer();
+            }
+        }
+        
         progressToNextContainer();
     }
 
