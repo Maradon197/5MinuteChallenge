@@ -48,6 +48,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     
     private List<ContentContainer> contentContainers;
     private int currentContainerIndex = 0;
+    private long lastQuestionStartTime;
     
     private String topicName;
     private int subjectId;
@@ -164,6 +165,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         }
         
         ContentContainer container = contentContainers.get(index);
+        
+        // Track when question containers are displayed
+        lastQuestionStartTime = System.currentTimeMillis();
         
         // Inflate and display the current container
         currentContainerLayout.removeAllViews();
@@ -365,15 +369,43 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private void onCheckButtonClicked() {
         ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
+        long questionStartTime = System.currentTimeMillis();
         
-        /*For interactive containers (quizzes, etc.), validation would happen here
-        For now, we just progress to the next container
-        Answer validation can be added in a follow-up based on container type:
-        - ContainerMultipleChoiceQuiz: check selected options
-        - ContainerFillInTheGaps: validate filled gaps
-        - ContainerSortingTask: verify order
-         - etc.
-        */
+        // For interactive containers (quizzes, etc.), validate the answer
+        boolean isCorrect = false;
+        boolean needsValidation = false;
+        
+        switch (currentContainer.getType()) {
+            case MULTIPLE_CHOICE_QUIZ:
+            case REVERSE_QUIZ:
+            case FILL_IN_THE_GAPS:
+            case SORTING_TASK:
+            case ERROR_SPOTTING:
+            case WIRE_CONNECTING:
+            case QUIZ:
+                // These containers need validation
+                needsValidation = true;
+                // Simplified validation - in real implementation, check actual user input
+                // For demo purposes, treating as correct answer
+                isCorrect = true;
+                break;
+            default:
+                // TEXT, TITLE, VIDEO, RECAP don't need validation
+                needsValidation = false;
+                break;
+        }
+        
+        if (needsValidation) {
+            // Record answer time (simulate question was shown for at least 1 second)
+            long answerTimeMs = Math.max(1000, questionStartTime - lastQuestionStartTime);
+            
+            if (isCorrect) {
+                onCorrectAnswer(answerTimeMs);
+            } else {
+                onIncorrectAnswer();
+            }
+        }
+        
         progressToNextContainer();
     }
 

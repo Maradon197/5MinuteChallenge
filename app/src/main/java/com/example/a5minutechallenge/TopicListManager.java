@@ -49,7 +49,7 @@ public class TopicListManager extends AppCompatActivity {
 
         topicListView.setOnItemClickListener((parent, view, position, id) -> {
             Topic selectedTopic = topicList.get(position);
-            Intent intent = new Intent(TopicListManager.this, FiveMinuteActivity.class);
+            Intent intent = new Intent(TopicListManager.this, ChallengeListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
             intent.putExtra("TOPIC_NAME", selectedTopic.getTitle());
             startActivity(intent);

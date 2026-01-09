@@ -26,6 +26,7 @@
 <!--    .............................................................    -->
         <activity android:name=".MainActivity" />
         <activity android:name=".TopicListManager" />
+        <activity android:name=".ChallengeListActivity" />
         <activity android:name=".FiveMinuteActivity" />
         <activity android:name=".StorageActivity" />
         <activity android:name=".LessonOverActivity" />
