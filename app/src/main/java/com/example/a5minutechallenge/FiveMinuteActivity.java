@@ -88,6 +88,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         if (topicName == null) {
             topicName = "Default Topic";
         }
+        
+        // Initialize question start time to current time
+        lastQuestionStartTime = System.currentTimeMillis();
     }
     
     private void initGamification() {

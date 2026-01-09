@@ -44,6 +44,10 @@ public class Challenge {
         return bestScore;
     }
     
+    /**
+     * Updates the best score if the new score is higher than the current best.
+     * @param bestScore The new score to consider
+     */
     public void setBestScore(int bestScore) {
         if (bestScore > this.bestScore) {
             this.bestScore = bestScore;

@@ -22,7 +22,7 @@ public class ChallengeListActivity extends AppCompatActivity {
 
     private static final int COUNTDOWN_ANIMATION_DELAY_MS = 500;
     private static final int MAX_TITLE_LENGTH = 30;
-    private static final int TRUNCATED_TITLE_LENGTH = 27;
+    private static final int TRUNCATED_TITLE_LENGTH = MAX_TITLE_LENGTH - 3; // Reserve 3 chars for "..."
     
     private ArrayList<Challenge> challengeList;
     private ChallengeListAdapter adapter;
