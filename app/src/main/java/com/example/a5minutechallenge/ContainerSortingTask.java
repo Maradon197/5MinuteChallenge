@@ -5,19 +5,19 @@ package com.example.a5minutechallenge;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SortingTaskContainer extends ContentContainer {
+public class ContainerSortingTask extends ContentContainer {
     
     private String instructions;
     private List<String> correctOrder; // Items in correct order
     private List<String> currentOrder; // Current user arrangement
     
-    public SortingTaskContainer(int id) {
+    public ContainerSortingTask(int id) {
         super(id, Types.SORTING_TASK);
         this.correctOrder = new ArrayList<>();
         this.currentOrder = new ArrayList<>();
     }
     
-    public SortingTaskContainer setInstructions(String instructions) {
+    public ContainerSortingTask setInstructions(String instructions) {
         this.instructions = instructions;
         return this;
     }
@@ -26,7 +26,7 @@ public class SortingTaskContainer extends ContentContainer {
         return instructions;
     }
     
-    public SortingTaskContainer setCorrectOrder(List<String> correctOrder) {
+    public ContainerSortingTask setCorrectOrder(List<String> correctOrder) {
         this.correctOrder = correctOrder;
         this.currentOrder = new ArrayList<>(correctOrder); // Start with same order
         return this;

@@ -1,14 +1,14 @@
 /** Content Container for the title of a 5-minute-challenge screen **/
 package com.example.a5minutechallenge;
 
-public class TitleContainer extends ContentContainer {
+public class ContainerTitle extends ContentContainer {
     private String title;
 
-    public TitleContainer(int id) {
+    public ContainerTitle(int id) {
         super(id, Types.TITLE);
     }
 
-    public TitleContainer setTitle(String title) {
+    public ContainerTitle setTitle(String title) {
         this.title = title;
         return this;
     }

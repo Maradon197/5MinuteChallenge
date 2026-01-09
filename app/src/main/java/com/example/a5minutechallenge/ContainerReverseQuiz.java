@@ -5,7 +5,7 @@ package com.example.a5minutechallenge;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReverseQuizContainer extends ContentContainer {
+public class ContainerReverseQuiz extends ContentContainer {
     
     private String answer;
     private List<String> questionOptions;
@@ -13,13 +13,13 @@ public class ReverseQuizContainer extends ContentContainer {
     private String explanationText;
     private int userSelectedIndex;
     
-    public ReverseQuizContainer(int id) {
+    public ContainerReverseQuiz(int id) {
         super(id, Types.REVERSE_QUIZ);
         this.questionOptions = new ArrayList<>();
         this.userSelectedIndex = -1;
     }
     
-    public ReverseQuizContainer setAnswer(String answer) {
+    public ContainerReverseQuiz setAnswer(String answer) {
         this.answer = answer;
         return this;
     }
@@ -28,7 +28,7 @@ public class ReverseQuizContainer extends ContentContainer {
         return answer;
     }
     
-    public ReverseQuizContainer setQuestionOptions(List<String> questionOptions) {
+    public ContainerReverseQuiz setQuestionOptions(List<String> questionOptions) {
         this.questionOptions = questionOptions;
         return this;
     }
@@ -37,7 +37,7 @@ public class ReverseQuizContainer extends ContentContainer {
         return questionOptions;
     }
     
-    public ReverseQuizContainer setCorrectQuestionIndex(int correctQuestionIndex) {
+    public ContainerReverseQuiz setCorrectQuestionIndex(int correctQuestionIndex) {
         this.correctQuestionIndex = correctQuestionIndex;
         return this;
     }
@@ -46,7 +46,7 @@ public class ReverseQuizContainer extends ContentContainer {
         return correctQuestionIndex;
     }
     
-    public ReverseQuizContainer setExplanationText(String explanationText) {
+    public ContainerReverseQuiz setExplanationText(String explanationText) {
         this.explanationText = explanationText;
         return this;
     }

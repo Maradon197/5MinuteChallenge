@@ -6,7 +6,7 @@ package com.example.a5minutechallenge;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultipleChoiceQuizContainer extends ContentContainer {
+public class ContainerMultipleChoiceQuiz extends ContentContainer {
     
     private String question;
     private List<String> options;
@@ -15,7 +15,7 @@ public class MultipleChoiceQuizContainer extends ContentContainer {
     private String explanationText;
     private List<Integer> userSelectedIndices;
     
-    public MultipleChoiceQuizContainer(int id) {
+    public ContainerMultipleChoiceQuiz(int id) {
         super(id, Types.MULTIPLE_CHOICE_QUIZ);
         this.options = new ArrayList<>();
         this.correctAnswerIndices = new ArrayList<>();
@@ -23,7 +23,7 @@ public class MultipleChoiceQuizContainer extends ContentContainer {
         this.allowMultipleAnswers = false;
     }
     
-    public MultipleChoiceQuizContainer setQuestion(String question) {
+    public ContainerMultipleChoiceQuiz setQuestion(String question) {
         this.question = question;
         return this;
     }
@@ -32,7 +32,7 @@ public class MultipleChoiceQuizContainer extends ContentContainer {
         return question;
     }
     
-    public MultipleChoiceQuizContainer setOptions(List<String> options) {
+    public ContainerMultipleChoiceQuiz setOptions(List<String> options) {
         this.options = options;
         return this;
     }
@@ -41,7 +41,7 @@ public class MultipleChoiceQuizContainer extends ContentContainer {
         return options;
     }
     
-    public MultipleChoiceQuizContainer setCorrectAnswerIndices(List<Integer> correctAnswerIndices) {
+    public ContainerMultipleChoiceQuiz setCorrectAnswerIndices(List<Integer> correctAnswerIndices) {
         this.correctAnswerIndices = correctAnswerIndices;
         return this;
     }
@@ -50,7 +50,7 @@ public class MultipleChoiceQuizContainer extends ContentContainer {
         return correctAnswerIndices;
     }
     
-    public MultipleChoiceQuizContainer setAllowMultipleAnswers(boolean allowMultipleAnswers) {
+    public ContainerMultipleChoiceQuiz setAllowMultipleAnswers(boolean allowMultipleAnswers) {
         this.allowMultipleAnswers = allowMultipleAnswers;
         return this;
     }
@@ -59,7 +59,7 @@ public class MultipleChoiceQuizContainer extends ContentContainer {
         return allowMultipleAnswers;
     }
     
-    public MultipleChoiceQuizContainer setExplanationText(String explanationText) {
+    public ContainerMultipleChoiceQuiz setExplanationText(String explanationText) {
         this.explanationText = explanationText;
         return this;
     }

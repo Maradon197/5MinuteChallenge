@@ -6,7 +6,7 @@ package com.example.a5minutechallenge;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FillInTheGapsContainer extends ContentContainer {
+public class ContainerFillInTheGaps extends ContentContainer {
     
     private String textTemplate; // Text with {} markers for gaps
     private List<String> correctWords; // Correct words for each gap in order
@@ -14,7 +14,7 @@ public class FillInTheGapsContainer extends ContentContainer {
     private List<String> userFilledWords; // Words user has filled in
     private int currentGapIndex;
     
-    public FillInTheGapsContainer(int id) {
+    public ContainerFillInTheGaps(int id) {
         super(id, Types.FILL_IN_THE_GAPS);
         this.correctWords = new ArrayList<>();
         this.wordOptions = new ArrayList<>();
@@ -22,7 +22,7 @@ public class FillInTheGapsContainer extends ContentContainer {
         this.currentGapIndex = 0;
     }
     
-    public FillInTheGapsContainer setTextTemplate(String textTemplate) {
+    public ContainerFillInTheGaps setTextTemplate(String textTemplate) {
         this.textTemplate = textTemplate;
         return this;
     }
@@ -31,7 +31,7 @@ public class FillInTheGapsContainer extends ContentContainer {
         return textTemplate;
     }
     
-    public FillInTheGapsContainer setCorrectWords(List<String> correctWords) {
+    public ContainerFillInTheGaps setCorrectWords(List<String> correctWords) {
         this.correctWords = correctWords;
         return this;
     }
@@ -40,7 +40,7 @@ public class FillInTheGapsContainer extends ContentContainer {
         return correctWords;
     }
     
-    public FillInTheGapsContainer setWordOptions(List<String> wordOptions) {
+    public ContainerFillInTheGaps setWordOptions(List<String> wordOptions) {
         this.wordOptions = wordOptions;
         return this;
     }

@@ -16,18 +16,18 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener {
 
     private FrameLayout currentContainerLayout;
-    //private FrameLayout nextContainerLayout;
-    //private FrameLayout nextContainerPreview;
+    private FrameLayout nextContainerLayout;
+    private FrameLayout nextContainerPreview;
     private Button checkButton;
     private TextView timerText;
     private TextView scoreDisplay;
@@ -58,9 +58,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     }
     
     private void initViews() {
-        currentContainerLayout = findViewById(R.id.current_container);
-        //nextContainerLayout = findViewById(R.id.next_container);
-        //nextContainerPreview = findViewById(R.id.next_container_preview);
+        currentContainerLayout = findViewById(R.id.current_container);//nested layout in five_minute_activity.xml
+        nextContainerLayout = findViewById(R.id.next_container);
+        nextContainerPreview = findViewById(R.id.next_container_preview);
         checkButton = findViewById(R.id.check_button);
         timerText = findViewById(R.id.timer_text);
         scoreDisplay = findViewById(R.id.score_display);
@@ -101,9 +101,12 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+
                 float diffY = e2.getY() - e1.getY();
                 float diffX = e2.getX() - e1.getX();
-                
+
+                //vertical?
                 if (Math.abs(diffY) > Math.abs(diffX)) {
                     if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                         if (diffY < 0) {
@@ -115,14 +118,21 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
                 return false;
             }
+
+            //GestureDetector needs onDown: true to track gesture
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
         });
 
         View contentArea = findViewById(R.id.content_container_area);
         contentArea.setOnTouchListener((v, event) -> {
-            gestureDetector.onTouchEvent(event);
-            return false;
+            // Pass event to detector and return true to "consume" the touch
+            return gestureDetector.onTouchEvent(event);
         });
     }
+
 
     /**
      * Loads and displays the content containers for this lesson.
@@ -182,64 +192,75 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 // view = inflater.inflate(R.layout.title_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.title_container, null);
                 TextView titleView = view.findViewById(R.id.title_text);
-                TitleContainer titleContainer = (TitleContainer) container;
+                ContainerTitle titleContainer = (ContainerTitle) container;
                 titleView.setText(titleContainer.getTitle());
                 break;
             case TEXT:
                 // view = inflater.inflate(R.layout.text_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.text_container, null);
                 TextView textView = view.findViewById(R.id.text_content);
-                TextContainer textContainer = (TextContainer) container;
+                ContainerText textContainer = (ContainerText) container;
                 textView.setText(textContainer.getText());
                 break;
             case MULTIPLE_CHOICE_QUIZ:
                 // view = inflater.inflate(R.layout.multiple_choice_quiz_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.multiple_choice_quiz_container, null);
                 TextView questionText = view.findViewById(R.id.question_text);
-                MultipleChoiceQuizContainer mcqContainer = (MultipleChoiceQuizContainer) container;
+                ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
                 questionText.setText(mcqContainer.getQuestion());
                 break;
             case REVERSE_QUIZ:
                 // view = inflater.inflate(R.layout.reverse_quiz_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.reverse_quiz_container, null);
                 TextView answerText = view.findViewById(R.id.answer_text);
-                ReverseQuizContainer reverseQuizContainer = (ReverseQuizContainer) container;
+                ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
                 answerText.setText(reverseQuizContainer.getAnswer());
                 break;
             case WIRE_CONNECTING:
                 // view = inflater.inflate(R.layout.wire_connecting_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.wire_connecting_container, null);
                 TextView wireInstructions = view.findViewById(R.id.instructions_text);
-                WireConnectingContainer wireContainer = (WireConnectingContainer) container;
+                ContainerWireConnecting wireContainer = (ContainerWireConnecting) container;
                 wireInstructions.setText(wireContainer.getInstructions());
                 break;
             case FILL_IN_THE_GAPS:
                 // view = inflater.inflate(R.layout.fill_in_gaps_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.fill_in_gaps_container, null);
                 TextView gapsText = view.findViewById(R.id.text_with_gaps);
-                FillInTheGapsContainer gapsContainer = (FillInTheGapsContainer) container;
+                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
                 gapsText.setText(gapsContainer.getDisplayText());
                 break;
             case SORTING_TASK:
                 // view = inflater.inflate(R.layout.sorting_task_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.sorting_task_container, null);
                 TextView sortInstructions = view.findViewById(R.id.instructions_text);
-                SortingTaskContainer sortContainer = (SortingTaskContainer) container;
+                ContainerSortingTask sortContainer = (ContainerSortingTask) container;
                 sortInstructions.setText(sortContainer.getInstructions());
                 break;
             case ERROR_SPOTTING:
                 // view = inflater.inflate(R.layout.error_spotting_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.error_spotting_container, null);
                 TextView errorInstructions = view.findViewById(R.id.instructions_text);
-                ErrorSpottingContainer errorContainer = (ErrorSpottingContainer) container;
+                ContainerErrorSpotting errorContainer = (ContainerErrorSpotting) container;
                 errorInstructions.setText(errorContainer.getInstructions());
                 break;
             case RECAP:
                 // view = inflater.inflate(R.layout.recap_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.recap_container, null);
                 TextView recapTitle = view.findViewById(R.id.recap_title);
-                RecapContainer recapContainer = (RecapContainer) container;
+                FrameLayout wrappedFrame = view.findViewById(R.id.wrapped_container_frame);
+                
+                ContainerRecap recapContainer = (ContainerRecap) container;
                 recapTitle.setText(recapContainer.getRecapTitle());
+                
+                // Handle nested container logic
+                ContentContainer wrapped = recapContainer.getWrappedContainer();
+                if (wrapped != null) {
+                    View wrappedView = inflateContainerView(wrapped);
+                    if (wrappedView != null) {
+                        wrappedFrame.addView(wrappedView);
+                    }
+                }
                 break;
             case VIDEO:
                 // view = inflater.inflate(R.layout.video_container, currentContainerLayout, false);
@@ -280,9 +301,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         /*For interactive containers (quizzes, etc.), validation would happen here
         For now, we just progress to the next container
         Answer validation can be added in a follow-up based on container type:
-        - MultipleChoiceQuizContainer: check selected options
-        - FillInTheGapsContainer: validate filled gaps
-        - SortingTaskContainer: verify order
+        - ContainerMultipleChoiceQuiz: check selected options
+        - ContainerFillInTheGaps: validate filled gaps
+        - ContainerSortingTask: verify order
          - etc.
         */
         progressToNextContainer();
@@ -323,7 +344,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 public void onAnimationRepeat(Animation animation) {}
             });
             currentContainerLayout.startAnimation(slideUp);
-            
+        } else {
+            // We are on the last container, finish the lesson
             checkLessonComplete();
         }
     }
@@ -421,26 +443,24 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Checks if the lesson is complete and navigates to result screen.
      */
     private void checkLessonComplete() {
-        if (currentContainerIndex >= contentContainers.size() - 1) {
-            timerManager.stop();
-            
-            int timeBonus = scoreManager.addTimeBonus(timerManager.getRemainingTimeSeconds());
-            int accuracyBonus = scoreManager.addAccuracyBonus();
-            
-            Intent intent = new Intent(this, LessonOverActivity.class);
-            intent.putExtra("TOTAL_SCORE", scoreManager.getTotalScore());
-            intent.putExtra("ACCURACY", scoreManager.getAccuracy());
-            intent.putExtra("MAX_STREAK", scoreManager.getMaxStreak());
-            intent.putExtra("TIME_BONUS", timeBonus);
-            intent.putExtra("ACCURACY_BONUS", accuracyBonus);
-            intent.putExtra("SUBJECT_ID", subjectId);
-            startActivity(intent);
-            finish();
-        }
+        timerManager.stop();
+        
+        int timeBonus = scoreManager.addTimeBonus(timerManager.getRemainingTimeSeconds());
+        int accuracyBonus = scoreManager.addAccuracyBonus();
+        Toast.makeText(this, "Lesson Complete!", Toast.LENGTH_SHORT).show();
+        
+        Intent intent = new Intent(this, LessonOverActivity.class);
+        intent.putExtra("TOTAL_SCORE", scoreManager.getTotalScore());
+        intent.putExtra("ACCURACY", scoreManager.getAccuracy());
+        intent.putExtra("MAX_STREAK", scoreManager.getMaxStreak());
+        intent.putExtra("TIME_BONUS", timeBonus);
+        intent.putExtra("ACCURACY_BONUS", accuracyBonus);
+        intent.putExtra("SUBJECT_ID", subjectId);
+        startActivity(intent);
+        finish();
     }
 
-    // TimerListener implementation
-
+    // TimerListener
     @Override
     public void onTimeUpdate(int remainingSeconds, float percentage) {
         runOnUiThread(() -> {

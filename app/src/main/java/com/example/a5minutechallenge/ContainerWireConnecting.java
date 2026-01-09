@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WireConnectingContainer extends ContentContainer {
+public class ContainerWireConnecting extends ContentContainer {
     
     private String instructions;
     private List<String> leftItems;
@@ -16,7 +16,7 @@ public class WireConnectingContainer extends ContentContainer {
     private Map<Integer, Integer> correctMatches; // leftIndex -> rightIndex
     private Map<Integer, Integer> userMatches; // leftIndex -> rightIndex
     
-    public WireConnectingContainer(int id) {
+    public ContainerWireConnecting(int id) {
         super(id, Types.WIRE_CONNECTING);
         this.leftItems = new ArrayList<>();
         this.rightItems = new ArrayList<>();
@@ -24,7 +24,7 @@ public class WireConnectingContainer extends ContentContainer {
         this.userMatches = new HashMap<>();
     }
     
-    public WireConnectingContainer setInstructions(String instructions) {
+    public ContainerWireConnecting setInstructions(String instructions) {
         this.instructions = instructions;
         return this;
     }
@@ -33,7 +33,7 @@ public class WireConnectingContainer extends ContentContainer {
         return instructions;
     }
     
-    public WireConnectingContainer setLeftItems(List<String> leftItems) {
+    public ContainerWireConnecting setLeftItems(List<String> leftItems) {
         this.leftItems = leftItems;
         return this;
     }
@@ -42,7 +42,7 @@ public class WireConnectingContainer extends ContentContainer {
         return leftItems;
     }
     
-    public WireConnectingContainer setRightItems(List<String> rightItems) {
+    public ContainerWireConnecting setRightItems(List<String> rightItems) {
         this.rightItems = rightItems;
         return this;
     }
@@ -51,7 +51,7 @@ public class WireConnectingContainer extends ContentContainer {
         return rightItems;
     }
     
-    public WireConnectingContainer setCorrectMatches(Map<Integer, Integer> correctMatches) {
+    public ContainerWireConnecting setCorrectMatches(Map<Integer, Integer> correctMatches) {
         this.correctMatches = correctMatches;
         return this;
     }

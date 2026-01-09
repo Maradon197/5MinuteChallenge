@@ -5,7 +5,7 @@ package com.example.a5minutechallenge;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ErrorSpottingContainer extends ContentContainer {
+public class ContainerErrorSpotting extends ContentContainer {
     
     private String instructions;
     private List<String> items;
@@ -13,13 +13,13 @@ public class ErrorSpottingContainer extends ContentContainer {
     private String explanationText;
     private int userSelectedIndex;
     
-    public ErrorSpottingContainer(int id) {
+    public ContainerErrorSpotting(int id) {
         super(id, Types.ERROR_SPOTTING);
         this.items = new ArrayList<>();
         this.userSelectedIndex = -1;
     }
     
-    public ErrorSpottingContainer setInstructions(String instructions) {
+    public ContainerErrorSpotting setInstructions(String instructions) {
         this.instructions = instructions;
         return this;
     }
@@ -28,7 +28,7 @@ public class ErrorSpottingContainer extends ContentContainer {
         return instructions;
     }
     
-    public ErrorSpottingContainer setItems(List<String> items) {
+    public ContainerErrorSpotting setItems(List<String> items) {
         this.items = items;
         return this;
     }
@@ -37,7 +37,7 @@ public class ErrorSpottingContainer extends ContentContainer {
         return items;
     }
     
-    public ErrorSpottingContainer setErrorIndex(int errorIndex) {
+    public ContainerErrorSpotting setErrorIndex(int errorIndex) {
         this.errorIndex = errorIndex;
         return this;
     }
@@ -46,7 +46,7 @@ public class ErrorSpottingContainer extends ContentContainer {
         return errorIndex;
     }
     
-    public ErrorSpottingContainer setExplanationText(String explanationText) {
+    public ContainerErrorSpotting setExplanationText(String explanationText) {
         this.explanationText = explanationText;
         return this;
     }

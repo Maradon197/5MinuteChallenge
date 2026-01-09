@@ -1,14 +1,14 @@
 /** Content Container for a simple text box in the 5-minute-challenge screen **/
 package com.example.a5minutechallenge;
 
-public class TextContainer extends ContentContainer {
+public class ContainerText extends ContentContainer {
     private String text;
 
-    public TextContainer(int id) {
+    public ContainerText(int id) {
         super(id, Types.TEXT);
     }
 
-    public TextContainer setText(String text) {
+    public ContainerText setText(String text) {
         this.text = text;
         return this;
     }

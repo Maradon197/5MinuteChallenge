@@ -7,6 +7,7 @@ public class ScoreManager {
     private int totalScore;
     private int currentStreak;
     private int maxStreak;
+
     private long lastAnswerTime;
     private int correctAnswers;
     private int totalAnswers;
@@ -43,6 +44,7 @@ public class ScoreManager {
         // Quick answer bonus
         if (answerTimeMs < QUICK_ANSWER_THRESHOLD_MS) {
             points += QUICK_ANSWER_BONUS;
+            //display something
         }
         
         // Streak bonus

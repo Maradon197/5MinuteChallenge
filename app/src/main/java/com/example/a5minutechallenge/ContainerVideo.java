@@ -1,14 +1,14 @@
 /** Content Container for a video in the 5-minute-challenge screen **/
 package com.example.a5minutechallenge;
 
-public class VideoContainer extends ContentContainer {
+public class ContainerVideo extends ContentContainer {
     private String url;
 
-    public VideoContainer(int id) {
+    public ContainerVideo(int id) {
         super(id, Types.VIDEO);
     }
 
-    public VideoContainer setUrl(String url) {
+    public ContainerVideo setUrl(String url) {
         this.url = url;
         return this;
     }

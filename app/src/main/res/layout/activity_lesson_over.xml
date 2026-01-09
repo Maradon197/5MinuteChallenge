@@ -13,56 +13,69 @@
 
         <TextView
             android:id="@+id/title_text"
+
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_xxl"
+
             android:text="@string/lesson_complete"
             android:textColor="@color/success"
             android:textSize="@dimen/text_size_xxl"
             android:textStyle="bold"
             android:fontFamily="sans-serif-medium"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <View
             android:id="@+id/trophy_icon"
+
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_marginTop="@dimen/spacing_lg"
+
             android:background="@drawable/card_elevated"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/title_text" />
 
         <TextView
             android:id="@+id/score_text"
+
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_xl"
+
             android:text="@string/your_score"
             android:textColor="@color/score_gold"
             android:textSize="@dimen/text_size_xxxl"
             android:textStyle="bold"
             android:fontFamily="sans-serif-medium"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/trophy_icon" />
 
         <LinearLayout
             android:id="@+id/stats_container"
+
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_xl"
+
             android:orientation="vertical"
             android:background="@drawable/card_elevated"
             android:padding="@dimen/spacing_lg"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/score_text">
 
             <TextView
                 android:id="@+id/accuracy_text"
+
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_primary"
@@ -77,6 +90,7 @@
 
             <TextView
                 android:id="@+id/streak_text"
+
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_primary"
@@ -85,6 +99,7 @@
 
             <View
                 android:id="@+id/divider_bonus"
+
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/divider"
@@ -93,6 +108,7 @@
 
             <TextView
                 android:id="@+id/time_bonus_text"
+
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/bonus_purple"
@@ -103,6 +119,7 @@
 
             <TextView
                 android:id="@+id/accuracy_bonus_text"
+
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/bonus_purple"
@@ -115,6 +132,7 @@
 
         <Button
             android:id="@+id/continue_button"
+
             android:layout_width="0dp"
             android:layout_height="@dimen/button_height"
             android:layout_marginTop="@dimen/spacing_xl"
@@ -123,12 +141,14 @@
             android:textColor="@color/white"
             android:textSize="@dimen/text_size_md"
             android:textStyle="bold"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/stats_container" />
 
         <Button
             android:id="@+id/back_to_topics_button"
+
             android:layout_width="0dp"
             android:layout_height="@dimen/button_height"
             android:layout_marginTop="@dimen/spacing_md"
@@ -136,6 +156,7 @@
             android:text="@string/back_to_topics"
             android:textColor="@color/white"
             android:textSize="@dimen/text_size_md"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/continue_button" />

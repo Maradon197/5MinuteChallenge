@@ -42,7 +42,7 @@ public class ContentLoader {
         int idCounter = 0;
         
         // Title container
-        containers.add(new TitleContainer(idCounter++).setTitle(topicName));
+        containers.add(new ContainerTitle(idCounter++).setTitle(topicName));
         
         switch (topicName) {
             case "Shortcuts":
@@ -72,11 +72,11 @@ public class ContentLoader {
         int id = startId;
         
         // TEXT container
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Keyboard shortcuts are essential for productive coding. Let's learn the most important JetBrains IDE shortcuts!"));
         
         // MULTIPLE_CHOICE_QUIZ container
-        MultipleChoiceQuizContainer mcq1 = new MultipleChoiceQuizContainer(id++);
+        ContainerMultipleChoiceQuiz mcq1 = new ContainerMultipleChoiceQuiz(id++);
         mcq1.setQuestion("What is the shortcut for 'Search Everywhere' in IntelliJ IDEA?");
         mcq1.setOptions(Arrays.asList("Ctrl+Shift+F", "Double Shift", "Ctrl+N", "Alt+F7"));
         mcq1.setCorrectAnswerIndices(Arrays.asList(1));
@@ -84,11 +84,11 @@ public class ContentLoader {
         containers.add(mcq1);
         
         // TEXT container
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("The 'Find in Files' shortcut helps you search across your entire project."));
         
         // REVERSE_QUIZ container
-        ReverseQuizContainer reverseQuiz = new ReverseQuizContainer(id++);
+        ContainerReverseQuiz reverseQuiz = new ContainerReverseQuiz(id++);
         reverseQuiz.setAnswer("Ctrl+Shift+F (Cmd+Shift+F on Mac)");
         reverseQuiz.setQuestionOptions(Arrays.asList(
             "What opens the Search Everywhere dialog?",
@@ -101,14 +101,14 @@ public class ContentLoader {
         containers.add(reverseQuiz);
         
         // FILL_IN_THE_GAPS container
-        FillInTheGapsContainer fillGaps = new FillInTheGapsContainer(id++);
+        ContainerFillInTheGaps fillGaps = new ContainerFillInTheGaps(id++);
         fillGaps.setTextTemplate("To quickly comment or uncomment a line, press {}. To duplicate a line, press {}. To delete a line, press {}.");
         fillGaps.setCorrectWords(Arrays.asList("Ctrl+/", "Ctrl+D", "Ctrl+Y"));
         fillGaps.setWordOptions(Arrays.asList("Ctrl+/", "Ctrl+D", "Ctrl+Y", "Ctrl+Z", "Ctrl+X", "Ctrl+C"));
         containers.add(fillGaps);
         
         // WIRE_CONNECTING container
-        WireConnectingContainer wireConnect = new WireConnectingContainer(id++);
+        ContainerWireConnecting wireConnect = new ContainerWireConnecting(id++);
         wireConnect.setInstructions("Match the shortcut with its action:");
         wireConnect.setLeftItems(Arrays.asList("Ctrl+Alt+L", "Alt+Enter", "Ctrl+W", "Shift+F6"));
         wireConnect.setRightItems(Arrays.asList("Reformat Code", "Show Context Actions", "Extend Selection", "Rename"));
@@ -121,7 +121,7 @@ public class ContentLoader {
         containers.add(wireConnect);
         
         // SORTING_TASK container
-        SortingTaskContainer sortTask = new SortingTaskContainer(id++);
+        ContainerSortingTask sortTask = new ContainerSortingTask(id++);
         sortTask.setInstructions("Arrange these refactoring shortcuts from most to least commonly used:");
         sortTask.setCorrectOrder(Arrays.asList(
             "Shift+F6 (Rename)",
@@ -132,7 +132,7 @@ public class ContentLoader {
         containers.add(sortTask);
         
         // ERROR_SPOTTING container
-        ErrorSpottingContainer errorSpot = new ErrorSpottingContainer(id++);
+        ContainerErrorSpotting errorSpot = new ContainerErrorSpotting(id++);
         errorSpot.setInstructions("Find the incorrect shortcut:");
         errorSpot.setItems(Arrays.asList(
             "Ctrl+N - Navigate to Class",
@@ -145,9 +145,9 @@ public class ContentLoader {
         containers.add(errorSpot);
         
         // RECAP container with TEXT inside
-        RecapContainer recap = new RecapContainer(id++);
+        ContainerRecap recap = new ContainerRecap(id++);
         recap.setRecapTitle("Shortcuts Recap");
-        TextContainer recapText = new TextContainer(id++);
+        ContainerText recapText = new ContainerText(id++);
         recapText.setText("Great job! You learned the essential IntelliJ IDEA shortcuts including Search Everywhere (Double Shift), Find in Files (Ctrl+Shift+F), and common refactoring shortcuts.");
         recap.setWrappedContainer(recapText);
         containers.add(recap);
@@ -156,20 +156,20 @@ public class ContentLoader {
     private static void loadNavigationContent(List<ContentContainer> containers, int startId) {
         int id = startId;
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Efficient navigation is key to productivity. Master these navigation techniques!"));
         
-        MultipleChoiceQuizContainer mcq = new MultipleChoiceQuizContainer(id++);
+        ContainerMultipleChoiceQuiz mcq = new ContainerMultipleChoiceQuiz(id++);
         mcq.setQuestion("Which action takes you to the declaration of a symbol?");
         mcq.setOptions(Arrays.asList("Ctrl+Click", "Alt+F7", "Ctrl+Shift+I", "F2"));
         mcq.setCorrectAnswerIndices(Arrays.asList(0));
         mcq.setExplanationText("Ctrl+Click (or Ctrl+B) navigates to the declaration of the symbol under the cursor.");
         containers.add(mcq);
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("The 'Recent Files' popup (Ctrl+E) shows your recently opened files for quick navigation."));
         
-        FillInTheGapsContainer fillGaps = new FillInTheGapsContainer(id++);
+        ContainerFillInTheGaps fillGaps = new ContainerFillInTheGaps(id++);
         fillGaps.setTextTemplate("To navigate forward and backward through your code history, use {} and {}. To jump to the last edit location, press {}.");
         fillGaps.setCorrectWords(Arrays.asList("Ctrl+Alt+Left", "Ctrl+Alt+Right", "Ctrl+Shift+Backspace"));
         fillGaps.setWordOptions(Arrays.asList("Ctrl+Alt+Left", "Ctrl+Alt+Right", "Ctrl+Shift+Backspace", "Alt+Left", "Alt+Right", "Backspace"));
@@ -179,10 +179,10 @@ public class ContentLoader {
     private static void loadCodeGenerationContent(List<ContentContainer> containers, int startId) {
         int id = startId;
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Code generation features help you write code faster with less typing!"));
         
-        MultipleChoiceQuizContainer mcq = new MultipleChoiceQuizContainer(id++);
+        ContainerMultipleChoiceQuiz mcq = new ContainerMultipleChoiceQuiz(id++);
         mcq.setQuestion("What does Alt+Insert do in a Java class?");
         mcq.setOptions(Arrays.asList(
             "Opens Generate menu (constructor, getters, setters, etc.)",
@@ -194,10 +194,10 @@ public class ContentLoader {
         mcq.setExplanationText("Alt+Insert opens the Generate menu where you can generate constructors, getters, setters, equals/hashCode, and more.");
         containers.add(mcq);
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Live templates let you insert common code patterns. Type 'psvm' and press Tab to generate a main method!"));
         
-        WireConnectingContainer wireConnect = new WireConnectingContainer(id++);
+        ContainerWireConnecting wireConnect = new ContainerWireConnecting(id++);
         wireConnect.setInstructions("Match the live template with what it generates:");
         wireConnect.setLeftItems(Arrays.asList("sout", "fori", "ifn", "psvm"));
         wireConnect.setRightItems(Arrays.asList("System.out.println()", "for loop with index", "if null check", "public static void main"));
@@ -213,10 +213,10 @@ public class ContentLoader {
     private static void loadRefactoringContent(List<ContentContainer> containers, int startId) {
         int id = startId;
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Refactoring helps you improve code structure safely. JetBrains IDEs offer powerful refactoring tools!"));
         
-        MultipleChoiceQuizContainer mcq = new MultipleChoiceQuizContainer(id++);
+        ContainerMultipleChoiceQuiz mcq = new ContainerMultipleChoiceQuiz(id++);
         mcq.setQuestion("What's the safest way to rename a variable or method?");
         mcq.setOptions(Arrays.asList(
             "Find and Replace",
@@ -228,7 +228,7 @@ public class ContentLoader {
         mcq.setExplanationText("Shift+F6 triggers the Rename refactoring which safely renames all occurrences and updates references.");
         containers.add(mcq);
         
-        SortingTaskContainer sortTask = new SortingTaskContainer(id++);
+        ContainerSortingTask sortTask = new ContainerSortingTask(id++);
         sortTask.setInstructions("Order these refactorings by complexity (simplest to most complex):");
         sortTask.setCorrectOrder(Arrays.asList(
             "Rename (Shift+F6)",
@@ -238,17 +238,17 @@ public class ContentLoader {
         ));
         containers.add(sortTask);
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Extract Method (Ctrl+Alt+M) helps you break down large methods into smaller, more maintainable pieces."));
     }
     
     private static void loadDebuggingContent(List<ContentContainer> containers, int startId) {
         int id = startId;
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Debugging is essential for finding and fixing bugs. Let's master the debugger!"));
         
-        MultipleChoiceQuizContainer mcq = new MultipleChoiceQuizContainer(id++);
+        ContainerMultipleChoiceQuiz mcq = new ContainerMultipleChoiceQuiz(id++);
         mcq.setQuestion("How do you set a breakpoint in IntelliJ IDEA?");
         mcq.setOptions(Arrays.asList(
             "Right-click on line number",
@@ -260,7 +260,7 @@ public class ContentLoader {
         mcq.setExplanationText("You can set a breakpoint by clicking the gutter or pressing Ctrl+F8. Both methods work!");
         containers.add(mcq);
         
-        WireConnectingContainer wireConnect = new WireConnectingContainer(id++);
+        ContainerWireConnecting wireConnect = new ContainerWireConnecting(id++);
         wireConnect.setInstructions("Match the debug action with its shortcut:");
         wireConnect.setLeftItems(Arrays.asList("F8", "F7", "F9", "Alt+F9"));
         wireConnect.setRightItems(Arrays.asList("Step Over", "Step Into", "Resume Program", "Run to Cursor"));
@@ -272,7 +272,7 @@ public class ContentLoader {
         wireConnect.setCorrectMatches(matches);
         containers.add(wireConnect);
         
-        ErrorSpottingContainer errorSpot = new ErrorSpottingContainer(id++);
+        ContainerErrorSpotting errorSpot = new ContainerErrorSpotting(id++);
         errorSpot.setInstructions("Find the incorrect debug shortcut:");
         errorSpot.setItems(Arrays.asList(
             "F8 - Step Over",
@@ -292,7 +292,7 @@ public class ContentLoader {
      */
     private static List<ContentContainer> loadDefaultContent(String topicName) {
         List<ContentContainer> containers = new ArrayList<>();
-        containers.add(new TitleContainer(0).setTitle(topicName));
+        containers.add(new ContainerTitle(0).setTitle(topicName));
         loadDefaultContent(containers, 1);
         return containers;
     }
@@ -300,13 +300,13 @@ public class ContentLoader {
     private static void loadDefaultContent(List<ContentContainer> containers, int startId) {
         int id = startId;
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Welcome to this 5-minute challenge! Let's learn something new."));
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("You'll be quizzed on the content. Answer correctly to earn points!"));
         
-        MultipleChoiceQuizContainer quiz = new MultipleChoiceQuizContainer(id++);
+        ContainerMultipleChoiceQuiz quiz = new ContainerMultipleChoiceQuiz(id++);
         quiz.setQuestion("What is the purpose of this challenge?");
         quiz.setOptions(Arrays.asList(
             "To learn in 5 minutes",
@@ -316,7 +316,7 @@ public class ContentLoader {
         quiz.setCorrectAnswerIndices(Arrays.asList(0));
         containers.add(quiz);
         
-        containers.add(new TextContainer(id++)
+        containers.add(new ContainerText(id++)
             .setText("Great job! Keep going to complete the challenge."));
     }
 }

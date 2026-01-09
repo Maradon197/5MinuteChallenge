@@ -3,17 +3,17 @@
  **/
 package com.example.a5minutechallenge;
 
-public class RecapContainer extends ContentContainer {
+public class ContainerRecap extends ContentContainer {
     
     private ContentContainer wrappedContainer;
     private String recapTitle;
     
-    public RecapContainer(int id) {
+    public ContainerRecap(int id) {
         super(id, Types.RECAP);
         this.recapTitle = "Recap";
     }
     
-    public RecapContainer setWrappedContainer(ContentContainer wrappedContainer) {
+    public ContainerRecap setWrappedContainer(ContentContainer wrappedContainer) {
         this.wrappedContainer = wrappedContainer;
         return this;
     }
@@ -22,7 +22,7 @@ public class RecapContainer extends ContentContainer {
         return wrappedContainer;
     }
     
-    public RecapContainer setRecapTitle(String recapTitle) {
+    public ContainerRecap setRecapTitle(String recapTitle) {
         this.recapTitle = recapTitle;
         return this;
     }

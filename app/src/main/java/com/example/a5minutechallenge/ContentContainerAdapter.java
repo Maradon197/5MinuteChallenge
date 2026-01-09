@@ -97,17 +97,17 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
         switch (contentContainer.getType()) {
             case TITLE:
                 TextView titleView = convertView.findViewById(R.id.title_text);
-                TitleContainer titleContainer = (TitleContainer) contentContainer;
+                ContainerTitle titleContainer = (ContainerTitle) contentContainer;
                 titleView.setText(titleContainer.getTitle());
                 break;
             case TEXT:
                 TextView textView = convertView.findViewById(R.id.text_content);
-                TextContainer textContainer = (TextContainer) contentContainer;
+                ContainerText textContainer = (ContainerText) contentContainer;
                 textView.setText(textContainer.getText());
                 break;
             case MULTIPLE_CHOICE_QUIZ:
                 TextView questionText = convertView.findViewById(R.id.question_text);
-                MultipleChoiceQuizContainer mcqContainer = (MultipleChoiceQuizContainer) contentContainer;
+                ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) contentContainer;
                 questionText.setText(mcqContainer.getQuestion());
                 
                 // Set explanation text if available
@@ -120,31 +120,31 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 break;
             case REVERSE_QUIZ:
                 TextView answerText = convertView.findViewById(R.id.answer_text);
-                ReverseQuizContainer reverseQuizContainer = (ReverseQuizContainer) contentContainer;
+                ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) contentContainer;
                 answerText.setText(reverseQuizContainer.getAnswer());
                 // Additional setup for question options would be handled by RecyclerView adapter
                 break;
             case WIRE_CONNECTING:
                 TextView wireInstructions = convertView.findViewById(R.id.instructions_text);
-                WireConnectingContainer wireContainer = (WireConnectingContainer) contentContainer;
+                ContainerWireConnecting wireContainer = (ContainerWireConnecting) contentContainer;
                 wireInstructions.setText(wireContainer.getInstructions());
                 // Additional setup for items would be handled by RecyclerView adapters
                 break;
             case FILL_IN_THE_GAPS:
                 TextView gapsText = convertView.findViewById(R.id.text_with_gaps);
-                FillInTheGapsContainer gapsContainer = (FillInTheGapsContainer) contentContainer;
+                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) contentContainer;
                 gapsText.setText(gapsContainer.getDisplayText());
                 // Additional setup for word chips would be handled by ChipGroup
                 break;
             case SORTING_TASK:
                 TextView sortInstructions = convertView.findViewById(R.id.instructions_text);
-                SortingTaskContainer sortContainer = (SortingTaskContainer) contentContainer;
+                ContainerSortingTask sortContainer = (ContainerSortingTask) contentContainer;
                 sortInstructions.setText(sortContainer.getInstructions());
                 // Additional setup for sortable items would be handled by RecyclerView adapter
                 break;
             case ERROR_SPOTTING:
                 TextView errorInstructions = convertView.findViewById(R.id.instructions_text);
-                ErrorSpottingContainer errorContainer = (ErrorSpottingContainer) contentContainer;
+                ContainerErrorSpotting errorContainer = (ContainerErrorSpotting) contentContainer;
                 errorInstructions.setText(errorContainer.getInstructions());
                 
                 // Set explanation text if available
@@ -157,7 +157,7 @@ public class ContentContainerAdapter extends ArrayAdapter<ContentContainer> {
                 break;
             case RECAP:
                 TextView recapTitle = convertView.findViewById(R.id.recap_title);
-                RecapContainer recapContainer = (RecapContainer) contentContainer;
+                ContainerRecap recapContainer = (ContainerRecap) contentContainer;
                 recapTitle.setText(recapContainer.getRecapTitle());
                 // The wrapped container would need additional handling
                 break;
