@@ -8,7 +8,14 @@ import android.content.Context;
 
 import com.example.a5minutechallenge.screens.storage.StorageListItem;
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
+import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
+import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
+import com.example.a5minutechallenge.service.SubjectGenerationService;
 import com.example.a5minutechallenge.util.fileutil.fileutil;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -252,6 +259,148 @@ public class Subject {
         }
 
         return false;
+    }
+
+    /**
+     * Triggers AI content generation from uploaded files using Gemini API
+     * @param context The application context
+     * @return true if generation was successful, false otherwise
+     */
+    public boolean generateContentFromFiles(Context context) {
+        SubjectGenerationService generationService = new SubjectGenerationService();
+        return generationService.generateContent(this, context);
+    }
+
+    /**
+     * Converts the Subject to JSON for serialization
+     * @return JSONObject representation of the Subject
+     * @throws JSONException if JSON creation fails
+     */
+    public JSONObject toJSON() throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("subjectId", subjectId);
+        json.put("title", title);
+        json.put("description", description);
+        
+        // Serialize topics
+        if (topics != null && !topics.isEmpty()) {
+            JSONArray topicsArray = new JSONArray();
+            for (Topic topic : topics) {
+                topicsArray.put(topicToJSON(topic));
+            }
+            json.put("topics", topicsArray);
+        }
+        
+        return json;
+    }
+
+    /**
+     * Creates a Subject from JSON data
+     * @param json JSONObject containing Subject data
+     * @return Subject instance
+     * @throws JSONException if JSON parsing fails
+     */
+    public static Subject fromJSON(JSONObject json) throws JSONException {
+        Integer id = json.getInt("subjectId");
+        Subject subject = new Subject(id);
+        
+        if (json.has("title")) {
+            subject.setTitle(json.getString("title"));
+        }
+        
+        if (json.has("description")) {
+            subject.setDescription(json.getString("description"));
+        }
+        
+        if (json.has("topics")) {
+            JSONArray topicsArray = json.getJSONArray("topics");
+            ArrayList<Topic> topics = new ArrayList<>();
+            for (int i = 0; i < topicsArray.length(); i++) {
+                topics.add(topicFromJSON(topicsArray.getJSONObject(i)));
+            }
+            subject.setTopics(topics);
+        }
+        
+        return subject;
+    }
+
+    private JSONObject topicToJSON(Topic topic) throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("title", topic.getTitle());
+        
+        ArrayList<Challenge> challenges = topic.getChallenges();
+        if (challenges != null && !challenges.isEmpty()) {
+            JSONArray challengesArray = new JSONArray();
+            for (Challenge challenge : challenges) {
+                challengesArray.put(challengeToJSON(challenge));
+            }
+            json.put("challenges", challengesArray);
+        }
+        
+        return json;
+    }
+
+    private JSONObject challengeToJSON(Challenge challenge) throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("title", challenge.getTitle());
+        json.put("description", challenge.getDescription());
+        json.put("completed", challenge.isCompleted());
+        json.put("bestScore", challenge.getBestScore());
+        json.put("attempts", challenge.getAttempts());
+        
+        ArrayList<ContentContainer> containers = challenge.getContainerlist();
+        if (containers != null && !containers.isEmpty()) {
+            JSONArray containersArray = new JSONArray();
+            for (ContentContainer container : containers) {
+                containersArray.put(containerToJSON(container));
+            }
+            json.put("containers", containersArray);
+        }
+        
+        return json;
+    }
+
+    private JSONObject containerToJSON(ContentContainer container) throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("type", container.getType().toString());
+        json.put("id", container.getId());
+        // Note: Full serialization of container properties would require 
+        // type-specific handling in each container class
+        return json;
+    }
+
+    private static Topic topicFromJSON(JSONObject json) throws JSONException {
+        Topic topic = new Topic(json.getString("title"));
+        
+        if (json.has("challenges")) {
+            JSONArray challengesArray = json.getJSONArray("challenges");
+            ArrayList<Challenge> challenges = new ArrayList<>();
+            for (int i = 0; i < challengesArray.length(); i++) {
+                challenges.add(challengeFromJSON(challengesArray.getJSONObject(i)));
+            }
+            topic.setChallenges(challenges);
+        }
+        
+        return topic;
+    }
+
+    private static Challenge challengeFromJSON(JSONObject json) throws JSONException {
+        Challenge challenge = new Challenge(
+            json.getString("title"),
+            json.getString("description")
+        );
+        
+        if (json.has("completed")) {
+            challenge.setCompleted(json.getBoolean("completed"));
+        }
+        
+        if (json.has("bestScore")) {
+            challenge.setBestScore(json.getInt("bestScore"));
+        }
+        
+        // Note: Full deserialization of containers would use ContentContainerFactory
+        
+        return challenge;
     }
 
 }

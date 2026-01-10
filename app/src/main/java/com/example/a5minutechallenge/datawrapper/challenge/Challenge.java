@@ -76,4 +76,19 @@ public class Challenge {
         }
         return 100;
     }
+
+    public ArrayList<ContentContainer> getContainerlist() {
+        if (containerlist == null) {
+            containerlist = new ArrayList<>();
+        }
+        return containerlist;
+    }
+
+    public void setContainerlist(ArrayList<ContentContainer> containerlist) {
+        this.containerlist = containerlist;
+    }
+
+    public void addContainer(ContentContainer container) {
+        getContainerlist().add(container);
+    }
 }

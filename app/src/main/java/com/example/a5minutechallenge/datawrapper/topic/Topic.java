@@ -20,6 +20,19 @@ public class Topic {
         title = newTitle;
     }
 
+    public ArrayList<Challenge> getChallenges() {
+        if (challenges == null) {
+            challenges = new ArrayList<>();
+        }
+        return challenges;
+    }
 
+    public void setChallenges(ArrayList<Challenge> challenges) {
+        this.challenges = challenges;
+    }
+
+    public void addChallenge(Challenge challenge) {
+        getChallenges().add(challenge);
+    }
 
 }
