@@ -70,6 +70,8 @@ public class ContentLoader {
     
     private static void loadShortcutsContent(List<ContentContainer> containers, int startId) {
         int id = startId;
+
+        //i get a list of contentcontainers, pull content from list via for loop and switch case
         
         // TEXT container
         containers.add(new ContainerText(id++)

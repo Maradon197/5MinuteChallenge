@@ -1,12 +1,15 @@
 /** Represents a 5-minute challenge with progress tracking */
 package com.example.a5minutechallenge;
 
+import java.util.ArrayList;
+
 public class Challenge {
     private String title;
     private String description;
     private boolean completed;
     private int bestScore;
     private int attempts;
+    private ArrayList<ContentContainer> containerlist;
     
     public Challenge(String title, String description) {
         this.title = title;
