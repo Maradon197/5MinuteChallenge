@@ -8,45 +8,34 @@ import android.util.Log;
 
 import com.example.a5minutechallenge.BuildConfig;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
-import com.google.genai.GenerativeModel;
-import com.google.genai.types.Content;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Part;
-import com.google.genai.types.TextPart;
-import com.google.genai.types.FileData;
-import com.google.genai.types.FileUploadResponse;
-import com.google.genai.types.GenerationConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class GeminiContentProcessor {
     
     private static final String TAG = "GeminiContentProcessor";
-    private static final String MODEL_NAME = "gemini-2.5-pro-latest";
-    private static final int MAX_TOKENS = 1000000; // 1M token context window
+    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+    private static final int MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
     
-    private final GenerativeModel model;
+    private final String apiKey;
     
     public GeminiContentProcessor() {
-        String apiKey = BuildConfig.GEMINI_API_KEY;
+        this.apiKey = BuildConfig.GEMINI_API_KEY;
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("null")) {
             throw new IllegalStateException("GEMINI_API_KEY not configured in local.properties");
         }
-        
-        this.model = new GenerativeModel(MODEL_NAME, apiKey, new GenerationConfig.Builder()
-                .temperature(0.7f)
-                .topK(40)
-                .topP(0.95f)
-                .maxOutputTokens(8192)
-                .build());
     }
     
     /**
@@ -65,37 +54,150 @@ public class GeminiContentProcessor {
         // Build the prompt
         String prompt = buildPrompt(subjectTitle);
         
-        // Prepare content parts including files
-        List<Part> parts = new ArrayList<>();
-        parts.add(new TextPart(prompt));
+        // Create request JSON
+        JSONObject request = new JSONObject();
         
-        // Add file references
+        // Add text prompt as first part
+        JSONObject textPart = new JSONObject();
+        textPart.put("text", prompt);
+        
+        // For simplicity, we'll combine file contents as text
+        // In a production implementation, we'd use proper file upload API
+        StringBuilder fileContents = new StringBuilder();
         for (SubjectFile subjectFile : files) {
             File file = subjectFile.getFile();
-            if (!file.exists()) {
-                Log.w(TAG, "File does not exist: " + file.getAbsolutePath());
-                continue;
+            if (file.exists() && file.length() < MAX_FILE_SIZE) {
+                fileContents.append("\n\n=== File: ").append(subjectFile.getFileName()).append(" ===\n");
+                fileContents.append(readFileContent(file));
             }
-            
-            // For large files, we'd use the Files API
-            // For now, we'll process files directly
-            // TODO: Implement file upload for files > 20MB
-            parts.add(createFilePartFromFile(file));
         }
         
-        // Generate content
-        Content content = new Content.Builder().addParts(parts).build();
+        if (fileContents.length() > 0) {
+            JSONObject fileTextPart = new JSONObject();
+            fileTextPart.put("text", fileContents.toString());
+            request.put("contents", new org.json.JSONArray()
+                    .put(new JSONObject().put("parts", new org.json.JSONArray()
+                            .put(textPart)
+                            .put(fileTextPart))));
+        } else {
+            request.put("contents", new org.json.JSONArray()
+                    .put(new JSONObject().put("parts", new org.json.JSONArray().put(textPart))));
+        }
+        
+        // Add generation config
+        JSONObject generationConfig = new JSONObject();
+        generationConfig.put("temperature", 0.7);
+        generationConfig.put("topK", 40);
+        generationConfig.put("topP", 0.95);
+        generationConfig.put("maxOutputTokens", 8192);
+        request.put("generationConfig", generationConfig);
+        
+        // Make API call
+        String response = makeApiCall(request);
+        
+        // Extract JSON from response
+        return extractJsonFromResponse(response);
+    }
+    
+    /**
+     * Reads file content as text
+     */
+    private String readFileContent(File file) throws IOException {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        }
+        return content.toString();
+    }
+    
+    /**
+     * Makes API call to Gemini
+     */
+    private String makeApiCall(JSONObject request) throws IOException, JSONException {
+        URL url = new URL(API_ENDPOINT + "?key=" + apiKey);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         
         try {
-            GenerateContentResponse response = model.generateContent(content);
-            String responseText = response.getText();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
             
-            // Extract JSON from response (Gemini might wrap it in markdown)
-            return extractJson(responseText);
-        } catch (Exception e) {
-            Log.e(TAG, "Error generating content", e);
-            throw new IOException("Failed to generate content: " + e.getMessage(), e);
+            // Send request
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = request.toString().getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+            
+            // Read response
+            int responseCode = conn.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                String errorBody = readErrorResponse(conn);
+                throw new IOException("API call failed with code " + responseCode + ": " + errorBody);
+            }
+            
+            StringBuilder response = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    response.append(line);
+                }
+            }
+            
+            return response.toString();
+        } finally {
+            conn.disconnect();
         }
+    }
+    
+    /**
+     * Reads error response from API
+     */
+    private String readErrorResponse(HttpURLConnection conn) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
+        } catch (Exception e) {
+            return "Unable to read error response";
+        }
+    }
+    
+    /**
+     * Extracts the generated text from API response
+     */
+    private String extractJsonFromResponse(String responseText) throws JSONException {
+        JSONObject response = new JSONObject(responseText);
+        
+        if (response.has("candidates")) {
+            org.json.JSONArray candidates = response.getJSONArray("candidates");
+            if (candidates.length() > 0) {
+                JSONObject candidate = candidates.getJSONObject(0);
+                if (candidate.has("content")) {
+                    JSONObject content = candidate.getJSONObject("content");
+                    if (content.has("parts")) {
+                        org.json.JSONArray parts = content.getJSONArray("parts");
+                        if (parts.length() > 0) {
+                            JSONObject part = parts.getJSONObject(0);
+                            if (part.has("text")) {
+                                String text = part.getString("text");
+                                return extractJson(text);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        throw new JSONException("Unable to extract text from API response");
     }
     
     /**
@@ -198,33 +300,6 @@ public class GeminiContentProcessor {
                 "- Vary container types to maintain engagement\n" +
                 "- Preserve all information from source files\n" +
                 "- Output ONLY valid JSON, no markdown formatting\n";
-    }
-    
-    /**
-     * Creates a Part from a file
-     */
-    private Part createFilePartFromFile(File file) {
-        // For simplicity, we'll use FileData
-        // In a real implementation, we'd detect mime type
-        String mimeType = detectMimeType(file.getName());
-        return new FileData(file.toURI().toString(), mimeType);
-    }
-    
-    /**
-     * Detects MIME type from file extension
-     */
-    private String detectMimeType(String fileName) {
-        String lowerName = fileName.toLowerCase();
-        if (lowerName.endsWith(".pdf")) {
-            return "application/pdf";
-        } else if (lowerName.endsWith(".txt")) {
-            return "text/plain";
-        } else if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) {
-            return "application/msword";
-        } else if (lowerName.endsWith(".md")) {
-            return "text/markdown";
-        }
-        return "application/octet-stream";
     }
     
     /**
