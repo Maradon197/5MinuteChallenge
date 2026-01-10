@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -203,7 +204,8 @@ public class ContentContainerFactory {
         // Parse correct matches
         JSONObject correctMatchesObj = json.getJSONObject("correctMatches");
         Map<Integer, Integer> correctMatches = new HashMap<>();
-        for (String key : correctMatchesObj.keys()) {
+        for (Iterator<String> it = correctMatchesObj.keys(); it.hasNext(); ) {
+            String key = it.next();
             correctMatches.put(Integer.parseInt(key), correctMatchesObj.getInt(key));
         }
         container.setCorrectMatches(correctMatches);

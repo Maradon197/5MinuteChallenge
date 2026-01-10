@@ -56,8 +56,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation("com.google.genai:google-genai:1.29.0")
-    implementation("org.json:json:20231013")
-    implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+    implementation("com.google.genai:google-genai:1.32.0")
+    implementation("org.json:json:20251224")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.20.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
 }
