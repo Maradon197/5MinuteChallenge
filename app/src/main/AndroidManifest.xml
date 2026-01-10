@@ -15,7 +15,7 @@
         android:theme="@style/Theme._5MinuteChallenge">
 <!--  .........................................................      -->
         <activity
-            android:name=".StartupActivity"
+            android:name=".screens.startup.StartupActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,12 +24,12 @@
             </intent-filter>
         </activity>
 <!--    .............................................................    -->
-        <activity android:name=".MainActivity" />
-        <activity android:name=".TopicListManager" />
-        <activity android:name=".ChallengeListActivity" />
-        <activity android:name=".FiveMinuteActivity" />
-        <activity android:name=".StorageActivity" />
-        <activity android:name=".LessonOverActivity" />
+        <activity android:name=".screens.main.MainActivity" />
+        <activity android:name=".screens.topic.TopicListManager" />
+        <activity android:name=".screens.challenge.ChallengeListActivity" />
+        <activity android:name=".screens.fiveminute.FiveMinuteActivity" />
+        <activity android:name=".screens.storage.StorageActivity" />
+        <activity android:name=".screens.challenge.LessonOverActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
