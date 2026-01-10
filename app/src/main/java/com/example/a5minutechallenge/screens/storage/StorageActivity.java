@@ -1,7 +1,3 @@
-/** Activity for the Subject-specific Storage screen. Calls StorageListManager (A recyclerview)
- *  for content creation and display.
- */
-
 package com.example.a5minutechallenge.screens.storage;
 
 import android.content.Intent;
@@ -9,9 +5,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -22,13 +20,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.subject.Subject;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
+import com.example.a5minutechallenge.screens.challenge.ChallengeListActivity;
+import com.example.a5minutechallenge.service.SubjectGenerationService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
-
 
     private ArrayList<StorageListItem> storageList;
     private StorageListManager storageListAdapter;
@@ -48,8 +47,7 @@ public class StorageActivity extends AppCompatActivity {
         storageListAdapter = new StorageListManager(this, storageList, this::showEditOptionsDialog);
         storageRecyclerView.setAdapter(storageListAdapter);
 
-        Subject s = new Subject(subjectId);
-        ArrayList<SubjectFile> subjectfiles = s.getFiles(getApplicationContext());
+        ArrayList<SubjectFile> subjectfiles = subject.getFiles(getApplicationContext());
         for(SubjectFile currentFile: subjectfiles) {
             subject.addStorageItem(currentFile);
             storageListAdapter.notifyDataSetChanged();
@@ -62,16 +60,11 @@ public class StorageActivity extends AppCompatActivity {
                         Uri uri = result.getData().getData();
                         if (uri != null) {
                             String fileName = getFileName(uri);
-                            //case handling for duplicate files (popup)?
                             try {
-                                // Get input stream from URI
                                 InputStream inputStream = getContentResolver().openInputStream(uri);
                                 if (inputStream != null) {
-                                    // Save file to internal storage via Subject
                                     SubjectFile savedFile = subject.saveFileToStorage(this, inputStream, fileName);
                                     if (savedFile != null) {
-                                        // File saved successfully and is accessible via subject.getFiles()
-                                        // Add to display list
                                         subject.addStorageItem(savedFile);
                                         storageListAdapter.notifyDataSetChanged();
                                     }
@@ -89,7 +82,38 @@ public class StorageActivity extends AppCompatActivity {
 
         FloatingActionButton genContentFab = findViewById(R.id.gen_content_fab);
         genContentFab.setOnClickListener(v -> {
-            //content
+            // Show a loading indicator and disable the button
+            Toast.makeText(StorageActivity.this, "Generating content, this may take a moment...", Toast.LENGTH_LONG).show();
+            genContentFab.setEnabled(false);
+
+            // Instantiate and call the asynchronous service
+            SubjectGenerationService generationService = new SubjectGenerationService();
+            generationService.generateContent(subject, StorageActivity.this, new SubjectGenerationService.GenerationCallback() {
+                @Override
+                public void onGenerationSuccess(Subject updatedSubject) {
+                    // This is executed on the main thread
+                    genContentFab.setEnabled(true);
+                    Toast.makeText(StorageActivity.this, "Content generated successfully!", Toast.LENGTH_LONG).show();
+
+                    // Navigate to the next screen to show the generated content
+                    Intent intent = new Intent(StorageActivity.this, ChallengeListActivity.class);
+                    intent.putExtra("SUBJECT_ID", updatedSubject.getSubjectId());
+                    startActivity(intent);
+                    finish(); // Finish this activity
+                }
+
+                @Override
+                public void onGenerationFailure(Exception e) {
+                    // This is executed on the main thread
+                    genContentFab.setEnabled(true);
+                    Log.e("GenerationFailed", "Error generating content", e);
+                    new AlertDialog.Builder(StorageActivity.this)
+                            .setTitle("Generation Failed")
+                            .setMessage("Could not generate content. Please check your connection and API key. Error: " + e.getMessage())
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show();
+                }
+            });
         });
     }
 
@@ -140,7 +164,6 @@ public class StorageActivity extends AppCompatActivity {
     private void showRenameDialog(int position) {
         StorageListItem item = storageList.get(position);
         showEditDialog(getString(R.string.rename_file), item.getTitle(), getString(R.string.rename), (newName) -> {
-            // Find and rename the corresponding file in storage
             ArrayList<SubjectFile> files = subject.getFiles(this);
             for (SubjectFile file : files) {
                 if (file.getFileName().equals(item.getTitle())) {
@@ -160,7 +183,6 @@ public class StorageActivity extends AppCompatActivity {
                 .setMessage(getString(R.string.confirm_delete_file))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                     StorageListItem item = storageList.get(position);
-                    // Find and delete the corresponding file from storage
                     ArrayList<SubjectFile> files = subject.getFiles(this);
                     for (SubjectFile file : files) {
                         if (file.getFileName().equals(item.getTitle())) {

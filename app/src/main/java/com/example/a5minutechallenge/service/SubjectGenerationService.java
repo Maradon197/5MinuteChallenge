@@ -4,6 +4,8 @@
 package com.example.a5minutechallenge.service;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
@@ -19,49 +21,59 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SubjectGenerationService {
     
     private static final String TAG = "SubjectGenerationService";
     
     private final GeminiContentProcessor geminiProcessor;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    /**
+     * Callback interface for generation results.
+     */
+    public interface GenerationCallback {
+        void onGenerationSuccess(Subject subject);
+        void onGenerationFailure(Exception e);
+    }
     
     public SubjectGenerationService() {
         this.geminiProcessor = new GeminiContentProcessor();
     }
     
     /**
-     * Generates content for a Subject from its uploaded files
+     * Asynchronously generates content for a Subject from its uploaded files.
+     * The result is delivered via the callback on the main UI thread.
      * @param subject The Subject to populate with generated content
      * @param context Android context for file access
-     * @return true if generation was successful, false otherwise
+     * @param callback Callback to handle success or failure
      */
-    public boolean generateContent(Subject subject, Context context) {
-        try {
-            // Get files for this subject
-            ArrayList<SubjectFile> files = subject.getFiles(context);
-            if (files == null || files.isEmpty()) {
-                Log.e(TAG, "No files found for subject");
-                return false;
+    public void generateContent(final Subject subject, final Context context, final GenerationCallback callback) {
+        executor.execute(() -> {
+            try {
+                // Get files for this subject
+                ArrayList<SubjectFile> files = subject.getFiles(context);
+                if (files == null || files.isEmpty()) {
+                    throw new IOException("No files found for subject");
+                }
+
+                // Process files with Gemini (This runs in the background)
+                String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(), context);
+
+                // Parse and populate subject
+                parseAndPopulateSubject(subject, jsonResponse);
+
+                // Post success result back to the main thread
+                handler.post(() -> callback.onGenerationSuccess(subject));
+
+            } catch (Exception e) {
+                // Post failure result back to the main thread
+                handler.post(() -> callback.onGenerationFailure(e));
             }
-            
-            // Process files with Gemini
-            String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle());
-            
-            // Parse and populate subject
-            parseAndPopulateSubject(subject, jsonResponse);
-            
-            return true;
-        } catch (IOException e) {
-            Log.e(TAG, "IO error during content generation", e);
-            return false;
-        } catch (JSONException e) {
-            Log.e(TAG, "JSON parsing error during content generation", e);
-            return false;
-        } catch (Exception e) {
-            Log.e(TAG, "Unexpected error during content generation", e);
-            return false;
-        }
+        });
     }
     
     /**

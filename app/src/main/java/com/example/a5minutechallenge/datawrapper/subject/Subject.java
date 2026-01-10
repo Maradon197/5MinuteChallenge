@@ -5,6 +5,7 @@
 package com.example.a5minutechallenge.datawrapper.subject;
 
 import android.content.Context;
+import android.widget.Toast;
 
 import com.example.a5minutechallenge.screens.storage.StorageListItem;
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
@@ -88,9 +89,14 @@ public class Subject {
                     topics.add(new Topic("Why are you lurking in my code?"));
                     break;
                 case 3:
+                    /*
                     topics.add(new Topic("HTML"));
                     topics.add(new Topic("CSS"));
                     topics.add(new Topic("JavaScript"));
+                     */
+
+
+
                     break;
                 default:
                     topics.add(new Topic("Topic 1"));
@@ -259,16 +265,6 @@ public class Subject {
         }
 
         return false;
-    }
-
-    /**
-     * Triggers AI content generation from uploaded files using Gemini API
-     * @param context The application context
-     * @return true if generation was successful, false otherwise
-     */
-    public boolean generateContentFromFiles(Context context) {
-        SubjectGenerationService generationService = new SubjectGenerationService();
-        return generationService.generateContent(this, context);
     }
 
     /**

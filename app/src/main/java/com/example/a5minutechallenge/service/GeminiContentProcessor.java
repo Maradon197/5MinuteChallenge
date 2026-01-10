@@ -5,6 +5,7 @@ package com.example.a5minutechallenge.service;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.a5minutechallenge.BuildConfig;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
@@ -46,7 +47,7 @@ public class GeminiContentProcessor {
      * @throws IOException if file processing fails
      * @throws JSONException if JSON generation fails
      */
-    public String processFiles(List<SubjectFile> files, String subjectTitle) throws IOException, JSONException {
+    public String processFiles(List<SubjectFile> files, String subjectTitle, Context context) throws IOException, JSONException {
         if (files == null || files.isEmpty()) {
             throw new IllegalArgumentException("No files provided for processing");
         }
@@ -86,12 +87,11 @@ public class GeminiContentProcessor {
         
         // Add generation config
         JSONObject generationConfig = new JSONObject();
-        generationConfig.put("temperature", 0.7);
+        generationConfig.put("temperature", 0.4);
         generationConfig.put("topK", 40);
         generationConfig.put("topP", 0.95);
         generationConfig.put("maxOutputTokens", 8192);
         request.put("generationConfig", generationConfig);
-        
         // Make API call
         String response = makeApiCall(request);
         
