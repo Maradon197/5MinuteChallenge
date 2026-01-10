@@ -86,6 +86,11 @@ public class StorageActivity extends AppCompatActivity {
 
         FloatingActionButton addFileFab = findViewById(R.id.add_file_fab);
         addFileFab.setOnClickListener(v -> openFilePicker());
+
+        FloatingActionButton genContentFab = findViewById(R.id.gen_content_fab);
+        genContentFab.setOnClickListener(v -> {
+            //content
+        });
     }
 
     private void openFilePicker() {
