@@ -22,13 +22,23 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class GeminiContentProcessor {
     
     private static final String TAG = "GeminiContentProcessor";
-    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
-    private static final int MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent";
+    private static final String COUNT_TOKENS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:countTokens";
+    private static final int MAX_FILE_SIZE = 50 * 1024 * 1024; // Increased to 50MB
+    private static final int MAX_TOKENS_PER_PART = 90000;
     
     private final String apiKey;
     
@@ -52,51 +62,79 @@ public class GeminiContentProcessor {
             throw new IllegalArgumentException("No files provided for processing");
         }
         
-        // Build the prompt
-        String prompt = buildPrompt(subjectTitle);
-        
-        // Create request JSON
-        JSONObject request = new JSONObject();
-        
-        // Add text prompt as first part
-        JSONObject textPart = new JSONObject();
-        textPart.put("text", prompt);
-        
-        // For simplicity, we'll combine file contents as text
-        // In a production implementation, we'd use proper file upload API
-        StringBuilder fileContents = new StringBuilder();
+        // Combine all file contents
+        StringBuilder fullContent = new StringBuilder();
         for (SubjectFile subjectFile : files) {
             File file = subjectFile.getFile();
             if (file.exists() && file.length() < MAX_FILE_SIZE) {
-                fileContents.append("\n\n=== File: ").append(subjectFile.getFileName()).append(" ===\n");
-                fileContents.append(readFileContent(file));
+                fullContent.append("\n\n=== File: ").append(subjectFile.getFileName()).append(" ===\n");
+                fullContent.append(readFileContent(file));
             }
         }
         
-        if (fileContents.length() > 0) {
-            JSONObject fileTextPart = new JSONObject();
-            fileTextPart.put("text", fileContents.toString());
-            request.put("contents", new org.json.JSONArray()
-                    .put(new JSONObject().put("parts", new org.json.JSONArray()
-                            .put(textPart)
-                            .put(fileTextPart))));
-        } else {
-            request.put("contents", new org.json.JSONArray()
-                    .put(new JSONObject().put("parts", new org.json.JSONArray().put(textPart))));
+        if (fullContent.length() == 0) {
+            throw new IOException("No readable content found in files");
+        }
+
+        // Split content into parts based on token count
+        List<String> contentParts = splitContentIntoParts(fullContent.toString());
+        
+        // Process parts in parallel for maximum productivity
+        ExecutorService partExecutor = Executors.newFixedThreadPool(Math.min(contentParts.size(), 5));
+        List<Future<String>> futures = new ArrayList<>();
+
+        for (int i = 0; i < contentParts.size(); i++) {
+            final int partIndex = i;
+            final String partContent = contentParts.get(i);
+            final int totalParts = contentParts.size();
+            
+            futures.add(partExecutor.submit(() -> {
+                String partInfo = totalParts > 1 ? " (Part " + (partIndex + 1) + " of " + totalParts + ")" : "";
+                String prompt = buildPrompt(subjectTitle + partInfo);
+                
+                JSONObject request = new JSONObject();
+                
+                // Add text prompt as first part
+                JSONObject textPart = new JSONObject();
+                textPart.put("text", prompt);
+                
+                JSONObject fileTextPart = new JSONObject();
+                fileTextPart.put("text", partContent);
+                
+                request.put("contents", new org.json.JSONArray()
+                        .put(new JSONObject().put("parts", new org.json.JSONArray()
+                                .put(textPart)
+                                .put(fileTextPart))));
+                
+                // Add generation config
+                JSONObject generationConfig = new JSONObject();
+                generationConfig.put("temperature", 0.4);
+                generationConfig.put("topK", 40);
+                generationConfig.put("topP", 0.95);
+                generationConfig.put("maxOutputTokens", 8192);
+                request.put("generationConfig", generationConfig);
+                
+                // Make API call
+                String response = makeApiCall(API_ENDPOINT, request);
+                
+                // Extract JSON from response
+                return extractJsonFromResponse(response);
+            }));
         }
         
-        // Add generation config
-        JSONObject generationConfig = new JSONObject();
-        generationConfig.put("temperature", 0.4);
-        generationConfig.put("topK", 40);
-        generationConfig.put("topP", 0.95);
-        generationConfig.put("maxOutputTokens", 8192);
-        request.put("generationConfig", generationConfig);
-        // Make API call
-        String response = makeApiCall(request);
+        List<String> jsonResponses = new ArrayList<>();
+        try {
+            for (Future<String> future : futures) {
+                jsonResponses.add(future.get());
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new IOException("Failed to process content parts in parallel: " + e.getMessage(), e);
+        } finally {
+            partExecutor.shutdown();
+        }
         
-        // Extract JSON from response
-        return extractJsonFromResponse(response);
+        // Merge results
+        return mergeJsonResponses(jsonResponses);
     }
     
     /**
@@ -117,8 +155,8 @@ public class GeminiContentProcessor {
     /**
      * Makes API call to Gemini
      */
-    private String makeApiCall(JSONObject request) throws IOException, JSONException {
-        URL url = new URL(API_ENDPOINT + "?key=" + apiKey);
+    private String makeApiCall(String endpoint, JSONObject request) throws IOException, JSONException {
+        URL url = new URL(endpoint + "?key=" + apiKey);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         
         try {
@@ -331,5 +369,117 @@ public class GeminiContentProcessor {
     public static boolean isApiKeyConfigured() {
         String apiKey = BuildConfig.GEMINI_API_KEY;
         return apiKey != null && !apiKey.isEmpty() && !apiKey.equals("null");
+    }
+
+    private List<String> splitContentIntoParts(String content) throws IOException, JSONException {
+        List<String> parts = new ArrayList<>();
+        String[] lines = content.split("\n");
+        int startIndex = 0;
+        
+        Log.d(TAG, "Splitting content of " + content.length() + " chars into parts...");
+
+        while (startIndex < lines.length) {
+            int low = startIndex;
+            int high = lines.length;
+            int bestEnd = startIndex + 1;
+            
+            // Binary search for the largest chunk that fits in MAX_TOKENS_PER_PART
+            while (low <= high) {
+                int mid = (low + high) / 2;
+                if (mid <= startIndex) {
+                    low = mid + 1;
+                    continue;
+                }
+                
+                StringBuilder sb = new StringBuilder();
+                for (int i = startIndex; i < mid; i++) {
+                    sb.append(lines[i]).append("\n");
+                }
+                
+                int tokens = countTokens(sb.toString());
+                if (tokens <= MAX_TOKENS_PER_PART) {
+                    bestEnd = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            
+            StringBuilder partBuffer = new StringBuilder();
+            for (int i = startIndex; i < bestEnd; i++) {
+                partBuffer.append(lines[i]).append("\n");
+            }
+            parts.add(partBuffer.toString());
+            Log.d(TAG, "Added part with " + (bestEnd - startIndex) + " lines");
+            startIndex = bestEnd;
+        }
+        
+        return parts;
+    }
+
+    private int countTokens(String text) throws IOException, JSONException {
+        JSONObject textPart = new JSONObject();
+        textPart.put("text", text);
+        
+        JSONObject content = new JSONObject();
+        content.put("parts", new org.json.JSONArray().put(textPart));
+        
+        JSONObject request = new JSONObject();
+        request.put("contents", new org.json.JSONArray().put(content));
+        
+        String response = makeApiCall(COUNT_TOKENS_ENDPOINT, request);
+        JSONObject jsonResponse = new JSONObject(response);
+        return jsonResponse.getInt("totalTokens");
+    }
+
+    private String mergeJsonResponses(List<String> responses) throws JSONException {
+        if (responses.isEmpty()) return "{\"topics\": []}";
+        if (responses.size() == 1) return responses.get(0);
+        
+        JSONObject first = new JSONObject(responses.get(0));
+        org.json.JSONArray allTopics = first.optJSONArray("topics");
+        if (allTopics == null) {
+            allTopics = new org.json.JSONArray();
+            first.put("topics", allTopics);
+        }
+        
+        // Map to keep track of topics by title for merging
+        Map<String, JSONObject> topicMap = new HashMap<>();
+        for (int i = 0; i < allTopics.length(); i++) {
+            JSONObject topic = allTopics.getJSONObject(i);
+            topicMap.put(topic.optString("title"), topic);
+        }
+        
+        for (int i = 1; i < responses.size(); i++) {
+            JSONObject next = new JSONObject(responses.get(i));
+            org.json.JSONArray nextTopics = next.optJSONArray("topics");
+            if (nextTopics != null) {
+                for (int j = 0; j < nextTopics.length(); j++) {
+                    JSONObject nextTopic = nextTopics.getJSONObject(j);
+                    String title = nextTopic.optString("title");
+                    
+                    if (topicMap.containsKey(title)) {
+                        // Merge challenges into existing topic
+                        JSONObject existingTopic = topicMap.get(title);
+                        org.json.JSONArray existingChallenges = existingTopic.optJSONArray("challenges");
+                        org.json.JSONArray nextChallenges = nextTopic.optJSONArray("challenges");
+                        
+                        if (existingChallenges != null && nextChallenges != null) {
+                            for (int k = 0; k < nextChallenges.length(); k++) {
+                                existingChallenges.put(nextChallenges.get(k));
+                            }
+                        } else if (nextChallenges != null) {
+                            existingTopic.put("challenges", nextChallenges);
+                        }
+                    } else {
+                        // Add new topic
+                        allTopics.put(nextTopic);
+                        topicMap.put(title, nextTopic);
+                    }
+                }
+            }
+        }
+        
+        return first.toString();
     }
 }
