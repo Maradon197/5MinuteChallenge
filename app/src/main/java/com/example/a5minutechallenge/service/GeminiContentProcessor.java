@@ -1,17 +1,21 @@
-/** Service for processing files with Google's Gemini 2.5 Pro API.
+/** Service for processing files with Google's Gemini 2.0 Pro API.
  * Handles file uploads and structured content generation.
  */
 package com.example.a5minutechallenge.service;
 
 import android.content.Context;
+import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.a5minutechallenge.BuildConfig;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
+import com.tom_roush.pdfbox.text.PDFTextStripper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,24 +27,30 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class GeminiContentProcessor {
     
     private static final String TAG = "GeminiContentProcessor";
-    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent";
-    private static final String COUNT_TOKENS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:countTokens";
+    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private static final String COUNT_TOKENS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens";
     private static final int MAX_FILE_SIZE = 50 * 1024 * 1024; // Increased to 50MB
-    private static final int MAX_TOKENS_PER_PART = 90000;
+    private static final int MAX_TOKENS_PER_PART = 300000;
+    private static final int PDF_PAGES_PER_CHUNK = 50;
+    private static final long MAX_RETRY_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+    private static final long INITIAL_RETRY_DELAY_MS = 2000; // 2 seconds
+    private static final long MAX_RETRY_DELAY_MS = 30000; // 30 seconds    
     
     private final String apiKey;
+    private final AtomicLong totalTokensProcessed = new AtomicLong(0);
+    private final AtomicInteger activeThreads = new AtomicInteger(0);
+    private final AtomicInteger rateLimitedThreads = new AtomicInteger(0);
     
     public GeminiContentProcessor() {
         this.apiKey = BuildConfig.GEMINI_API_KEY;
@@ -58,67 +68,133 @@ public class GeminiContentProcessor {
      * @throws JSONException if JSON generation fails
      */
     public String processFiles(List<SubjectFile> files, String subjectTitle, Context context) throws IOException, JSONException {
+        // Initialize PDFBox resource loader so embedded glyphlists and other
+        // PDF resources are available on Android at runtime.
+        try {
+            PDFBoxResourceLoader.init(context);
+        } catch (Exception e) {
+            Log.w(TAG, "PDFBoxResourceLoader.init failed: " + e.getMessage());
+        }
+
         if (files == null || files.isEmpty()) {
             throw new IllegalArgumentException("No files provided for processing");
         }
         
-        // Combine all file contents
-        StringBuilder fullContent = new StringBuilder();
+        List<JSONObject> allParts = new ArrayList<>();
+        List<String> textBlocks = new ArrayList<>();
+        StringBuilder textCollector = new StringBuilder();
+
         for (SubjectFile subjectFile : files) {
             File file = subjectFile.getFile();
-            if (file.exists() && file.length() < MAX_FILE_SIZE) {
-                fullContent.append("\n\n=== File: ").append(subjectFile.getFileName()).append(" ===\n");
-                fullContent.append(readFileContent(file));
+            if (!file.exists() || file.length() >= MAX_FILE_SIZE) {
+                continue;
+            }
+
+            String mimeType = getMimeType(file);
+            if ("application/pdf".equals(mimeType)) {
+                flushTextCollector(textCollector, textBlocks);
+                List<PdfChunk> pdfChunks = extractPdfChunks(file, PDF_PAGES_PER_CHUNK);
+                for (PdfChunk chunk : pdfChunks) {
+                    textBlocks.add(String.format("\n\n=== File: %s (Pages %d-%d) ===\n%s",
+                            subjectFile.getFileName(), chunk.startPage, chunk.endPage, chunk.text));
+                }
+            } else if (isBinaryMimeType(mimeType)) {
+                flushTextCollector(textCollector, textBlocks);
+                JSONObject inlineData = new JSONObject();
+                inlineData.put("mime_type", mimeType);
+                inlineData.put("data", fileToBase64(file));
+
+                JSONObject part = new JSONObject();
+                part.put("inline_data", inlineData);
+                allParts.add(part);
+            } else {
+                textCollector.append("\n\n=== File: ").append(subjectFile.getFileName()).append(" ===\n");
+                textCollector.append(readFileContent(file));
             }
         }
-        
-        if (fullContent.length() == 0) {
+        flushTextCollector(textCollector, textBlocks);
+
+        for (String block : textBlocks) {
+            List<String> textSegments = splitTextIntoSegments(block);
+            for (String segment : textSegments) {
+                JSONObject part = new JSONObject();
+                part.put("text", segment);
+                allParts.add(part);
+            }
+        }
+
+        if (allParts.isEmpty()) {
             throw new IOException("No readable content found in files");
         }
 
-        // Split content into parts based on token count
-        List<String> contentParts = splitContentIntoParts(fullContent.toString());
+        // Group all parts into chunks that fit the token limit per request
+        List<org.json.JSONArray> chunks = groupPartsIntoChunks(allParts);
         
-        // Process parts in parallel for maximum productivity
-        ExecutorService partExecutor = Executors.newFixedThreadPool(Math.min(contentParts.size(), 5));
+        // Process chunks in parallel for maximum productivity
+        ExecutorService partExecutor = Executors.newFixedThreadPool(Math.min(chunks.size(), 5));
         List<Future<String>> futures = new ArrayList<>();
 
-        for (int i = 0; i < contentParts.size(); i++) {
-            final int partIndex = i;
-            final String partContent = contentParts.get(i);
-            final int totalParts = contentParts.size();
+        for (int i = 0; i < chunks.size(); i++) {
+            final int chunkIndex = i;
+            final org.json.JSONArray requestParts = chunks.get(i);
+            final int totalChunks = chunks.size();
             
             futures.add(partExecutor.submit(() -> {
-                String partInfo = totalParts > 1 ? " (Part " + (partIndex + 1) + " of " + totalParts + ")" : "";
-                String prompt = buildPrompt(subjectTitle + partInfo);
+                long partStartTime = System.currentTimeMillis();
+                long currentDelay = INITIAL_RETRY_DELAY_MS;
                 
-                JSONObject request = new JSONObject();
-                
-                // Add text prompt as first part
-                JSONObject textPart = new JSONObject();
-                textPart.put("text", prompt);
-                
-                JSONObject fileTextPart = new JSONObject();
-                fileTextPart.put("text", partContent);
-                
-                request.put("contents", new org.json.JSONArray()
-                        .put(new JSONObject().put("parts", new org.json.JSONArray()
-                                .put(textPart)
-                                .put(fileTextPart))));
-                
-                // Add generation config
-                JSONObject generationConfig = new JSONObject();
-                generationConfig.put("temperature", 0.4);
-                generationConfig.put("topK", 40);
-                generationConfig.put("topP", 0.95);
-                generationConfig.put("maxOutputTokens", 8192);
-                request.put("generationConfig", generationConfig);
-                
-                // Make API call
-                String response = makeApiCall(API_ENDPOINT, request);
-                
-                // Extract JSON from response
-                return extractJsonFromResponse(response);
+                while (true) {
+                    try {
+                        String partInfo = totalChunks > 1 ? " (Part " + (chunkIndex + 1) + " of " + totalChunks + ")" : "";
+                        String prompt = buildPrompt(subjectTitle + partInfo);
+                        
+                        JSONObject request = new JSONObject();
+                        
+                        // Add text prompt as first part
+                        JSONObject textPromptPart = new JSONObject();
+                        textPromptPart.put("text", prompt);
+                        
+                        org.json.JSONArray finalParts = new org.json.JSONArray();
+                        finalParts.put(textPromptPart);
+                        for (int j = 0; j < requestParts.length(); j++) {
+                            finalParts.put(requestParts.get(j));
+                        }
+                        
+                        request.put("contents", new org.json.JSONArray()
+                                .put(new JSONObject().put("parts", finalParts)));
+                        
+                        // Add generation config
+                        JSONObject generationConfig = new JSONObject();
+                        generationConfig.put("temperature", 0.4);
+                        generationConfig.put("topK", 40);
+                        generationConfig.put("topP", 0.95);
+                        generationConfig.put("maxOutputTokens", 8192);
+                        request.put("generationConfig", generationConfig);
+                        
+                        // Make API call
+                        String response = makeApiCall(API_ENDPOINT, request);
+                        
+                        // Extract JSON from response
+                        return extractJsonFromResponse(response);
+                        
+                    } catch (JSONException | IOException e) {
+                        long elapsed = System.currentTimeMillis() - partStartTime;
+                        if (elapsed < MAX_RETRY_DURATION_MS) {
+                            Log.w(TAG, String.format("Error processing chunk %d. Retrying in %dms... (%s)", 
+                                (chunkIndex + 1), currentDelay, e.getMessage()));
+                            try {
+                                Thread.sleep(currentDelay);
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                throw new IOException("Retry interrupted", ie);
+                            }
+                            currentDelay = Math.min(currentDelay * 2, MAX_RETRY_DELAY_MS);
+                        } else {
+                            Log.e(TAG, "Exceeded retry duration for chunk " + (chunkIndex + 1));
+                            throw e;
+                        }
+                    }
+                }
             }));
         }
         
@@ -128,262 +204,120 @@ public class GeminiContentProcessor {
                 jsonResponses.add(future.get());
             }
         } catch (InterruptedException | ExecutionException e) {
-            throw new IOException("Failed to process content parts in parallel: " + e.getMessage(), e);
+            throw new IOException("Failed to process chunks in parallel: " + e.getMessage(), e);
         } finally {
             partExecutor.shutdown();
         }
         
         // Merge results
-        return mergeJsonResponses(jsonResponses);
-    }
-    
-    /**
-     * Reads file content as text
-     */
-    private String readFileContent(File file) throws IOException {
-        StringBuilder content = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-        }
-        return content.toString();
-    }
-    
-    /**
-     * Makes API call to Gemini
-     */
-    private String makeApiCall(String endpoint, JSONObject request) throws IOException, JSONException {
-        URL url = new URL(endpoint + "?key=" + apiKey);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        
-        try {
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-            
-            // Send request
-            try (OutputStream os = conn.getOutputStream()) {
-                byte[] input = request.toString().getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-            
-            // Read response
-            int responseCode = conn.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                String errorBody = readErrorResponse(conn);
-                throw new IOException("API call failed with code " + responseCode + ": " + errorBody);
-            }
-            
-            StringBuilder response = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    response.append(line);
-                }
-            }
-            
-            return response.toString();
-        } finally {
-            conn.disconnect();
-        }
-    }
-    
-    /**
-     * Reads error response from API
-     */
-    private String readErrorResponse(HttpURLConnection conn) {
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                response.append(line);
-            }
-            return response.toString();
-        } catch (Exception e) {
-            return "Unable to read error response";
-        }
-    }
-    
-    /**
-     * Extracts the generated text from API response
-     */
-    private String extractJsonFromResponse(String responseText) throws JSONException {
-        JSONObject response = new JSONObject(responseText);
-        
-        if (response.has("candidates")) {
-            org.json.JSONArray candidates = response.getJSONArray("candidates");
-            if (candidates.length() > 0) {
-                JSONObject candidate = candidates.getJSONObject(0);
-                if (candidate.has("content")) {
-                    JSONObject content = candidate.getJSONObject("content");
-                    if (content.has("parts")) {
-                        org.json.JSONArray parts = content.getJSONArray("parts");
-                        if (parts.length() > 0) {
-                            JSONObject part = parts.getJSONObject(0);
-                            if (part.has("text")) {
-                                String text = part.getString("text");
-                                return extractJson(text);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        throw new JSONException("Unable to extract text from API response");
-    }
-    
-    /**
-     * Builds the structured prompt for Gemini
-     */
-    private String buildPrompt(String subjectTitle) {
-        return "You are an expert educational content creator. Analyze the provided files and create comprehensive, structured learning content.\n\n" +
-                "Subject: " + subjectTitle + "\n\n" +
-                "CRITICAL REQUIREMENTS:\n" +
-                "1. Extract EVERY piece of information from the files - DO NOT summarize or omit anything\n" +
-                "2. Preserve all technical terminology, examples, and details exactly as they appear\n" +
-                "3. Organize content into Topics that group related concepts\n" +
-                "4. Split each Topic into multiple 5-minute Challenges (each with 3-7 content containers)\n" +
-                "5. Use diverse container types for engagement and learning effectiveness\n" +
-                "6. Ensure technical accuracy and maintain the original depth of information\n\n" +
-                "OUTPUT FORMAT:\n" +
-                "Return ONLY valid JSON matching this exact schema (no markdown, no additional text):\n\n" +
-                "{\n" +
-                "  \"topics\": [\n" +
-                "    {\n" +
-                "      \"title\": \"Topic Name\",\n" +
-                "      \"challenges\": [\n" +
-                "        {\n" +
-                "          \"title\": \"Challenge Name\",\n" +
-                "          \"description\": \"Brief description\",\n" +
-                "          \"containers\": [\n" +
-                "            // Container objects - see types below\n" +
-                "          ]\n" +
-                "        }\n" +
-                "      ]\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}\n\n" +
-                "CONTAINER TYPES:\n\n" +
-                "1. TITLE (for section headings):\n" +
-                "{\n" +
-                "  \"type\": \"TITLE\",\n" +
-                "  \"title\": \"Section heading\"\n" +
-                "}\n\n" +
-                "2. TEXT (for explanations):\n" +
-                "{\n" +
-                "  \"type\": \"TEXT\",\n" +
-                "  \"text\": \"Detailed content\"\n" +
-                "}\n\n" +
-                "3. MULTIPLE_CHOICE_QUIZ:\n" +
-                "{\n" +
-                "  \"type\": \"MULTIPLE_CHOICE_QUIZ\",\n" +
-                "  \"question\": \"Question text\",\n" +
-                "  \"options\": [\"Option 1\", \"Option 2\", \"Option 3\", \"Option 4\"],\n" +
-                "  \"correctAnswerIndices\": [0],\n" +
-                "  \"allowMultipleAnswers\": false,\n" +
-                "  \"explanationText\": \"Why this is correct\"\n" +
-                "}\n\n" +
-                "4. FILL_IN_THE_GAPS:\n" +
-                "{\n" +
-                "  \"type\": \"FILL_IN_THE_GAPS\",\n" +
-                "  \"textTemplate\": \"Text with {} placeholders for {} gaps\",\n" +
-                "  \"correctWords\": [\"word1\", \"word2\"],\n" +
-                "  \"wordOptions\": [\"word1\", \"word2\", \"distractor1\", \"distractor2\"]\n" +
-                "}\n\n" +
-                "5. SORTING_TASK:\n" +
-                "{\n" +
-                "  \"type\": \"SORTING_TASK\",\n" +
-                "  \"instructions\": \"Put in correct order\",\n" +
-                "  \"correctOrder\": [\"First\", \"Second\", \"Third\"]\n" +
-                "}\n\n" +
-                "6. ERROR_SPOTTING:\n" +
-                "{\n" +
-                "  \"type\": \"ERROR_SPOTTING\",\n" +
-                "  \"instructions\": \"Find the error\",\n" +
-                "  \"items\": [\"Item1\", \"Item2\", \"Incorrect item\", \"Item3\"],\n" +
-                "  \"errorIndex\": 2,\n" +
-                "  \"explanationText\": \"Why it's wrong\"\n" +
-                "}\n\n" +
-                "7. REVERSE_QUIZ:\n" +
-                "{\n" +
-                "  \"type\": \"REVERSE_QUIZ\",\n" +
-                "  \"answer\": \"The answer\",\n" +
-                "  \"questionOptions\": [\"Question 1?\", \"Question 2?\", \"Correct question?\"],\n" +
-                "  \"correctQuestionIndex\": 2,\n" +
-                "  \"explanationText\": \"Why this question fits\"\n" +
-                "}\n\n" +
-                "8. WIRE_CONNECTING:\n" +
-                "{\n" +
-                "  \"type\": \"WIRE_CONNECTING\",\n" +
-                "  \"instructions\": \"Match items\",\n" +
-                "  \"leftItems\": [\"Term 1\", \"Term 2\"],\n" +
-                "  \"rightItems\": [\"Definition A\", \"Definition B\"],\n" +
-                "  \"correctMatches\": {\"0\": 1, \"1\": 0}\n" +
-                "}\n\n" +
-                "9. RECAP:\n" +
-                "{\n" +
-                "  \"type\": \"RECAP\",\n" +
-                "  \"recapTitle\": \"Review\",\n" +
-                "  \"wrappedContainer\": { /* any container type */ }\n" +
-                "}\n\n" +
-                "IMPORTANT:\n" +
-                "- Each Challenge should take approximately 5 minutes to complete\n" +
-                "- Include 3-7 containers per Challenge\n" +
-                "- Vary container types to maintain engagement\n" +
-                "- Preserve all information from source files\n" +
-                "- Output ONLY valid JSON, no markdown formatting\n";
-    }
-    
-    /**
-     * Extracts JSON from response, handling markdown code blocks
-     */
-    private String extractJson(String responseText) {
-        if (responseText == null || responseText.isEmpty()) {
-            return "{}";
-        }
-        
-        // Remove markdown code blocks if present
-        String cleaned = responseText.trim();
-        if (cleaned.startsWith("```json")) {
-            cleaned = cleaned.substring(7);
-        } else if (cleaned.startsWith("```")) {
-            cleaned = cleaned.substring(3);
-        }
-        
-        if (cleaned.endsWith("```")) {
-            cleaned = cleaned.substring(0, cleaned.length() - 3);
-        }
-        
-        return cleaned.trim();
-    }
-    
-    /**
-     * Validates that the API key is configured
-     */
-    public static boolean isApiKeyConfigured() {
-        String apiKey = BuildConfig.GEMINI_API_KEY;
-        return apiKey != null && !apiKey.isEmpty() && !apiKey.equals("null");
+        String mergedResult = mergeJsonResponses(jsonResponses);
+        Log.i(TAG, String.format("Processing complete. Total tokens used so far: %d", totalTokensProcessed.get()));
+        return mergedResult;
     }
 
-    private List<String> splitContentIntoParts(String content) throws IOException, JSONException {
-        List<String> parts = new ArrayList<>();
+    private String getMimeType(File file) {
+        String name = file.getName().toLowerCase();
+        if (name.endsWith(".pdf")) return "application/pdf";
+        if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+        if (name.endsWith(".png")) return "image/png";
+        if (name.endsWith(".webp")) return "image/webp";
+        return "text/plain";
+    }
+
+    private boolean isBinaryMimeType(String mimeType) {
+        return mimeType.startsWith("image/");
+    }
+
+    private String fileToBase64(File file) throws IOException {
+        byte[] bytes = new byte[(int) file.length()];
+        try (FileInputStream fis = new FileInputStream(file)) {
+            int readTotal = 0;
+            while (readTotal < bytes.length) {
+                int read = fis.read(bytes, readTotal, bytes.length - readTotal);
+                if (read == -1) break;
+                readTotal += read;
+            }
+        }
+        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
+
+    private List<org.json.JSONArray> groupPartsIntoChunks(List<JSONObject> allParts) throws IOException, JSONException {
+        List<org.json.JSONArray> chunks = new ArrayList<>();
+        org.json.JSONArray currentChunk = new org.json.JSONArray();
+        int currentChunkTokens = 0;
+        
+        // Token overhead for the prompt
+        int promptTokens = countTokens(new org.json.JSONArray().put(new JSONObject().put("text", buildPrompt(""))));
+
+        for (JSONObject part : allParts) {
+            int partTokens = countTokens(new org.json.JSONArray().put(part));
+            
+            if (currentChunk.length() > 0 && currentChunkTokens + partTokens + promptTokens > MAX_TOKENS_PER_PART) {
+                chunks.add(currentChunk);
+                currentChunk = new org.json.JSONArray();
+                currentChunkTokens = 0;
+            }
+            
+            currentChunk.put(part);
+            currentChunkTokens += partTokens;
+        }
+
+        if (currentChunk.length() > 0) {
+            chunks.add(currentChunk);
+        }
+
+        return chunks;
+    }
+
+    private void flushTextCollector(StringBuilder collector, List<String> blocks) {
+        if (collector.length() > 0) {
+            blocks.add(collector.toString());
+            collector.setLength(0);
+        }
+    }
+
+    private List<PdfChunk> extractPdfChunks(File file, int pagesPerChunk) throws IOException {
+        List<PdfChunk> chunks = new ArrayList<>();
+        try (PDDocument document = PDDocument.load(file)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            int totalPages = document.getNumberOfPages();
+            int currentPage = 1;
+            while (currentPage <= totalPages) {
+                int endPage = Math.min(currentPage + pagesPerChunk - 1, totalPages);
+                stripper.setStartPage(currentPage);
+                stripper.setEndPage(endPage);
+                String text = stripper.getText(document).trim();
+                if (!text.isEmpty()) {
+                    chunks.add(new PdfChunk(text, currentPage, endPage));
+                }
+                currentPage = endPage + 1;
+            }
+        }
+        return chunks;
+    }
+
+    private static final class PdfChunk {
+        final String text;
+        final int startPage;
+        final int endPage;
+
+        private PdfChunk(String text, int startPage, int endPage) {
+            this.text = text;
+            this.startPage = startPage;
+            this.endPage = endPage;
+        }
+    }
+
+    private List<String> splitTextIntoSegments(String content) throws IOException, JSONException {
+        List<String> segments = new ArrayList<>();
         String[] lines = content.split("\n");
         int startIndex = 0;
         
-        Log.d(TAG, "Splitting content of " + content.length() + " chars into parts...");
-
         while (startIndex < lines.length) {
             int low = startIndex;
             int high = lines.length;
             int bestEnd = startIndex + 1;
             
-            // Binary search for the largest chunk that fits in MAX_TOKENS_PER_PART
             while (low <= high) {
                 int mid = (low + high) / 2;
                 if (mid <= startIndex) {
@@ -396,8 +330,11 @@ public class GeminiContentProcessor {
                     sb.append(lines[i]).append("\n");
                 }
                 
-                int tokens = countTokens(sb.toString());
-                if (tokens <= MAX_TOKENS_PER_PART) {
+                JSONObject part = new JSONObject();
+                part.put("text", sb.toString());
+                int tokens = countTokens(new org.json.JSONArray().put(part));
+                
+                if (tokens <= MAX_TOKENS_PER_PART / 2) { // Allow space for prompt and binary parts
                     bestEnd = mid;
                     low = mid + 1;
                 } else {
@@ -405,81 +342,227 @@ public class GeminiContentProcessor {
                 }
             }
             
-            StringBuilder partBuffer = new StringBuilder();
+            StringBuilder buffer = new StringBuilder();
             for (int i = startIndex; i < bestEnd; i++) {
-                partBuffer.append(lines[i]).append("\n");
+                buffer.append(lines[i]).append("\n");
             }
-            parts.add(partBuffer.toString());
-            Log.d(TAG, "Added part with " + (bestEnd - startIndex) + " lines");
+            segments.add(buffer.toString());
             startIndex = bestEnd;
         }
+        return segments;
+    }
+    
+    /**
+     * Reads file content as text and sanitizes it by removing non-printable characters
+     */
+    private String readFileContent(File file) throws IOException {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Remove non-printable characters except common whitespace
+                String sanitized = line.replaceAll("[^\\x20-\\x7E\\x0A\\x0D\\x09\\u00A0-\\uD7FF\\\uE000-\\uFFFD]", "");
+                content.append(sanitized).append("\n");
+            }
+        }
+        return content.toString();
+    }
+    
+    /**
+     * Makes API call to Gemini with retry logic for rate limiting
+     */
+    private String makeApiCall(String endpoint, JSONObject request) throws IOException, JSONException {
+        long startTime = System.currentTimeMillis();
+        long currentDelay = INITIAL_RETRY_DELAY_MS;
         
-        return parts;
+        activeThreads.incrementAndGet();
+        try {
+            while (true) {
+                URL url = new URL(endpoint + "?key=" + apiKey);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                
+                try {
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setDoOutput(true);
+                    
+                    // Send request
+                    try (OutputStream os = conn.getOutputStream()) {
+                        byte[] input = request.toString().getBytes(StandardCharsets.UTF_8);
+                        os.write(input, 0, input.length);
+                    }
+                    
+                    // Read response
+                    int responseCode = conn.getResponseCode();
+                    
+                    if (responseCode == 429) { // Rate limited
+                        rateLimitedThreads.incrementAndGet();
+                        long elapsed = System.currentTimeMillis() - startTime;
+                        try {
+                            if (elapsed < MAX_RETRY_DURATION_MS) {
+                                Log.w(TAG, String.format("Rate limited (429). [%d active, %d rate-limited] Retrying in %dms... (Total wait: %ds)", 
+                                    activeThreads.get(), rateLimitedThreads.get(), currentDelay, (elapsed / 1000)));
+                                try {
+                                    Thread.sleep(currentDelay);
+                                } catch (InterruptedException ie) {
+                                    Thread.currentThread().interrupt();
+                                    throw new IOException("Retry interrupted", ie);
+                                }
+                            } else {
+                                throw new IOException("Exceeded retry duration for rate limit");
+                            }
+                        } finally {
+                            rateLimitedThreads.decrementAndGet();
+                        }
+                        currentDelay = Math.min(currentDelay * 2, MAX_RETRY_DELAY_MS);
+                        continue;
+                    }
+                    
+                    if (responseCode >= 400) {
+                        throw new IOException("HTTP Error: " + responseCode + " - " + conn.getResponseMessage());
+                    }
+                    
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                        StringBuilder response = new StringBuilder();
+                        String responseLine;
+                        while ((responseLine = br.readLine()) != null) {
+                            response.append(responseLine.trim());
+                        }
+                        return response.toString();
+                    }
+                } finally {
+                    conn.disconnect();
+                }
+            }
+        } finally {
+            activeThreads.decrementAndGet();
+        }
     }
 
-    private int countTokens(String text) throws IOException, JSONException {
-        JSONObject textPart = new JSONObject();
-        textPart.put("text", text);
-        
-        JSONObject content = new JSONObject();
-        content.put("parts", new org.json.JSONArray().put(textPart));
-        
+    /**
+     * Counts tokens for a given set of parts by calling the countTokens endpoint
+     */
+    private int countTokens(org.json.JSONArray parts) throws IOException, JSONException {
         JSONObject request = new JSONObject();
-        request.put("contents", new org.json.JSONArray().put(content));
+        request.put("contents", new org.json.JSONArray()
+                .put(new JSONObject().put("parts", parts)));
         
         String response = makeApiCall(COUNT_TOKENS_ENDPOINT, request);
         JSONObject jsonResponse = new JSONObject(response);
-        return jsonResponse.getInt("totalTokens");
+        int tokens = jsonResponse.getInt("totalTokens");
+        totalTokensProcessed.addAndGet(tokens);
+        return tokens;
     }
 
-    private String mergeJsonResponses(List<String> responses) throws JSONException {
-        if (responses.isEmpty()) return "{\"topics\": []}";
-        if (responses.size() == 1) return responses.get(0);
-        
-        JSONObject first = new JSONObject(responses.get(0));
-        org.json.JSONArray allTopics = first.optJSONArray("topics");
-        if (allTopics == null) {
-            allTopics = new org.json.JSONArray();
-            first.put("topics", allTopics);
+    /**
+     * Extracts the generated JSON content from the Gemini API response
+     */
+    private String extractJsonFromResponse(String response) throws IOException {
+        try {
+            JSONObject jsonResponse = new JSONObject(response);
+            String text = jsonResponse
+                    .getJSONArray("candidates")
+                    .getJSONObject(0)
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text");
+            
+            // Clean up the response, removing markdown backticks
+            return text.replaceAll("```json", "").replaceAll("```", "").trim();
+        } catch (JSONException e) {
+            throw new IOException("Failed to parse JSON from Gemini response: " + response, e);
         }
-        
-        // Map to keep track of topics by title for merging
-        Map<String, JSONObject> topicMap = new HashMap<>();
-        for (int i = 0; i < allTopics.length(); i++) {
-            JSONObject topic = allTopics.getJSONObject(i);
-            topicMap.put(topic.optString("title"), topic);
+    }
+
+    /**
+     * Merges JSON responses from multiple chunks into a single valid JSON string
+     */
+    private String mergeJsonResponses(List<String> jsonResponses) throws JSONException {
+        if (jsonResponses.isEmpty()) {
+            return "{}";
         }
-        
-        for (int i = 1; i < responses.size(); i++) {
-            JSONObject next = new JSONObject(responses.get(i));
-            org.json.JSONArray nextTopics = next.optJSONArray("topics");
-            if (nextTopics != null) {
-                for (int j = 0; j < nextTopics.length(); j++) {
-                    JSONObject nextTopic = nextTopics.getJSONObject(j);
-                    String title = nextTopic.optString("title");
-                    
-                    if (topicMap.containsKey(title)) {
-                        // Merge challenges into existing topic
-                        JSONObject existingTopic = topicMap.get(title);
-                        org.json.JSONArray existingChallenges = existingTopic.optJSONArray("challenges");
-                        org.json.JSONArray nextChallenges = nextTopic.optJSONArray("challenges");
-                        
-                        if (existingChallenges != null && nextChallenges != null) {
-                            for (int k = 0; k < nextChallenges.length(); k++) {
-                                existingChallenges.put(nextChallenges.get(k));
-                            }
-                        } else if (nextChallenges != null) {
-                            existingTopic.put("challenges", nextChallenges);
-                        }
-                    } else {
-                        // Add new topic
-                        allTopics.put(nextTopic);
-                        topicMap.put(title, nextTopic);
+        if (jsonResponses.size() == 1) {
+            return jsonResponses.get(0);
+        }
+
+        JSONObject mergedRoot = new JSONObject();
+        org.json.JSONArray mergedTopics = new org.json.JSONArray();
+        mergedRoot.put("topics", mergedTopics);
+
+        for (String jsonStr : jsonResponses) {
+            try {
+                JSONObject chunkRoot = new JSONObject(jsonStr);
+                if (chunkRoot.has("topics")) {
+                    org.json.JSONArray chunkTopics = chunkRoot.getJSONArray("topics");
+                    for (int i = 0; i < chunkTopics.length(); i++) {
+                        mergedTopics.put(chunkTopics.getJSONObject(i));
                     }
                 }
+            } catch (JSONException e) {
+                Log.w(TAG, "Failed to parse a JSON chunk: " + jsonStr);
             }
         }
-        
-        return first.toString();
+
+        return mergedRoot.toString();
+    }
+
+    /**
+     * Builds the main prompt for content generation
+     */
+    private String buildPrompt(String subjectTitle) {
+        return """
+Your task is to act as a structured learning content generator. I will provide you with one or more documents (text, PDFs, images). 
+Based *only* on the content of these documents, you will generate a structured JSON object that breaks down the information into topics, challenges, and content containers. 
+Do not use any information outside of the provided documents.
+
+Subject Title: {subjectTitle}
+
+Follow this JSON schema strictly:
+
+{
+  "topics": [
+    {
+      "title": "<A concise, descriptive title for a main topic covered in the documents>",
+      "challenges": [
+        {
+          "title": "<A concise title for a specific challenge or lesson within this topic>",
+          "description": "<An optional, brief (1-2 sentences) description of the challenge>",
+          "containers": [
+            {
+              "type": "<Type of content: 'PlainText', 'Image', 'MultipleChoice', 'TrueFalse'>",
+              // For PlainText
+              "content": "<A paragraph of text explaining a concept. Use markdown for formatting if necessary.>",
+              // For Image
+              "image_description": "<A detailed description of the image content>",
+              // For MultipleChoice
+              "question": "<The multiple-choice question>",
+              "options": ["<Option A>", "<Option B>", "<Option C>", "<Option D>"],
+              "correct_answer_index": <Index of the correct answer (0-3)>,
+              "explanation": "<An explanation for why the correct answer is right>",
+              // For TrueFalse
+              "statement": "<The statement to be evaluated>",
+              "is_true": <true or false>,
+              "explanation": "<An explanation for why the statement is true or false>"
+            }
+            // ... more containers
+          ]
+        }
+        // ... more challenges
+      ]
+    }
+    // ... more topics
+  ]
+}
+
+- Analyze the documents and identify the main learning topics.
+- For each topic, create 1-5 specific challenges or lessons.
+- For each challenge, create a sequence of 'content containers' to teach the concept step-by-step. Use a mix of PlainText, MultipleChoice, and TrueFalse questions.
+- If you encounter images, describe them in an 'Image' container. Do not analyze or interpret them beyond what is visible.
+- Ensure all generated content is directly and exclusively derived from the provided documents.
+- Do not include a container if you cannot find relevant information in the documents.
+- The final output must be a single, valid JSON object and nothing else.
+""".replace("{subjectTitle}", subjectTitle);
     }
 }

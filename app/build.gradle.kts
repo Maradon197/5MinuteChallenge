@@ -35,12 +35,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     packagingOptions {
         resources.excludes.add("META-INF/INDEX.LIST")
         resources.excludes.add("META-INF/DEPENDENCIES")
+        // Ensure pdfbox native resource files (glyph lists, etc.) are packaged
+        // so `com/tom_roush/pdfbox/resources/glyphlist/glyphlist.txt` can be loaded at runtime.
+        resources.pickFirsts.add("com/tom_roush/pdfbox/resources/**")
+        resources.pickFirsts.add("com/tom_roush/pdfbox/resources/glyphlist/glyphlist.txt")
     }
     buildFeatures {
         buildConfig = true
@@ -60,4 +64,5 @@ dependencies {
     implementation("org.json:json:20251224")
     implementation("com.fasterxml.jackson.core:jackson-core:2.20.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 }
