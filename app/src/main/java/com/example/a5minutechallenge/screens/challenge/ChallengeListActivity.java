@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.a5minutechallenge.screens.fiveminute.FiveMinuteActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
+import com.example.a5minutechallenge.datawrapper.challenge.ChallengeManager;
 
 import java.util.ArrayList;
 
@@ -69,23 +70,33 @@ public class ChallengeListActivity extends AppCompatActivity {
      * @return ArrayList of challenges
      */
     private ArrayList<Challenge> loadChallengesForTopic(String topicName) {
-        ArrayList<Challenge> challenges = new ArrayList<>();
+        // Check if challenges already exist in manager
+        ChallengeManager manager = ChallengeManager.getInstance();
+        ArrayList<Challenge> challenges = manager.getChallengesForTopic(topicName);
         
-        //Dummy data for presentation PLEASE LEAVE HERE
-        challenges.add(new Challenge(
-            "Challenge 1: Basics",
-            "Learn about storage organization"
-        ));
-        
-        challenges.add(new Challenge(
-            "Challenge 2: Switching networks",
-            "Learn about static and dynamic switching networks"
-        ));
+        if (challenges == null) {
+            // Create new challenges if they don't exist
+            challenges = new ArrayList<>();
+            
+            //Dummy data for presentation PLEASE LEAVE HERE
+            challenges.add(new Challenge(
+                "Challenge 1: Basics",
+                "Learn about storage organization"
+            ));
+            
+            challenges.add(new Challenge(
+                "Challenge 2: Switching networks",
+                "Learn about static and dynamic switching networks"
+            ));
 
-        challenges.add(new Challenge(
-            "Challenge 3: Evaluating Performance",
-            "Learn about performance evaluation"
-        ));
+            challenges.add(new Challenge(
+                "Challenge 3: Evaluating Performance",
+                "Learn about performance evaluation"
+            ));
+            
+            // Store challenges in manager
+            manager.setChallengesForTopic(topicName, challenges);
+        }
         
         return challenges;
     }

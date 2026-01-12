@@ -64,37 +64,101 @@ public class ContentLoader {
         return containers;
     }
     
+    /**
+     * Loads test content by extracting data from source containers and adding new containers to the list.
+     * Processes containers with sequential IDs starting from startId.
+     * @param containers List to add the processed containers to
+     * @param startId Starting ID for new containers
+     */
     private static void loadTestContent(List<ContentContainer> containers, int startId){
         int id = startId;
-
-        for (ContentContainer container : containers) {
+        // Create a copy of the current containers to iterate over
+        List<ContentContainer> sourceContainers = new ArrayList<>(containers);
+        
+        for (ContentContainer container : sourceContainers) {
             switch (container.getType()) {
-                case TEXT:
-                    (ContainerText) containers.add(new ContainerText(id++)//this is supposed to be a typecast to make ".getText" work. But the typecast is faulty somehow
-                            .setText(container.getText()));
-                    break;
                 case ERROR_SPOTTING:
-                    (ContainerErrorSpotting) containers.add(new ContainerErrorSpotting(id++)
-                            .setText(container.getText()));
+                    ContainerErrorSpotting errorSpotting = (ContainerErrorSpotting) container;
+                    containers.add(new ContainerErrorSpotting(id++)
+                            .setInstructions(errorSpotting.getInstructions())
+                            .setItems(errorSpotting.getItems())
+                            .setErrorIndex(errorSpotting.getErrorIndex())
+                            .setExplanationText(errorSpotting.getExplanationText()));
                     break;
+                    
                 case FILL_IN_THE_GAPS:
-                    (ContainerFillInTheGaps) containers.add(new ContainerFillInTheGaps(id++)
-                            .setText(container.getText()));
+                    ContainerFillInTheGaps fillInGaps = (ContainerFillInTheGaps) container;
+                    containers.add(new ContainerFillInTheGaps(id++)
+                            .setTextTemplate(fillInGaps.getTextTemplate())
+                            .setCorrectWords(fillInGaps.getCorrectWords())
+                            .setWordOptions(fillInGaps.getWordOptions()));
+                    break;
+                    
                 case MULTIPLE_CHOICE_QUIZ:
-                    (ContainerMultipleChoiceQuiz) containers.add(new ContainerMultipleChoiceQuiz(id++)
-                            .setQuestion(container.getQuestion())
-                            .setOptions(container.getOptions())
-                            .setCorrectAnswerIndices(container.getCorrectAnswerIndices())
-                            .setExplanationText(container.getExplanationText()));
+                    ContainerMultipleChoiceQuiz mcQuiz = (ContainerMultipleChoiceQuiz) container;
+                    containers.add(new ContainerMultipleChoiceQuiz(id++)
+                            .setQuestion(mcQuiz.getQuestion())
+                            .setOptions(mcQuiz.getOptions())
+                            .setCorrectAnswerIndices(mcQuiz.getCorrectAnswerIndices())
+                            .setAllowMultipleAnswers(mcQuiz.isAllowMultipleAnswers())
+                            .setExplanationText(mcQuiz.getExplanationText()));
                     break;
+                    
                 case RECAP:
-                    (ContainerRecap) containers.add(new ContainerRecap(id++)
-                            .setText(container.getText())
-                            .getWrappedContainer.loadTestContent(List<ContentContainer> list = list.of(container), 0));
+                    ContainerRecap recap = (ContainerRecap) container;
+                    ContainerRecap newRecap = new ContainerRecap(id++);
+                    newRecap.setRecapTitle(recap.getRecapTitle());
+                    if (recap.getWrappedContainer() != null) {
+                        newRecap.setWrappedContainer(recap.getWrappedContainer());
+                    }
+                    containers.add(newRecap);
                     break;
+                    
                 case REVERSE_QUIZ:
-                    //GO THROUGH ALL TYPES ALPHABETICALLY
+                    ContainerReverseQuiz reverseQuiz = (ContainerReverseQuiz) container;
+                    containers.add(new ContainerReverseQuiz(id++)
+                            .setAnswer(reverseQuiz.getAnswer())
+                            .setQuestionOptions(reverseQuiz.getQuestionOptions())
+                            .setCorrectQuestionIndex(reverseQuiz.getCorrectQuestionIndex())
+                            .setExplanationText(reverseQuiz.getExplanationText()));
+                    break;
+                    
+                case SORTING_TASK:
+                    ContainerSortingTask sortingTask = (ContainerSortingTask) container;
+                    containers.add(new ContainerSortingTask(id++)
+                            .setInstructions(sortingTask.getInstructions())
+                            .setCorrectOrder(sortingTask.getCorrectOrder()));
+                    break;
+                    
+                case TEXT:
+                    ContainerText text = (ContainerText) container;
+                    containers.add(new ContainerText(id++)
+                            .setText(text.getText()));
+                    break;
+                    
+                case TITLE:
+                    ContainerTitle title = (ContainerTitle) container;
+                    containers.add(new ContainerTitle(id++)
+                            .setTitle(title.getTitle()));
+                    break;
+                    
+                case VIDEO:
+                    ContainerVideo video = (ContainerVideo) container;
+                    containers.add(new ContainerVideo(id++)
+                            .setUrl(video.getUrl()));
+                    break;
+                    
+                case WIRE_CONNECTING:
+                    ContainerWireConnecting wireConnecting = (ContainerWireConnecting) container;
+                    containers.add(new ContainerWireConnecting(id++)
+                            .setInstructions(wireConnecting.getInstructions())
+                            .setLeftItems(wireConnecting.getLeftItems())
+                            .setRightItems(wireConnecting.getRightItems())
+                            .setCorrectMatches(wireConnecting.getCorrectMatches()));
+                    break;
+                    
                 default:
+                    // Unknown container type - skip it
                     break;
             }
         }
