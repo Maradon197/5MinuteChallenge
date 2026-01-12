@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.a5minutechallenge.R;
+import com.example.a5minutechallenge.datawrapper.challenge.ChallengeManager;
 import com.example.a5minutechallenge.screens.topic.TopicListManager;
 
 public class LessonOverActivity extends AppCompatActivity {
@@ -58,6 +59,13 @@ public class LessonOverActivity extends AppCompatActivity {
         int maxStreak = getIntent().getIntExtra("MAX_STREAK", 0);
         int timeBonus = getIntent().getIntExtra("TIME_BONUS", 0);
         int accuracyBonus = getIntent().getIntExtra("ACCURACY_BONUS", 0);
+        String topicName = getIntent().getStringExtra("TOPIC_NAME");
+        int challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
+        
+        // Update challenge completion if this was from a challenge
+        if (topicName != null && challengePosition >= 0) {
+            ChallengeManager.getInstance().updateChallengeCompletion(topicName, challengePosition, totalScore);
+        }
         
         scoreText.setText(getString(R.string.your_score, totalScore));
         accuracyText.setText(String.format("Accuracy: %.0f%%", accuracy * 100));

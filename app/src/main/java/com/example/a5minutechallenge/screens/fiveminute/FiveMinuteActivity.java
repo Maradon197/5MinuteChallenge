@@ -52,6 +52,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     
     private String topicName;
     private int subjectId;
+    private int challengePosition = -1; // Position of challenge in the list, -1 if not from challenge list
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,6 +83,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void initData() {
         topicName = getIntent().getStringExtra("TOPIC_NAME");
         subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
+        challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
         
         if (topicName == null) {
             topicName = "Default Topic";
@@ -420,6 +422,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         intent.putExtra("TIME_BONUS", timeBonus);
         intent.putExtra("ACCURACY_BONUS", accuracyBonus);
         intent.putExtra("SUBJECT_ID", subjectId);
+        intent.putExtra("TOPIC_NAME", topicName);
+        intent.putExtra("CHALLENGE_POSITION", challengePosition);
         startActivity(intent);
         finish();
     }
