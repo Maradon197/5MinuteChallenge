@@ -76,12 +76,11 @@ public class Subject {
         if (topics == null) {
             topics = new ArrayList<>();
             switch (subjectId) {
-                case 0: // Jetbrains IDE
-                    topics.add(new Topic("Shortcuts"));
-                    topics.add(new Topic("Navigation"));
-                    topics.add(new Topic("Code Generation"));
-                    topics.add(new Topic("Refactoring"));
-                    topics.add(new Topic("Debugging"));
+                case 0: //MPI
+                    topics.add(new Topic("Parallel architecture"));
+                    topics.add(new Topic("Programming in distributed adress fields"));
+                    topics.add(new Topic("Parallelization with MPI"));
+                    topics.add(new Topic("Multithreading essentials"));
                     break;
                 case 2:
                     topics.add(new Topic("ORDB"));

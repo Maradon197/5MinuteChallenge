@@ -71,30 +71,20 @@ public class ChallengeListActivity extends AppCompatActivity {
     private ArrayList<Challenge> loadChallengesForTopic(String topicName) {
         ArrayList<Challenge> challenges = new ArrayList<>();
         
-        // Create multiple challenges for the topic
+        //Dummy data for presentation PLEASE LEAVE HERE
         challenges.add(new Challenge(
             "Challenge 1: Basics",
-            "Learn the fundamentals of " + topicName
+            "Learn about storage organization"
         ));
         
         challenges.add(new Challenge(
-            "Challenge 2: Intermediate",
-            "Apply your knowledge with intermediate concepts"
+            "Challenge 2: Switching networks",
+            "Learn about static and dynamic switching networks"
         ));
-        
+
         challenges.add(new Challenge(
-            "Challenge 3: Advanced",
-            "Master advanced topics and techniques"
-        ));
-        
-        challenges.add(new Challenge(
-            "Challenge 4: Practice",
-            "Practice what you've learned"
-        ));
-        
-        challenges.add(new Challenge(
-            "Challenge 5: Mastery",
-            "Prove your mastery of " + topicName
+            "Challenge 3: Evaluating Performance",
+            "Learn about performance evaluation"
         ));
         
         return challenges;
