@@ -66,9 +66,10 @@ public class LessonOverActivity extends AppCompatActivity {
         int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
 
         //todo
-        Challenge c = new Subject(subjectId).getTopics(getApplicationContext()).get(index).getChallenges().get(challengePosition);
+        Subject subject = new Subject(subjectId);
+        Challenge c = subject.getTopics(getApplicationContext()).get(index).getChallenges().get(challengePosition);
         c.setCompleted(true);
-        c.saveToStorage(getApplicationContext());
+        subject.saveToStorage(getApplicationContext());
 
         // Update challenge completion if this was from a challenge
         if (topicName != null && challengePosition >= 0) {
