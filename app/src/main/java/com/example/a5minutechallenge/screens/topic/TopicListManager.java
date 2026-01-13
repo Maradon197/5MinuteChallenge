@@ -47,7 +47,7 @@ public class TopicListManager extends AppCompatActivity {
         ListView topicListView = findViewById(R.id.topic_list_view);
 
         subject = new Subject(subjectId);
-        topicList = subject.getTopics();
+        topicList = subject.getTopics(getApplicationContext());
         adapter = new TopicListAdapter(this, topicList);
         topicListView.setAdapter(adapter);
 
