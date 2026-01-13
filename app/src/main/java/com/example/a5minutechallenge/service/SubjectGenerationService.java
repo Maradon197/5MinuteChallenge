@@ -63,6 +63,14 @@ public class SubjectGenerationService {
                 // Process files with Gemini (This runs in the background)
                 String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(), context);
 
+                // Save the raw JSON into subject-specific storage (json/ folder)
+                try {
+                    String fileName = "generated_" + System.currentTimeMillis() + ".json";
+                    subject.saveGeneratedJson(context, jsonResponse, fileName);
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to save generated JSON: " + e.getMessage());
+                }
+
                 // Parse and populate subject
                 parseAndPopulateSubject(subject, jsonResponse);
 

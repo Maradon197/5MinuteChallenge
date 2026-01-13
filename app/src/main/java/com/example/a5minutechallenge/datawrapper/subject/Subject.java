@@ -19,9 +19,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class Subject {
@@ -93,6 +97,23 @@ public class Subject {
         return topics;
     }
 
+    /**
+     * Returns topics, attempting to load generated content JSON from storage
+     * when a Context is available. Falls back to the default behavior when
+     * no generated JSON is present.
+     */
+    public ArrayList<Topic> getTopics(Context context) {
+        if (topics == null) {
+            // Try loading generated content from subject-specific json/ folder
+            boolean loaded = loadGeneratedContentFromStorage(context);
+            if (!loaded) {
+                // fall back to existing default population
+                return getTopics();
+            }
+        }
+        return topics;
+    }
+
     public ArrayList<StorageListItem> getStorageItems() {
         if (storageItems == null) {
             storageItems = new ArrayList<>();
@@ -142,9 +163,16 @@ public class Subject {
                 subjectDir.mkdirs();
             }
 
-            // Create the file
-            File file = new File(subjectDir, sanitizedFileName);
-            
+            // User-uploaded files are stored under a nested uploads folder so
+            // other types of files can co-exist under the subject folder.
+            File uploadsDir = new File(subjectDir, "uploads");
+            if (!uploadsDir.exists()) {
+                uploadsDir.mkdirs();
+            }
+
+            // Create the file inside the nested uploads folder
+            File file = new File(uploadsDir, sanitizedFileName);
+
             // Copy the file content
             try (FileOutputStream outputStream = new FileOutputStream(file)) {
                 byte[] buffer = new byte[4096];
@@ -173,6 +201,34 @@ public class Subject {
     }
 
     /**
+     * Save a generated JSON string into subject_<id>/json/<fileName>
+     */
+    public SubjectFile saveGeneratedJson(Context context, String jsonContent, String fileName) {
+        if (context == null || jsonContent == null || fileName == null) return null;
+
+        String sanitizedFileName = fileutil.sanitizeFileName(fileName);
+        if (sanitizedFileName.isEmpty()) return null;
+
+        try {
+            File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+            if (!subjectDir.exists()) subjectDir.mkdirs();
+
+            File jsonDir = new File(subjectDir, "json");
+            if (!jsonDir.exists()) jsonDir.mkdirs();
+
+            File file = new File(jsonDir, sanitizedFileName);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(jsonContent.getBytes(StandardCharsets.UTF_8));
+            }
+
+            return new SubjectFile(sanitizedFileName, file.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * Loads all files from internal storage for this subject
      * @param context The application context
      */
@@ -183,13 +239,159 @@ public class Subject {
 
         File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
         if (subjectDir.exists() && subjectDir.isDirectory()) {
-            File[] files = subjectDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile()) {
-                        subjectFiles.add(new SubjectFile(file.getName(), file.getAbsolutePath()));
-                    }
+            // Only load files that live under the uploads/ folder. Other
+            // files will be handled separately via getOtherFiles().
+            File uploadsDir = new File(subjectDir, "uploads");
+            if (uploadsDir.exists() && uploadsDir.isDirectory()) {
+                addFilesRecursively(uploadsDir);
+            }
+        }
+    }
+
+    /**
+     * Loads generated JSON files from subject_<id>/json/ and populates `topics`.
+     * Returns true if at least one topic was loaded.
+     */
+    private boolean loadGeneratedContentFromStorage(Context context) {
+        if (context == null) return false;
+
+        File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+        File jsonDir = new File(subjectDir, "json");
+        if (!jsonDir.exists() || !jsonDir.isDirectory()) return false;
+
+        File[] files = jsonDir.listFiles((d, name) -> name.toLowerCase().endsWith(".json") );
+        if (files == null || files.length == 0) return false;
+
+        ArrayList<Topic> loadedTopics = new ArrayList<>();
+
+        for (File f : files) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append('\n');
                 }
+
+                String jsonText = sb.toString();
+                org.json.JSONObject root = new org.json.JSONObject(jsonText);
+                if (!root.has("topics")) continue;
+
+                org.json.JSONArray topicsArray = root.getJSONArray("topics");
+                for (int i = 0; i < topicsArray.length(); i++) {
+                    org.json.JSONObject topicJson = topicsArray.getJSONObject(i);
+                    String title = topicJson.optString("title", "");
+                    Topic topic = new Topic(title);
+
+                    if (topicJson.has("challenges")) {
+                        org.json.JSONArray challengesArray = topicJson.getJSONArray("challenges");
+                        ArrayList<com.example.a5minutechallenge.datawrapper.challenge.Challenge> challenges = new ArrayList<>();
+                        for (int j = 0; j < challengesArray.length(); j++) {
+                            org.json.JSONObject challengeJson = challengesArray.getJSONObject(j);
+                            String cTitle = challengeJson.optString("title", "");
+                            String cDesc = challengeJson.optString("description", "");
+                            com.example.a5minutechallenge.datawrapper.challenge.Challenge challenge = new com.example.a5minutechallenge.datawrapper.challenge.Challenge(cTitle, cDesc);
+
+                            if (challengeJson.has("containers")) {
+                                org.json.JSONArray containersArray = challengeJson.getJSONArray("containers");
+                                ArrayList<com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer> containers = new ArrayList<>();
+                                for (int k = 0; k < containersArray.length(); k++) {
+                                    org.json.JSONObject containerJson = containersArray.getJSONObject(k);
+                                    try {
+                                        com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer container = com.example.a5minutechallenge.service.ContentContainerFactory.createFromJson(containerJson);
+                                        if (container != null) containers.add(container);
+                                    } catch (org.json.JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                challenge.setContainerlist(containers);
+                            }
+
+                            challenges.add(challenge);
+                        }
+                        topic.setChallenges(challenges);
+                    }
+
+                    loadedTopics.add(topic);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (!loadedTopics.isEmpty()) {
+            this.topics = loadedTopics;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns files under the subject directory that are NOT inside the
+     * `uploads/` folder. Useful for handling other file types separately.
+     */
+    public ArrayList<SubjectFile> getOtherFiles(Context context) {
+        ArrayList<SubjectFile> otherFiles = new ArrayList<>();
+        if (context == null) return otherFiles;
+
+        File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+        if (!subjectDir.exists() || !subjectDir.isDirectory()) return otherFiles;
+
+        File uploadsDir = new File(subjectDir, "uploads");
+        addFilesRecursivelyExcluding(subjectDir, uploadsDir, otherFiles);
+        return otherFiles;
+    }
+
+    /**
+     * Recursively add files from dir to the supplied list, skipping the
+     * excludeDir (and its children) if provided.
+     */
+    private void addFilesRecursivelyExcluding(File dir, File excludeDir, ArrayList<SubjectFile> list) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File f : files) {
+            if (excludeDir != null) {
+                try {
+                    String fCanonical = f.getCanonicalPath();
+                    String excludeCanonical = excludeDir.getCanonicalPath();
+                    if (fCanonical.startsWith(excludeCanonical)) {
+                        // skip this entry (it's inside uploads/)
+                        continue;
+                    }
+                } catch (IOException e) {
+                    // If canonicalization fails, fall back to path compare
+                    if (f.getAbsolutePath().startsWith(excludeDir.getAbsolutePath())) continue;
+                }
+            }
+
+            if (f.isFile()) {
+                list.add(new SubjectFile(f.getName(), f.getAbsolutePath()));
+            } else if (f.isDirectory()) {
+                addFilesRecursivelyExcluding(f, excludeDir, list);
+            }
+        }
+    }
+
+    /**
+     * Recursively add files from the given directory to the subjectFiles list.
+     */
+    private void addFilesRecursively(File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) {
+            return;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File f : files) {
+            if (f.isFile()) {
+                subjectFiles.add(new SubjectFile(f.getName(), f.getAbsolutePath()));
+            } else if (f.isDirectory()) {
+                addFilesRecursively(f);
             }
         }
     }
