@@ -38,9 +38,11 @@ public class MainActivity extends AppCompatActivity {
 
         ////////////////////////////////////////////////////////////////////////////////////////////// Data population, prompt engine should change these
         subjectList = new ArrayList<>();
+        /*
         subjectList.add(new Subject(0).setTitle("Message Passing Interface").setDescription("Learn MPI"));
         subjectList.add(new Subject(2).setTitle("Databases").setDescription("Example Description 2"));
         subjectList.add(new Subject(3).setTitle("Programming Languages").setDescription("Example Description 3"));
+        */
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         /* THIS HAS TO STAY FOR LATER; DO NOT DELETE!!!!!
