@@ -61,7 +61,10 @@ public class LessonOverActivity extends AppCompatActivity {
         int accuracyBonus = getIntent().getIntExtra("ACCURACY_BONUS", 0);
         String topicName = getIntent().getStringExtra("TOPIC_NAME");
         int challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
+        int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
         
+        new Subject(subjectId).getTopics(getApplicationContext()).getChallenges().get(challengePosition).setCompleted(true, getApplicationContext());
+
         // Update challenge completion if this was from a challenge
         if (topicName != null && challengePosition >= 0) {
             ChallengeManager.getInstance().updateChallengeCompletion(topicName, challengePosition, totalScore);
