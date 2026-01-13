@@ -1,6 +1,7 @@
 /** Activity that displays a list of 5-minute challenges for a selected topic */
 package com.example.a5minutechallenge.screens.challenge;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +17,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.a5minutechallenge.datawrapper.subject.Subject;
+import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.screens.fiveminute.FiveMinuteActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
@@ -53,7 +56,7 @@ public class ChallengeListActivity extends AppCompatActivity {
         ListView challengeListView = findViewById(R.id.challenge_list_view);
 
         // Load challenges for this topic
-        challengeList = loadChallengesForTopic(topicName);
+        challengeList = loadChallengesForTopic(this, topicName, subjectId);
         adapter = new ChallengeListAdapter(this, challengeList);
         challengeListView.setAdapter(adapter);
 
@@ -69,37 +72,26 @@ public class ChallengeListActivity extends AppCompatActivity {
      * @param topicName The name of the topic
      * @return ArrayList of challenges
      */
-    private ArrayList<Challenge> loadChallengesForTopic(String topicName) {
-        // Check if challenges already exist in manager
-        ChallengeManager manager = ChallengeManager.getInstance();
-        ArrayList<Challenge> challenges = manager.getChallengesForTopic(topicName);
-        
-        if (challenges == null) {
-            // Create new challenges if they don't exist
-            challenges = new ArrayList<>();
-            
-            //Dummy data for presentation PLEASE LEAVE HERE
-            challenges.add(new Challenge(
-                "Challenge 1: Basics",
-                "Learn about storage organization"
-            ));
-            
-            challenges.add(new Challenge(
-                "Challenge 2: Switching networks",
-                "Learn about static and dynamic switching networks"
-            ));
+    private ArrayList<Challenge> loadChallengesForTopic(Context context, String topicName, int subjectId) {
 
-            challenges.add(new Challenge(
-                "Challenge 3: Evaluating Performance",
-                "Learn about performance evaluation"
-            ));
-            
-            // Store challenges in manager
-            manager.setChallengesForTopic(topicName, challenges);
+        Subject subject = new Subject(subjectId);
+        ArrayList<Topic> topics = subject.getTopics(context);
+
+        int topicId = 0;
+        for (int i = 0; i < topics.size(); i++) {
+            if (topics.get(i).getTitle().equals(topicName)) {
+                topicId = i;
+                break;
+            }
         }
-        
+
+        ArrayList<Challenge> challenges = topics.get(topicId).getChallenges();
+        for (Challenge challenge : challenges) {
+            challenges.add(new Challenge(challenge.getTitle(), challenge.getDescription()));
+        }
         return challenges;
     }
+
 
     /**
      * Shows a countdown dialog before starting the challenge.
