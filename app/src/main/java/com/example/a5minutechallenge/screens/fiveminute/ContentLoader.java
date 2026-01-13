@@ -6,6 +6,8 @@ package com.example.a5minutechallenge.screens.fiveminute;
 
 import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.MULTIPLE_CHOICE_QUIZ;
 
+import android.content.Context;
+
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
@@ -35,19 +37,20 @@ public class ContentLoader {
     
     /**
      * Loads content containers for a specific subject and topic.
-     * This is example population and for reference
-     * subject to LOTS of change
+     * This loads actual data from generated JSON files stored for the subject.
+     * @param context The application context for loading data from storage
      * @param subjectId The ID of the subject
      * @param topicName The name of the topic
+     * @param challengePosition The position of the challenge in the topic
      * @return List of ContentContainer objects for the lesson
      */
-    public static List<ContentContainer> loadContent(int subjectId, String topicName, int challengePosition) {
+    public static List<ContentContainer> loadContent(Context context, int subjectId, String topicName, int challengePosition) {
 
         Subject subject = new Subject(subjectId);
-        ArrayList<Topic> topics = subject.getTopics(/*MISSING CONTEXT*/);
+        ArrayList<Topic> topics = subject.getTopics(context);
 
         int topicId = 0;
-        for (int i =0; i < subject.getTopics().size(); i++) {
+        for (int i = 0; i < topics.size(); i++) {
             if (topics.get(i).getTitle().equals(topicName)) {
                 topicId = i;
                 break;
