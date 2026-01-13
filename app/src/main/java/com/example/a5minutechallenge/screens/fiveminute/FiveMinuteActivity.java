@@ -84,7 +84,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         topicName = getIntent().getStringExtra("TOPIC_NAME");
         subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
         challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
-        
+
         if (topicName == null) {
             topicName = "Default Topic";
         }
@@ -151,10 +151,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Loads and displays the content containers for this lesson.
      */
     private void loadContent() {
-        // Load content from ContentLoader based on subject and topic
+        // Load content from ContentLoader based on subject topic and challenge
         contentContainers = ContentLoader.loadContent(subjectId, topicName, challengePosition);
-        
-        // Display the first container
+
         if (contentContainers != null && !contentContainers.isEmpty()) {
             displayContainer(currentContainerIndex);
         }

@@ -46,33 +46,19 @@ public class ContentLoader {
         Subject subject = new Subject(subjectId);
         ArrayList<Topic> topics = subject.getTopics();
 
-        ArrayList<ContentContainer> containers = new ArrayList<>();
-
-        List<ContentContainer> containers = new ArrayList<>();
-        for (Topic topic : topics) {
-            ArrayList<Challenge> challenges = topic.getChallenges();
-            for (Challenge challenge : challenges) {
-
+        int topicId = 0;
+        for (int i =0; i < subject.getTopics().size(); i++) {
+            if (topics.get(i).getTitle().equals(topicName)) {
+                topicId = i;
+                break;
             }
         }
 
-        return loadTestContent();
-    }
-    
-    /**
-     * Loads content for Jetbrains IDE topics with examples of all container types.
-     * @param topicName The name of the topic
-     * @return List of ContentContainer objects
-     */
-    private static List<ContentContainer> loadJetbrainsIDEContent(String topicName) {
-        List<ContentContainer> containers = new ArrayList<>();
-        int idCounter = 0;
-        
-        // Title container
-        containers.add(new ContainerTitle(idCounter++).setTitle(topicName));
-        
-        loadTestContent(containers, idCounter);
-        return containers;
+        ArrayList<Challenge> challenges = topics.get(topicId).getChallenges();
+
+        List<ContentContainer> containers = challenges.get(challengePosition).getContainerlist();
+
+        return loadTestContent(containers, 0);
     }
     
     /**
@@ -81,9 +67,9 @@ public class ContentLoader {
      * @param containers List to add the processed containers to
      * @param startId Starting ID for new containers
      */
-    private static void loadTestContent(List<ContentContainer> containers, int startId){
+    private static List<ContentContainer> loadTestContent(List<ContentContainer> containers, int startId){
         int id = startId;
-        // Create a copy of the current containers to iterate over
+        //copy to iterate over
         List<ContentContainer> sourceContainers = new ArrayList<>(containers);
         
         for (ContentContainer container : sourceContainers) {
@@ -173,6 +159,7 @@ public class ContentLoader {
                     break;
             }
         }
+        return containers;
     }
     
     /**
