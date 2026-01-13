@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -61,7 +62,7 @@ public class SubjectGenerationService {
                 }
 
                 // Process files with Gemini (This runs in the background)
-                String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(), context);
+                String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(context), context);
 
                 // Save the raw JSON into subject-specific storage (json/ folder)
                 try {
@@ -101,7 +102,7 @@ public class SubjectGenerationService {
         
         subject.setTopics(topics);
         
-        Log.i(TAG, "Successfully generated " + topics.size() + " topics for subject: " + subject.getTitle());
+        Log.i(TAG, "Successfully generated " + topics.size() + " topics for subject: " + subject.getTitle(null));
     }
     
     /**
@@ -195,6 +196,37 @@ public class SubjectGenerationService {
         
         Log.i(TAG, result.message);
         return result;
+    }
+
+    /**
+     * Scans internal storage for folders named subject_<id> and returns the
+     * list of numeric IDs found.
+     */
+    public ArrayList<Integer> getAllSubjectIDs(Context context) {
+        ArrayList<Integer> ids = new ArrayList<>();
+        if (context == null) return ids;
+
+        File filesDir = context.getFilesDir();
+        if (filesDir == null || !filesDir.exists()) return ids;
+
+        File[] children = filesDir.listFiles();
+        if (children == null) return ids;
+
+        for (File f : children) {
+            if (f.isDirectory()) {
+                String name = f.getName();
+                if (name.startsWith("subject_")) {
+                    String num = name.substring("subject_".length());
+                    try {
+                        int id = Integer.parseInt(num);
+                        ids.add(id);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+        }
+
+        return ids;
     }
     
     /**

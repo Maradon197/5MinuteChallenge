@@ -423,6 +423,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         intent.putExtra("SUBJECT_ID", subjectId);
         intent.putExtra("TOPIC_NAME", topicName);
         intent.putExtra("CHALLENGE_POSITION", challengePosition);
+        
         startActivity(intent);
         finish();
     }

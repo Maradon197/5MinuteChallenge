@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+ 
 
 public class Subject {
 
@@ -46,7 +47,18 @@ public class Subject {
     }
     public String getTitle() {
         if(title == null) {
-            //Fetch from DB
+            // title may be lazily loaded from subject.json if available
+        }
+        return title;
+    }
+
+    /**
+     * Returns the title for this subject, attempting to load from storage
+     * if not already present in memory.
+     */
+    public String getTitle(Context context) {
+        if (title == null && context != null) {
+            loadMetaFromStorage(context);
         }
         return title;
     }
@@ -58,9 +70,97 @@ public class Subject {
 
     public String getDescription() {
         if(description == null) {
-            //Fetch from DB
+            // description may be lazily loaded from subject.json if available
         }
         return description;
+    }
+
+    /**
+     * Returns the description for this subject, attempting to load from storage
+     * if not already present in memory.
+     */
+    public String getDescription(Context context) {
+        if (description == null && context != null) {
+            loadMetaFromStorage(context);
+        }
+        return description;
+    }
+
+    /**
+     * Writes a small metadata JSON (`subject.json`) containing title & description
+     * into the subject_<id> folder.
+     */
+    public boolean saveMetaToStorage(Context context) {
+        if (context == null) return false;
+        try {
+            File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+            if (!subjectDir.exists()) subjectDir.mkdirs();
+
+            JSONObject meta = new JSONObject();
+            meta.put("subjectId", subjectId);
+            meta.put("title", title == null ? "" : title);
+            meta.put("description", description == null ? "" : description);
+
+            File metaFile = new File(subjectDir, "subject.json");
+            try (FileOutputStream fos = new FileOutputStream(metaFile)) {
+                fos.write(meta.toString().getBytes(StandardCharsets.UTF_8));
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Loads `subject.json` from the subject_<id> folder and sets title/description
+     */
+    private boolean loadMetaFromStorage(Context context) {
+        if (context == null) return false;
+        File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+        if (!subjectDir.exists() || !subjectDir.isDirectory()) return false;
+
+        File metaFile = new File(subjectDir, "subject.json");
+        if (!metaFile.exists() || !metaFile.isFile()) return false;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(metaFile), StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+
+            String jsonText = sb.toString();
+            JSONObject root = new JSONObject(jsonText);
+            title = root.optString("title", title);
+            description = root.optString("description", description);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Deletes the entire subject_<id> folder and its contents.
+     */
+    public boolean deleteSubjectStorage(Context context) {
+        if (context == null) return false;
+        File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+        return deleteRecursively(subjectDir);
+    }
+
+    private boolean deleteRecursively(File fileOrDir) {
+        if (fileOrDir == null || !fileOrDir.exists()) return true;
+        if (fileOrDir.isDirectory()) {
+            File[] children = fileOrDir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (!deleteRecursively(child)) return false;
+                }
+            }
+        }
+        return fileOrDir.delete();
     }
 
     public Subject setDescription(String newDescription) {

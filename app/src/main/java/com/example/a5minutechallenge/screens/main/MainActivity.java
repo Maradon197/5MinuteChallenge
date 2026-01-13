@@ -38,9 +38,11 @@ public class MainActivity extends AppCompatActivity {
 
         ////////////////////////////////////////////////////////////////////////////////////////////// Data population, prompt engine should change these
         subjectList = new ArrayList<>();
+        /*
         subjectList.add(new Subject(0).setTitle("Message Passing Interface").setDescription("Learn MPI"));
         subjectList.add(new Subject(2).setTitle("Databases").setDescription("Example Description 2"));
         subjectList.add(new Subject(3).setTitle("Programming Languages").setDescription("Example Description 3"));
+        */
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         /* THIS HAS TO STAY FOR LATER; DO NOT DELETE!!!!!
@@ -95,7 +97,10 @@ public class MainActivity extends AppCompatActivity {
     private void showAddSubjectDialog() {
         showEditDialog(getString(R.string.add_new_subject), "", getString(R.string.add), (newName) -> {
             int newId = subjectList.size(); // Simple ID generation
-            subjectList.add(new Subject(newId).setTitle(newName));
+            Subject newSubject = new Subject(newId).setTitle(newName);
+            // persist subject metadata to internal storage
+            newSubject.saveMetaToStorage(MainActivity.this);
+            subjectList.add(newSubject);
             subjectListAdapter.notifyDataSetChanged();
         });
     }
@@ -127,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
         Subject subject = subjectList.get(position);
         showEditDialog(getString(R.string.rename_subject), subject.getTitle(), getString(R.string.rename), (newName) -> {
             subject.setTitle(newName);
+            // persist updated title
+            subject.saveMetaToStorage(MainActivity.this);
             subjectListAdapter.notifyItemChanged(position);
         });
     }
@@ -140,6 +147,9 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.delete_subject))
                 .setMessage(getString(R.string.confirm_delete_subject))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
+                    Subject subject = subjectList.get(position);
+                    // delete folder and contents
+                    subject.deleteSubjectStorage(MainActivity.this);
                     subjectList.remove(position);
                     subjectListAdapter.notifyItemRemoved(position);
                 })
