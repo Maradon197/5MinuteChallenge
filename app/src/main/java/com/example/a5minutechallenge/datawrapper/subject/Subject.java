@@ -82,6 +82,7 @@ public class Subject {
         if (topics == null) {
             topics = new ArrayList<>();
             // Try loading generated content from subject-specific json/ folder
+            // If loading fails, an empty list will be returned
             if (context != null) {
                 loadGeneratedContentFromStorage(context);
             }
