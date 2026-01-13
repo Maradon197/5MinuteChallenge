@@ -65,7 +65,7 @@ public class TopicListManager extends AppCompatActivity {
         });
 
         FloatingActionButton addTopicFab = findViewById(R.id.add_topic_fab);
-        addTopicFab.setOnClickListener(v -> showAddTopicDialog());
+
 
         FloatingActionButton storageFab = findViewById(R.id.storage_fab);
         storageFab.setOnClickListener(v -> {
@@ -75,15 +75,6 @@ public class TopicListManager extends AppCompatActivity {
         });
     }
 
-    /**
-     * Displays a dialog to add a new topic to the current subject.
-     */
-    private void showAddTopicDialog() {
-        showEditDialog(getString(R.string.add_new_topic), "", getString(R.string.add), (newName) -> {
-            subject.addTopic(newName);
-            adapter.notifyDataSetChanged();
-        });
-    }
 
     /**
      * Displays a dialog with edit options (rename/delete) for a topic at the given position.

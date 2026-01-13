@@ -72,11 +72,8 @@ public class Subject {
         topics = newtopics;
     }
 
-    public void addTopic(String topicName) {
-        getTopics().add(new Topic(topicName));
-    }
 
-    public ArrayList<Topic> getTopics() {
+    /*public ArrayList<Topic> getTopics() {
         //where is this data being handed over?
         if (topics == null) {
             topics = new ArrayList<>();
@@ -95,7 +92,7 @@ public class Subject {
             }
         }
         return topics;
-    }
+    }*/
 
     /**
      * Returns topics, attempting to load generated content JSON from storage
@@ -108,7 +105,7 @@ public class Subject {
             boolean loaded = loadGeneratedContentFromStorage(context);
             if (!loaded) {
                 // fall back to existing default population
-                return getTopics();
+                //return getTopics();
             }
         }
         return topics;

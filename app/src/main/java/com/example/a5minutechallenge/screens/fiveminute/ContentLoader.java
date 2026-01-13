@@ -44,7 +44,7 @@ public class ContentLoader {
     public static List<ContentContainer> loadContent(int subjectId, String topicName, int challengePosition) {
 
         Subject subject = new Subject(subjectId);
-        ArrayList<Topic> topics = subject.getTopics();
+        ArrayList<Topic> topics = subject.getTopics(/*MISSING CONTEXT*/);
 
         int topicId = 0;
         for (int i =0; i < subject.getTopics().size(); i++) {
