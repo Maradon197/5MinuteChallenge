@@ -6,6 +6,7 @@ package com.example.a5minutechallenge.screens.fiveminute;
 
 import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.MULTIPLE_CHOICE_QUIZ;
 
+import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerText;
@@ -17,8 +18,12 @@ import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerReverseQuiz;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerSortingTask;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerVideo;
+import com.example.a5minutechallenge.datawrapper.subject.Subject;
+import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.google.genai.types.Content;
 
+
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,16 +41,22 @@ public class ContentLoader {
      * @param topicName The name of the topic
      * @return List of ContentContainer objects for the lesson
      */
-    public static List<ContentContainer> loadContent(int subjectId, String topicName) {
+    public static List<ContentContainer> loadContent(int subjectId, String topicName, int challengePosition) {
+
+        Subject subject = new Subject(subjectId);
+        ArrayList<Topic> topics = subject.getTopics();
+
+        ArrayList<ContentContainer> containers = new ArrayList<>();
+
         List<ContentContainer> containers = new ArrayList<>();
-        
-        // Route to appropriate content based on subject and topic
-        if (subjectId == 0) { // Jetbrains IDE
-            return loadJetbrainsIDEContent(topicName);
+        for (Topic topic : topics) {
+            ArrayList<Challenge> challenges = topic.getChallenges();
+            for (Challenge challenge : challenges) {
+
+            }
         }
-        
-        // Default content for other subjects
-        return loadDefaultContent(topicName);
+
+        return loadTestContent();
     }
     
     /**

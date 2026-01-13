@@ -73,29 +73,15 @@ public class Subject {
     }
 
     public ArrayList<Topic> getTopics() {
+        //where is this data being handed over?
         if (topics == null) {
             topics = new ArrayList<>();
             switch (subjectId) {
-                case 0: //MPI
+                case 0: //MPI example population, leave here
                     topics.add(new Topic("Parallel architecture"));
                     topics.add(new Topic("Programming in distributed adress fields"));
                     topics.add(new Topic("Parallelization with MPI"));
                     topics.add(new Topic("Multithreading essentials"));
-                    break;
-                case 2:
-                    topics.add(new Topic("ORDB"));
-                    topics.add(new Topic("SQL - Statements"));
-                    topics.add(new Topic("Why are you lurking in my code?"));
-                    break;
-                case 3:
-                    /*
-                    topics.add(new Topic("HTML"));
-                    topics.add(new Topic("CSS"));
-                    topics.add(new Topic("JavaScript"));
-                     */
-
-
-
                     break;
                 default:
                     topics.add(new Topic("Topic 1"));

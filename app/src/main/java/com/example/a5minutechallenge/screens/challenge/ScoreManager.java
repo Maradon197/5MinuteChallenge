@@ -11,9 +11,9 @@ public class ScoreManager {
     private long lastAnswerTime;
     private int correctAnswers;
     private int totalAnswers;
-    private static final int QUICK_ANSWER_THRESHOLD_MS = 3000; // 3 seconds
+    private static final int QUICK_ANSWER_THRESHOLD_MS = 5000; // 5s
     private static final int QUICK_ANSWER_BONUS = 50;
-    private static final int STREAK_MULTIPLIER = 10;
+    private static final int STREAK_MULTIPLIER = 20;
     private static final int BASE_CORRECT_POINTS = 100;
     
     public ScoreManager() {
@@ -44,7 +44,7 @@ public class ScoreManager {
         // Quick answer bonus
         if (answerTimeMs < QUICK_ANSWER_THRESHOLD_MS) {
             points += QUICK_ANSWER_BONUS;
-            //display something
+            //display something?
         }
         
         // Streak bonus
@@ -86,10 +86,10 @@ public class ScoreManager {
         if (totalAnswers == 0) return 0;
         
         double accuracy = (double) correctAnswers / totalAnswers;
-        int bonus = (int) (accuracy * 200);
+        int bonus = (int) (accuracy * 100);//all correct makes +100%
         
         if (accuracy == 1.0) {
-            bonus += 100; // Perfect bonus
+            bonus += 200; // Perfect bonus
         }
         
         totalScore += bonus;
