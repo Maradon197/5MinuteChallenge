@@ -41,9 +41,8 @@ public class Challenge {
         return completed;
     }
     
-    public void setCompleted(boolean completed, Context context) {
+    public void setCompleted(boolean completed) {
         this.completed = completed;
-        //todo: save to json file
     }
     
     public int getBestScore() {

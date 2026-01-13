@@ -13,7 +13,9 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.a5minutechallenge.R;
+import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
 import com.example.a5minutechallenge.datawrapper.challenge.ChallengeManager;
+import com.example.a5minutechallenge.datawrapper.subject.Subject;
 import com.example.a5minutechallenge.screens.topic.TopicListManager;
 
 public class LessonOverActivity extends AppCompatActivity {
@@ -62,8 +64,11 @@ public class LessonOverActivity extends AppCompatActivity {
         String topicName = getIntent().getStringExtra("TOPIC_NAME");
         int challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
         int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
-        
-        new Subject(subjectId).getTopics(getApplicationContext()).getChallenges().get(challengePosition).setCompleted(true, getApplicationContext());
+
+        //todo
+        Challenge c = new Subject(subjectId).getTopics(getApplicationContext()).get(index).getChallenges().get(challengePosition);
+        c.setCompleted(true);
+        c.saveToStorage(getApplicationContext());
 
         // Update challenge completion if this was from a challenge
         if (topicName != null && challengePosition >= 0) {
