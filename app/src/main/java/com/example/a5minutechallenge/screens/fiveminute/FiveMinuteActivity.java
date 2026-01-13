@@ -152,7 +152,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private void loadContent() {
         // Load content from ContentLoader based on subject topic and challenge
-        contentContainers = ContentLoader.loadContent(subjectId, topicName, challengePosition);
+        contentContainers = ContentLoader.loadContent(this, subjectId, topicName, challengePosition);
 
         if (contentContainers != null && !contentContainers.isEmpty()) {
             displayContainer(currentContainerIndex);

@@ -72,41 +72,33 @@ public class Subject {
         topics = newtopics;
     }
 
-
-    /*public ArrayList<Topic> getTopics() {
-        //where is this data being handed over?
-        if (topics == null) {
-            topics = new ArrayList<>();
-            switch (subjectId) {
-                case 0: //MPI example population, leave here
-                    topics.add(new Topic("Parallel architecture"));
-                    topics.add(new Topic("Programming in distributed adress fields"));
-                    topics.add(new Topic("Parallelization with MPI"));
-                    topics.add(new Topic("Multithreading essentials"));
-                    break;
-                default:
-                    topics.add(new Topic("Topic 1"));
-                    topics.add(new Topic("Topic 2"));
-                    topics.add(new Topic("Topic 3"));
-                    break;
-            }
-        }
-        return topics;
-    }*/
-
     /**
-     * Returns topics, attempting to load generated content JSON from storage
-     * when a Context is available. Falls back to the default behavior when
-     * no generated JSON is present.
+     * Returns topics for this subject. If topics are not yet loaded in memory,
+     * attempts to load generated content JSON from storage.
+     * @param context The application context, required for loading from storage
+     * @return ArrayList of topics, or empty list if none are available
      */
     public ArrayList<Topic> getTopics(Context context) {
         if (topics == null) {
+            topics = new ArrayList<>();
             // Try loading generated content from subject-specific json/ folder
-            boolean loaded = loadGeneratedContentFromStorage(context);
-            if (!loaded) {
-                // fall back to existing default population
-                //return getTopics();
+            // If loading fails, an empty list will be returned
+            if (context != null) {
+                loadGeneratedContentFromStorage(context);
             }
+        }
+        return topics;
+    }
+
+    /**
+     * Returns topics that have already been loaded into memory.
+     * Use this only when topics have been explicitly set via setTopics() or
+     * have already been loaded via getTopics(Context).
+     * @return ArrayList of topics, or empty list if none are loaded
+     */
+    public ArrayList<Topic> getTopics() {
+        if (topics == null) {
+            topics = new ArrayList<>();
         }
         return topics;
     }
