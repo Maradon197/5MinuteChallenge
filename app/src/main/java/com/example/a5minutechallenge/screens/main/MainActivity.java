@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 //import com.google.ai.client.generativeai.common.client.GenerationConfig;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.subject.Subject;
+import com.example.a5minutechallenge.service.SubjectGenerationService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 //import com.google.genai.Client;
 //import com.google.genai.types.GenerateContentResponse;
@@ -24,6 +25,7 @@ import java.util.concurrent.Executors;*/
 public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Subject> subjectList;
+    private ArrayList<Integer> subjectIds;
     private SubjectListManager subjectListAdapter;
 
     /**
@@ -36,54 +38,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.subject_list);
 
-        ////////////////////////////////////////////////////////////////////////////////////////////// Data population, prompt engine should change these
+        //Data Population
         subjectList = new ArrayList<>();
-        /*
-        subjectList.add(new Subject(0).setTitle("Message Passing Interface").setDescription("Learn MPI"));
-        subjectList.add(new Subject(2).setTitle("Databases").setDescription("Example Description 2"));
-        subjectList.add(new Subject(3).setTitle("Programming Languages").setDescription("Example Description 3"));
-        */
-        //////////////////////////////////////////////////////////////////////////////////////////////
 
-        /* THIS HAS TO STAY FOR LATER; DO NOT DELETE!!!!!
-        // Use an ExecutorService for the background thread.
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        /// ///////////////////////////////////////////////////////
+        SubjectGenerationService myService = new SubjectGenerationService();
+        subjectIds = myService.getAllSubjectIDs(this);
+        /// ///////////////////////////////////////////////////////
 
-        // Get a Handler that is associated with the main UI thread's Looper.
-        Handler handler = new Handler(Looper.getMainLooper());
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try (Client gemini = Client.builder().apiKey(getString(R.string.api_key)).build()) {
-
-                    GenerateContentResponse response =
-                            gemini.models.generateContent("gemini-2.5-flash", "How does AI work?", null);
-
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, response.text(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
-            }
-        }).start(); */
-
+        for(int i : subjectIds) {
+            Subject subject = new Subject(subjectIds.get(i));
+            subjectList.add(subject);
+        }
 
 
         RecyclerView subjectRecyclerView = findViewById(R.id.subject_recycler_view);
-        subjectListAdapter = new SubjectListManager(this, subjectList, this::showEditOptionsDialog);
+        subjectListAdapter = new SubjectListManager(this, subjectList, position -> showEditOptionsDialog(position));
         subjectRecyclerView.setAdapter(subjectListAdapter);
 
         FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_button);

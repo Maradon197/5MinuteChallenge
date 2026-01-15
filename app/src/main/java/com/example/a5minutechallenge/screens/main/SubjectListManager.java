@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.subject.Subject;
-import com.example.a5minutechallenge.screens.topic.TopicListManager;
+import com.example.a5minutechallenge.screens.topic.TopicListActivity;
 
 import java.util.ArrayList;
 
@@ -66,7 +66,7 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
 
         holder.itemView.setOnClickListener(v -> {
             Toast.makeText(context, "Subject ID: " + subject.getSubjectId(), Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(context, TopicListManager.class);
+            Intent intent = new Intent(context, TopicListActivity.class);
             intent.putExtra("SUBJECT_ID", subject.getSubjectId());
             intent.putExtra("SUBJECT_TITLE", subject.getTitle());
             context.startActivity(intent);

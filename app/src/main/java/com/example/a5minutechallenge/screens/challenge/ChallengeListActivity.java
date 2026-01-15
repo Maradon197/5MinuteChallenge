@@ -65,6 +65,8 @@ public class ChallengeListActivity extends AppCompatActivity {
         });
     }
 
+
+
     /**
      * Loads challenges for a given topic.
      * In a real application, this would load from a database or API.
@@ -76,6 +78,8 @@ public class ChallengeListActivity extends AppCompatActivity {
         Subject subject = new Subject(subjectId);
         ArrayList<Topic> topics = subject.getTopics(context);
 
+
+        //match topic name because i was too dumb to implement an id in topic.java
         int topicId = 0;
         for (int i = 0; i < topics.size(); i++) {
             if (topics.get(i).getTitle().equals(topicName)) {
@@ -84,10 +88,12 @@ public class ChallengeListActivity extends AppCompatActivity {
             }
         }
 
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
         ArrayList<Challenge> challenges = topics.get(topicId).getChallenges();
         for (Challenge challenge : challenges) {
             challenges.add(new Challenge(challenge.getTitle(), challenge.getDescription()));
         }
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
         return challenges;
     }
 

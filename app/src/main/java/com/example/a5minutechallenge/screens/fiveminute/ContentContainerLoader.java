@@ -4,8 +4,6 @@
  */
 package com.example.a5minutechallenge.screens.fiveminute;
 
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.MULTIPLE_CHOICE_QUIZ;
-
 import android.content.Context;
 
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
@@ -22,33 +20,30 @@ import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerVideo;
 import com.example.a5minutechallenge.datawrapper.subject.Subject;
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
-import com.google.genai.types.Content;
 
-
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class ContentLoader {
-    
+public class ContentContainerLoader {
+
     /**
      * Loads content containers for a specific subject and topic.
      * This loads actual data from generated JSON files stored for the subject.
-     * @param context The application context for loading data from storage
-     * @param subjectId The ID of the subject
-     * @param topicName The name of the topic
+     *
+     * @param context           The application context for loading data from storage
+     * @param subjectId         The ID of the subject
+     * @param topicName         The name of the topic
      * @param challengePosition The position of the challenge in the topic
      * @return List of ContentContainer objects for the lesson
      */
-    public static List<ContentContainer> loadContent(Context context, int subjectId, String topicName, int challengePosition) {
+    public static List<ContentContainer> loadContent(Context context, int subjectId, String topicName, int challengePosition, int start_container) {
 
         Subject subject = new Subject(subjectId);
         ArrayList<Topic> topics = subject.getTopics(context);
 
+        //match topic name because i was too dumb to implement an id in topic.java
         int topicId = 0;
         for (int i = 0; i < topics.size(); i++) {
             if (topics.get(i).getTitle().equals(topicName)) {
@@ -56,147 +51,100 @@ public class ContentLoader {
                 break;
             }
         }
-
         ArrayList<Challenge> challenges = topics.get(topicId).getChallenges();
-
         List<ContentContainer> containers = challenges.get(challengePosition).getContainerlist();
 
-        return loadTestContent(containers, 0);
-    }
-    
-    /**
-     * Loads test content by extracting data from source containers and adding new containers to the list.
-     * Processes containers with sequential IDs starting from startId.
-     * @param containers List to add the processed containers to
-     * @param startId Starting ID for new containers
-     */
-    private static List<ContentContainer> loadTestContent(List<ContentContainer> containers, int startId){
-        int id = startId;
+
         //copy to iterate over
-        List<ContentContainer> sourceContainers = new ArrayList<>(containers);
-        
-        for (ContentContainer container : sourceContainers) {
+        List<ContentContainer> populatedContainers = new ArrayList<>(containers);
+
+        for (ContentContainer container : populatedContainers) {
             switch (container.getType()) {
                 case ERROR_SPOTTING:
                     ContainerErrorSpotting errorSpotting = (ContainerErrorSpotting) container;
-                    containers.add(new ContainerErrorSpotting(id++)
+                    containers.add(new ContainerErrorSpotting(start_container++)
                             .setInstructions(errorSpotting.getInstructions())
                             .setItems(errorSpotting.getItems())
                             .setErrorIndex(errorSpotting.getErrorIndex())
                             .setExplanationText(errorSpotting.getExplanationText()));
                     break;
-                    
+
                 case FILL_IN_THE_GAPS:
                     ContainerFillInTheGaps fillInGaps = (ContainerFillInTheGaps) container;
-                    containers.add(new ContainerFillInTheGaps(id++)
+                    containers.add(new ContainerFillInTheGaps(start_container++)
                             .setTextTemplate(fillInGaps.getTextTemplate())
                             .setCorrectWords(fillInGaps.getCorrectWords())
                             .setWordOptions(fillInGaps.getWordOptions()));
                     break;
-                    
+
                 case MULTIPLE_CHOICE_QUIZ:
                     ContainerMultipleChoiceQuiz mcQuiz = (ContainerMultipleChoiceQuiz) container;
-                    containers.add(new ContainerMultipleChoiceQuiz(id++)
+                    containers.add(new ContainerMultipleChoiceQuiz(start_container++)
                             .setQuestion(mcQuiz.getQuestion())
                             .setOptions(mcQuiz.getOptions())
                             .setCorrectAnswerIndices(mcQuiz.getCorrectAnswerIndices())
                             .setAllowMultipleAnswers(mcQuiz.isAllowMultipleAnswers())
                             .setExplanationText(mcQuiz.getExplanationText()));
                     break;
-                    
+
                 case RECAP:
                     ContainerRecap recap = (ContainerRecap) container;
-                    ContainerRecap newRecap = new ContainerRecap(id++);
+                    ContainerRecap newRecap = new ContainerRecap(start_container++);
                     newRecap.setRecapTitle(recap.getRecapTitle());
                     if (recap.getWrappedContainer() != null) {
                         newRecap.setWrappedContainer(recap.getWrappedContainer());
                     }
                     containers.add(newRecap);
                     break;
-                    
+
                 case REVERSE_QUIZ:
                     ContainerReverseQuiz reverseQuiz = (ContainerReverseQuiz) container;
-                    containers.add(new ContainerReverseQuiz(id++)
+                    containers.add(new ContainerReverseQuiz(start_container++)
                             .setAnswer(reverseQuiz.getAnswer())
                             .setQuestionOptions(reverseQuiz.getQuestionOptions())
                             .setCorrectQuestionIndex(reverseQuiz.getCorrectQuestionIndex())
                             .setExplanationText(reverseQuiz.getExplanationText()));
                     break;
-                    
+
                 case SORTING_TASK:
                     ContainerSortingTask sortingTask = (ContainerSortingTask) container;
-                    containers.add(new ContainerSortingTask(id++)
+                    containers.add(new ContainerSortingTask(start_container++)
                             .setInstructions(sortingTask.getInstructions())
                             .setCorrectOrder(sortingTask.getCorrectOrder()));
                     break;
-                    
+
                 case TEXT:
                     ContainerText text = (ContainerText) container;
-                    containers.add(new ContainerText(id++)
+                    containers.add(new ContainerText(start_container++)
                             .setText(text.getText()));
                     break;
-                    
+
                 case TITLE:
                     ContainerTitle title = (ContainerTitle) container;
-                    containers.add(new ContainerTitle(id++)
+                    containers.add(new ContainerTitle(start_container++)
                             .setTitle(title.getTitle()));
                     break;
-                    
+
                 case VIDEO:
                     ContainerVideo video = (ContainerVideo) container;
-                    containers.add(new ContainerVideo(id++)
+                    containers.add(new ContainerVideo(start_container++)
                             .setUrl(video.getUrl()));
                     break;
-                    
+
                 case WIRE_CONNECTING:
                     ContainerWireConnecting wireConnecting = (ContainerWireConnecting) container;
-                    containers.add(new ContainerWireConnecting(id++)
+                    containers.add(new ContainerWireConnecting(start_container++)
                             .setInstructions(wireConnecting.getInstructions())
                             .setLeftItems(wireConnecting.getLeftItems())
                             .setRightItems(wireConnecting.getRightItems())
                             .setCorrectMatches(wireConnecting.getCorrectMatches()));
                     break;
-                    
+
                 default:
                     // Unknown container type - skip it
                     break;
             }
         }
-        return containers;
-    }
-    
-    /**
-     * Loads default content for topics without specific content defined.
-     * @param topicName The name of the topic
-     * @return List of ContentContainer objects
-     */
-    private static List<ContentContainer> loadDefaultContent(String topicName) {
-        List<ContentContainer> containers = new ArrayList<>();
-        containers.add(new ContainerTitle(0).setTitle(topicName));
-        loadDefaultContent(containers, 1);
-        return containers;
-    }
-    
-    private static void loadDefaultContent(List<ContentContainer> containers, int startId) {
-        int id = startId;
-        
-        containers.add(new ContainerText(id++)
-            .setText("Welcome to this 5-minute challenge! Let's learn something new."));
-        
-        containers.add(new ContainerText(id++)
-            .setText("You'll be quizzed on the content. Answer correctly to earn points!"));
-        
-        ContainerMultipleChoiceQuiz quiz = new ContainerMultipleChoiceQuiz(id++);
-        quiz.setQuestion("What is the purpose of this challenge?");
-        quiz.setOptions(Arrays.asList(
-            "To learn in 5 minutes",
-            "To waste time",
-            "To play games"
-        ));
-        quiz.setCorrectAnswerIndices(Arrays.asList(0));
-        containers.add(quiz);
-        
-        containers.add(new ContainerText(id++)
-            .setText("Great job! Keep going to complete the challenge."));
+        return populatedContainers;
     }
 }

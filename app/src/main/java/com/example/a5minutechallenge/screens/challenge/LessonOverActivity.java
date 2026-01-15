@@ -13,9 +13,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.a5minutechallenge.R;
-import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
-import com.example.a5minutechallenge.datawrapper.subject.Subject;
-import com.example.a5minutechallenge.screens.topic.TopicListManager;
+import com.example.a5minutechallenge.screens.topic.TopicListActivity;
 
 public class LessonOverActivity extends AppCompatActivity {
     
@@ -97,7 +95,7 @@ public class LessonOverActivity extends AppCompatActivity {
         int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
         
         continueButton.setOnClickListener(v -> {
-            Intent intent = new Intent(LessonOverActivity.this, TopicListManager.class);
+            Intent intent = new Intent(LessonOverActivity.this, TopicListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
@@ -105,7 +103,7 @@ public class LessonOverActivity extends AppCompatActivity {
         });
         
         backToTopicsButton.setOnClickListener(v -> {
-            Intent intent = new Intent(LessonOverActivity.this, TopicListManager.class);
+            Intent intent = new Intent(LessonOverActivity.this, TopicListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);

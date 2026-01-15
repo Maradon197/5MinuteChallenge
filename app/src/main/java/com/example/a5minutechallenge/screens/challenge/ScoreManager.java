@@ -30,7 +30,7 @@ public class ScoreManager {
      * @param answerTimeMs Time taken to answer in milliseconds
      * @return Points awarded for this answer
      */
-    public int recordCorrectAnswer(long answerTimeMs) {
+    public int recordCorrectAnswer() {
         correctAnswers++;
         totalAnswers++;
         currentStreak++;
@@ -40,12 +40,6 @@ public class ScoreManager {
         }
         
         int points = BASE_CORRECT_POINTS;
-        
-        // Quick answer bonus
-        if (answerTimeMs < QUICK_ANSWER_THRESHOLD_MS) {
-            points += QUICK_ANSWER_BONUS;
-            //display something?
-        }
         
         // Streak bonus
         if (currentStreak > 1) {

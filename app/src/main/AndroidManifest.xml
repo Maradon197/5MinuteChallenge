@@ -25,7 +25,7 @@
         </activity>
 <!--    .............................................................    -->
         <activity android:name=".screens.main.MainActivity" />
-        <activity android:name=".screens.topic.TopicListManager" />
+        <activity android:name=".screens.topic.TopicListActivity" />
         <activity android:name=".screens.challenge.ChallengeListActivity" />
         <activity android:name=".screens.fiveminute.FiveMinuteActivity" />
         <activity android:name=".screens.storage.StorageActivity" />

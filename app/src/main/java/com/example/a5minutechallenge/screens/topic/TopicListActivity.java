@@ -1,4 +1,4 @@
-/** Main class for the subject specific screen*/
+/**Dis*/
 package com.example.a5minutechallenge.screens.topic;
 
 import android.content.Intent;
@@ -22,14 +22,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 
-public class TopicListManager extends AppCompatActivity {
+public class TopicListActivity extends AppCompatActivity {
 
     private ArrayList<Topic> topicList;
     private TopicListAdapter adapter;
     private Subject subject;
 
     /**
-     * Initializes the TopicListManager activity with a topic list for the selected subject.
+     * Initializes the TopicListActivity activity with a topic list for the selected subject.
      * Sets up the ListView with topics and configures FABs for adding topics and accessing storage.
      * @param savedInstanceState Bundle containing the activity's previously saved state
      */
@@ -47,13 +47,17 @@ public class TopicListManager extends AppCompatActivity {
         ListView topicListView = findViewById(R.id.topic_list_view);
 
         subject = new Subject(subjectId);
+
+        /// ///////////////////////////////////////////////////////
         topicList = subject.getTopics(getApplicationContext());
+        /// ///////////////////////////////////////////////////////
+
         adapter = new TopicListAdapter(this, topicList);
         topicListView.setAdapter(adapter);
 
         topicListView.setOnItemClickListener((parent, view, position, id) -> {
             Topic selectedTopic = topicList.get(position);
-            Intent intent = new Intent(TopicListManager.this, ChallengeListActivity.class);
+            Intent intent = new Intent(TopicListActivity.this, ChallengeListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
             intent.putExtra("TOPIC_NAME", selectedTopic.getTitle());
             startActivity(intent);
@@ -64,12 +68,9 @@ public class TopicListManager extends AppCompatActivity {
             return true;
         });
 
-        FloatingActionButton addTopicFab = findViewById(R.id.add_topic_fab);
-
-
         FloatingActionButton storageFab = findViewById(R.id.storage_fab);
         storageFab.setOnClickListener(v -> {
-            Intent intent = new Intent(TopicListManager.this, StorageActivity.class);
+            Intent intent = new Intent(TopicListActivity.this, StorageActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
             startActivity(intent);
         });
