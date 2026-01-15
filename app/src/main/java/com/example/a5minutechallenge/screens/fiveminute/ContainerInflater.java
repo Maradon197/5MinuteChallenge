@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,7 +27,31 @@ import com.google.android.material.chip.ChipGroup;
 
 public class ContainerInflater extends AppCompatActivity {
 
+    /**
+     * Listener interface for container item selection events.
+     * Used to notify the activity when a user selects an item within a container.
+     */
+    public interface OnContainerItemSelectedListener {
+        /**
+         * Called when an item is selected in a container.
+         * @param container The container where the selection occurred
+         * @param position The position of the selected item
+         */
+        void onContainerItemSelected(ContentContainer container, int position);
+    }
+
     public View inflateContainerView(ContentContainer container, Context context) {
+        return inflateContainerView(container, context, null);
+    }
+
+    /**
+     * Inflates the appropriate view for a content container with an optional item selection listener.
+     * @param container The content container to inflate
+     * @param context The context for inflation
+     * @param listener Optional listener for item selection events
+     * @return The inflated view
+     */
+    public View inflateContainerView(ContentContainer container, Context context, @Nullable OnContainerItemSelectedListener listener) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View view = null;
 
@@ -55,7 +80,10 @@ public class ContainerInflater extends AppCompatActivity {
                 // Setup options RecyclerView
                 RecyclerView optionsRecyclerView = view.findViewById(R.id.options_recycler_view);
                 if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {
-                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions());
+                    SimpleTextAdapter.OnItemClickListener mcqClickListener = listener != null
+                            ? position -> listener.onContainerItemSelected(container, position)
+                            : null;
+                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions(), mcqClickListener);
                     optionsRecyclerView.setAdapter(optionsAdapter);
                     optionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -70,7 +98,10 @@ public class ContainerInflater extends AppCompatActivity {
                 // Setup question options RecyclerView
                 RecyclerView questionOptionsRecyclerView = view.findViewById(R.id.question_options_recycler_view);
                 if (questionOptionsRecyclerView != null && reverseQuizContainer.getQuestionOptions() != null && !reverseQuizContainer.getQuestionOptions().isEmpty()) {
-                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions());
+                    SimpleTextAdapter.OnItemClickListener reverseQuizClickListener = listener != null
+                            ? position -> listener.onContainerItemSelected(container, position)
+                            : null;
+                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions(), reverseQuizClickListener);
                     questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
                     questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -83,9 +114,15 @@ public class ContainerInflater extends AppCompatActivity {
                 wireInstructions.setText(wireContainer.getInstructions());
 
                 // Setup left items RecyclerView
+                // Note: Wire connecting logic is postponed. Currently both left and right items
+                // use the same callback without distinguishing sides. This should be enhanced
+                // when wire connecting is fully implemented.
                 RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
                 if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
-                    SimpleTextAdapter leftItemsAdapter = new SimpleTextAdapter(wireContainer.getLeftItems());
+                    SimpleTextAdapter.OnItemClickListener leftItemsClickListener = listener != null
+                            ? position -> listener.onContainerItemSelected(container, position)
+                            : null;
+                    SimpleTextAdapter leftItemsAdapter = new SimpleTextAdapter(wireContainer.getLeftItems(), leftItemsClickListener);
                     leftItemsRecyclerView.setAdapter(leftItemsAdapter);
                     leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -93,7 +130,10 @@ public class ContainerInflater extends AppCompatActivity {
                 // Setup right items RecyclerView
                 RecyclerView rightItemsRecyclerView = view.findViewById(R.id.right_items_recycler_view);
                 if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
-                    SimpleTextAdapter rightItemsAdapter = new SimpleTextAdapter(wireContainer.getRightItems());
+                    SimpleTextAdapter.OnItemClickListener rightItemsClickListener = listener != null
+                            ? position -> listener.onContainerItemSelected(container, position)
+                            : null;
+                    SimpleTextAdapter rightItemsAdapter = new SimpleTextAdapter(wireContainer.getRightItems(), rightItemsClickListener);
                     rightItemsRecyclerView.setAdapter(rightItemsAdapter);
                     rightItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -143,7 +183,10 @@ public class ContainerInflater extends AppCompatActivity {
                 // Setup items RecyclerView
                 RecyclerView itemsRecyclerView = view.findViewById(R.id.items_recycler_view);
                 if (itemsRecyclerView != null && errorContainer.getItems() != null && !errorContainer.getItems().isEmpty()) {
-                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems());
+                    SimpleTextAdapter.OnItemClickListener errorSpottingClickListener = listener != null
+                            ? position -> listener.onContainerItemSelected(container, position)
+                            : null;
+                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems(), errorSpottingClickListener);
                     itemsRecyclerView.setAdapter(itemsAdapter);
                     itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -160,7 +203,7 @@ public class ContainerInflater extends AppCompatActivity {
                 // Handle nested container logic
                 ContentContainer wrapped = recapContainer.getWrappedContainer();
                 if (wrapped != null) {
-                    View wrappedView = inflateContainerView(wrapped, context);
+                    View wrappedView = inflateContainerView(wrapped, context, listener);
                     if (wrappedView != null) {
                         wrappedFrame.addView(wrappedView);
                     }
