@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.R;
@@ -18,9 +19,27 @@ import java.util.List;
  */
 public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.ViewHolder> {
     private final List<String> items;
-    
+    @Nullable
+    private final OnItemClickListener onItemClickListener;
+
+    /**
+     * Listener interface for item click events in the RecyclerView.
+     */
+    public interface OnItemClickListener {
+        /**
+         * Called when an item in the RecyclerView is clicked.
+         * @param position The adapter position of the clicked item
+         */
+        void onItemClick(int position);
+    }
+
     public SimpleTextAdapter(List<String> items) {
+        this(items, null);
+    }
+
+    public SimpleTextAdapter(List<String> items, @Nullable OnItemClickListener onItemClickListener) {
         this.items = items;
+        this.onItemClickListener = onItemClickListener;
     }
     
     @NonNull
@@ -34,6 +53,10 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.textView.setText(items.get(position));
+        
+        if (onItemClickListener != null) {
+            holder.itemView.setOnClickListener(v -> onItemClickListener.onItemClick(holder.getAdapterPosition()));
+        }
     }
     
     @Override

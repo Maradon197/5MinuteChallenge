@@ -38,7 +38,7 @@ import com.example.a5minutechallenge.screens.challenge.ScoreManager;
 
 import java.util.List;
 
-public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener {
+public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener, ContainerInflater.OnContainerItemSelectedListener {
 
     private static final long MIN_ANSWER_TIME_MS = 1000;
 
@@ -205,7 +205,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private View inflateContainerView(ContentContainer container) {
         ContainerInflater containerInflater = new ContainerInflater();
-        return containerInflater.inflateContainerView(container, this);
+        return containerInflater.inflateContainerView(container, this, this);
     }
 
     /**
@@ -468,6 +468,41 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     @Override
     public void onTimerStateChanged(boolean isRunning) {
         // Could add pause/resume UI feedback here
+    }
+
+    // OnContainerItemSelectedListener implementation
+    @Override
+    public void onContainerItemSelected(ContentContainer container, int position) {
+        switch (container.getType()) {
+            case MULTIPLE_CHOICE_QUIZ:
+                ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
+                if (mcqContainer.isAllowMultipleAnswers()) {
+                    // Toggle selection for multiple answer mode
+                    if (mcqContainer.getUserSelectedIndices().contains(position)) {
+                        mcqContainer.removeUserSelectedIndex(position);
+                    } else {
+                        mcqContainer.addUserSelectedIndex(position);
+                    }
+                } else {
+                    // Single answer mode - just add (which clears previous selection)
+                    mcqContainer.addUserSelectedIndex(position);
+                }
+                break;
+            case REVERSE_QUIZ:
+                ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
+                reverseQuizContainer.setUserSelectedIndex(position);
+                break;
+            case ERROR_SPOTTING:
+                ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) container;
+                errorSpottingContainer.setUserSelectedIndex(position);
+                break;
+            case WIRE_CONNECTING:
+                // Wire connecting logic is postponed
+                break;
+            default:
+                // No action needed for other container types
+                break;
+        }
     }
 
     @Override
