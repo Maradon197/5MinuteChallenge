@@ -55,7 +55,12 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
         holder.textView.setText(items.get(position));
         
         if (onItemClickListener != null) {
-            holder.itemView.setOnClickListener(v -> onItemClickListener.onItemClick(holder.getAdapterPosition()));
+            holder.itemView.setOnClickListener(v -> {
+                int adapterPosition = holder.getBindingAdapterPosition();
+                if (adapterPosition != RecyclerView.NO_POSITION) {
+                    onItemClickListener.onItemClick(adapterPosition);
+                }
+            });
         }
     }
     

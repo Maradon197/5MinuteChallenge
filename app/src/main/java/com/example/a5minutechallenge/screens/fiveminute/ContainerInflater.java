@@ -114,6 +114,9 @@ public class ContainerInflater extends AppCompatActivity {
                 wireInstructions.setText(wireContainer.getInstructions());
 
                 // Setup left items RecyclerView
+                // Note: Wire connecting logic is postponed. Currently both left and right items
+                // use the same callback without distinguishing sides. This should be enhanced
+                // when wire connecting is fully implemented.
                 RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
                 if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
                     SimpleTextAdapter.OnItemClickListener leftItemsClickListener = listener != null
