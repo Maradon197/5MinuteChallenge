@@ -22,7 +22,6 @@ import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.screens.fiveminute.FiveMinuteActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
-import com.example.a5minutechallenge.datawrapper.challenge.ChallengeManager;
 
 import java.util.ArrayList;
 

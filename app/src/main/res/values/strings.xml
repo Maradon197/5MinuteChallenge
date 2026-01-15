@@ -74,7 +74,7 @@
     
     <!-- Wire Connecting -->
     <string name="match_items">Match the items</string>
-    <string name="draw_connections">Draw lines to connect matching items</string>
+    <string name="click_pairs">Click the matching pairs!</string>
     
     <!-- Error Spotting -->
     <string name="find_the_error">Find the error</string>
