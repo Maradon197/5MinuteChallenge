@@ -30,6 +30,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerErrorSpotting;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerReverseQuiz;
+import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerFillInTheGaps;
 import com.example.a5minutechallenge.screens.challenge.LessonOverActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.screens.challenge.TimerManager;
@@ -56,7 +57,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     
     private List<ContentContainer> contentContainers;
     private int currentContainerIndex = 0;
-    private long lastQuestionStartTime;
     
     private String topicName;
     private int subjectId;
@@ -94,9 +94,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         if (topicName == null) {
             topicName = "Default Topic";
         }
-        
-        // Initialize question start time to current time
-        lastQuestionStartTime = System.currentTimeMillis();
     }
     
     private void initGamification() {
@@ -145,7 +142,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
         View contentArea = findViewById(R.id.content_container_area);
         contentArea.setOnTouchListener((v, event) -> {
-            // Pass event to detector and return true to "consume" the touch
+            // Pass event to detector and return true to consume the touch
             return gestureDetector.onTouchEvent(event);
         });
     }
@@ -173,9 +170,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         }
         
         ContentContainer container = contentContainers.get(index);
-        
-        // Track when question containers are displayed
-        lastQuestionStartTime = System.currentTimeMillis();
         
         // Inflate and display vurrent container
         currentContainerLayout.removeAllViews();
@@ -264,7 +258,13 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                     isCorrect = false;
                 break;
             case FILL_IN_THE_GAPS:
-                //postponed
+                userResponseExpected = true;
+                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) currentContainerGeneric;
+                // Fill in the gaps logic will be handled here based on user selections
+                // You'll need to compare gapsContainer.getUserSelectedWordIndex() with the correct answer
+                // For now, let's assume it's correct if a selection has been made (this will need refinement)
+                isCorrect = (gapsContainer.getUserSelectedWordIndex() != -1); // Assuming -1 means no selection
+                break;
             case SORTING_TASK:
                 //postponed
             case ERROR_SPOTTING:
@@ -467,7 +467,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
     @Override
     public void onTimerStateChanged(boolean isRunning) {
-        // Could add pause/resume UI feedback here
+        //pause/resume UI feedback here?
     }
 
     // OnContainerItemSelectedListener implementation
@@ -477,14 +477,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case MULTIPLE_CHOICE_QUIZ:
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
                 if (mcqContainer.isAllowMultipleAnswers()) {
-                    // Toggle selection for multiple answer mode
+                    //Toggle selection for multiple answer mode
                     if (mcqContainer.getUserSelectedIndices().contains(position)) {
                         mcqContainer.removeUserSelectedIndex(position);
                     } else {
-                        mcqContainer.addUserSelectedIndex(position);
+                        mcqContainer.addUserSelectedIndex(position);//Add UI feedback!!
                     }
                 } else {
-                    // Single answer mode - just add (which clears previous selection)
+                    //Single answer, adding an option clears previous
                     mcqContainer.addUserSelectedIndex(position);
                 }
                 break;
@@ -496,11 +496,18 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) container;
                 errorSpottingContainer.setUserSelectedIndex(position);
                 break;
+            case FILL_IN_THE_GAPS:
+                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
+                gapsContainer.setUserSelectedWordIndex(position);
+                break;
             case WIRE_CONNECTING:
-                // Wire connecting logic is postponed
+                //postponed
+                break;
+            case SORTING_TASK:
+                //postponed
                 break;
             default:
-                // No action needed for other container types
+                //No action needed for other container types
                 break;
         }
     }

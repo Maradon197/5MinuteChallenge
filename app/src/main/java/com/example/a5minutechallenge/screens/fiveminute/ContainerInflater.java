@@ -40,10 +40,6 @@ public class ContainerInflater extends AppCompatActivity {
         void onContainerItemSelected(ContentContainer container, int position);
     }
 
-    public View inflateContainerView(ContentContainer container, Context context) {
-        return inflateContainerView(container, context, null);
-    }
-
     /**
      * Inflates the appropriate view for a content container with an optional item selection listener.
      * @param container The content container to inflate
@@ -57,30 +53,26 @@ public class ContainerInflater extends AppCompatActivity {
 
         switch (container.getType()) {
             case TITLE:
-                // view = inflater.inflate(R.layout.title_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.title_container, null);
                 TextView titleView = view.findViewById(R.id.title_text);
                 ContainerTitle titleContainer = (ContainerTitle) container;
                 titleView.setText(titleContainer.getTitle());
                 break;
             case TEXT:
-                // view = inflater.inflate(R.layout.text_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.text_container, null);
                 TextView textView = view.findViewById(R.id.text_content);
                 ContainerText textContainer = (ContainerText) container;
                 textView.setText(textContainer.getText());
                 break;
             case MULTIPLE_CHOICE_QUIZ:
-                // view = inflater.inflate(R.layout.multiple_choice_quiz_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.multiple_choice_quiz_container, null);
                 TextView questionText = view.findViewById(R.id.question_text);
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
                 questionText.setText(mcqContainer.getQuestion());
 
-                // Setup options RecyclerView
                 RecyclerView optionsRecyclerView = view.findViewById(R.id.options_recycler_view);
                 if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener mcqClickListener = listener != null
+                    SimpleTextAdapter.OnItemClickListener mcqClickListener = (listener != null)
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
                     SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions(), mcqClickListener);
@@ -89,13 +81,11 @@ public class ContainerInflater extends AppCompatActivity {
                 }
                 break;
             case REVERSE_QUIZ:
-                // view = inflater.inflate(R.layout.reverse_quiz_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.reverse_quiz_container, null);
                 TextView answerText = view.findViewById(R.id.answer_text);
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
                 answerText.setText(reverseQuizContainer.getAnswer());
 
-                // Setup question options RecyclerView
                 RecyclerView questionOptionsRecyclerView = view.findViewById(R.id.question_options_recycler_view);
                 if (questionOptionsRecyclerView != null && reverseQuizContainer.getQuestionOptions() != null && !reverseQuizContainer.getQuestionOptions().isEmpty()) {
                     SimpleTextAdapter.OnItemClickListener reverseQuizClickListener = listener != null
@@ -107,16 +97,11 @@ public class ContainerInflater extends AppCompatActivity {
                 }
                 break;
             case WIRE_CONNECTING:
-                // view = inflater.inflate(R.layout.wire_connecting_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.wire_connecting_container, null);
                 TextView wireInstructions = view.findViewById(R.id.instructions_text);
                 ContainerWireConnecting wireContainer = (ContainerWireConnecting) container;
                 wireInstructions.setText(wireContainer.getInstructions());
 
-                // Setup left items RecyclerView
-                // Note: Wire connecting logic is postponed. Currently both left and right items
-                // use the same callback without distinguishing sides. This should be enhanced
-                // when wire connecting is fully implemented.
                 RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
                 if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
                     SimpleTextAdapter.OnItemClickListener leftItemsClickListener = listener != null
@@ -127,7 +112,6 @@ public class ContainerInflater extends AppCompatActivity {
                     leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
 
-                // Setup right items RecyclerView
                 RecyclerView rightItemsRecyclerView = view.findViewById(R.id.right_items_recycler_view);
                 if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
                     SimpleTextAdapter.OnItemClickListener rightItemsClickListener = listener != null
@@ -139,48 +123,50 @@ public class ContainerInflater extends AppCompatActivity {
                 }
                 break;
             case FILL_IN_THE_GAPS:
-                // view = inflater.inflate(R.layout.fill_in_gaps_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.fill_in_gaps_container, null);
                 TextView gapsText = view.findViewById(R.id.text_with_gaps);
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
                 gapsText.setText(gapsContainer.getDisplayText());
 
-                // Setup word options ChipGroup
                 ChipGroup wordOptionsChipGroup = view.findViewById(R.id.word_options_chip_group);
                 if (wordOptionsChipGroup != null && gapsContainer.getWordOptions() != null && !gapsContainer.getWordOptions().isEmpty()) {
                     wordOptionsChipGroup.removeAllViews();
-                    for (String word : gapsContainer.getWordOptions()) {
+                    for (int i = 0; i < gapsContainer.getWordOptions().size(); i++) {
+                        String word = gapsContainer.getWordOptions().get(i);
                         Chip chip = new Chip(context);
                         chip.setText(word);
                         chip.setClickable(true);
                         chip.setCheckable(false);
+                        final int chipPosition = i; // Make final for use in anonymous class
+                        if (listener != null) {
+                            chip.setOnClickListener(v -> listener.onContainerItemSelected(container, chipPosition));
+                        }
                         wordOptionsChipGroup.addView(chip);
                     }
                 }
                 break;
             case SORTING_TASK:
-                // view = inflater.inflate(R.layout.sorting_task_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.sorting_task_container, null);
                 TextView sortInstructions = view.findViewById(R.id.instructions_text);
                 ContainerSortingTask sortContainer = (ContainerSortingTask) container;
                 sortInstructions.setText(sortContainer.getInstructions());
 
-                // Setup sortable items RecyclerView
                 RecyclerView sortableItemsRecyclerView = view.findViewById(R.id.sortable_items_recycler_view);
                 if (sortableItemsRecyclerView != null && sortContainer.getCurrentOrder() != null && !sortContainer.getCurrentOrder().isEmpty()) {
-                    SimpleTextAdapter sortableItemsAdapter = new SimpleTextAdapter(sortContainer.getCurrentOrder());
+                    SimpleTextAdapter.OnItemClickListener sortableItemsClickListener = listener != null
+                            ? position -> listener.onContainerItemSelected(container, position)
+                            : null;
+                    SimpleTextAdapter sortableItemsAdapter = new SimpleTextAdapter(sortContainer.getCurrentOrder(), sortableItemsClickListener);
                     sortableItemsRecyclerView.setAdapter(sortableItemsAdapter);
                     sortableItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
                 break;
             case ERROR_SPOTTING:
-                // view = inflater.inflate(R.layout.error_spotting_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.error_spotting_container, null);
                 TextView errorInstructions = view.findViewById(R.id.instructions_text);
                 ContainerErrorSpotting errorContainer = (ContainerErrorSpotting) container;
                 errorInstructions.setText(errorContainer.getInstructions());
 
-                // Setup items RecyclerView
                 RecyclerView itemsRecyclerView = view.findViewById(R.id.items_recycler_view);
                 if (itemsRecyclerView != null && errorContainer.getItems() != null && !errorContainer.getItems().isEmpty()) {
                     SimpleTextAdapter.OnItemClickListener errorSpottingClickListener = listener != null
@@ -192,7 +178,6 @@ public class ContainerInflater extends AppCompatActivity {
                 }
                 break;
             case RECAP:
-                // view = inflater.inflate(R.layout.recap_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.recap_container, null);
                 TextView recapTitle = view.findViewById(R.id.recap_title);
                 FrameLayout wrappedFrame = view.findViewById(R.id.wrapped_container_frame);
@@ -200,7 +185,6 @@ public class ContainerInflater extends AppCompatActivity {
                 ContainerRecap recapContainer = (ContainerRecap) container;
                 recapTitle.setText(recapContainer.getRecapTitle());
 
-                // Handle nested container logic
                 ContentContainer wrapped = recapContainer.getWrappedContainer();
                 if (wrapped != null) {
                     View wrappedView = inflateContainerView(wrapped, context, listener);
@@ -209,12 +193,10 @@ public class ContainerInflater extends AppCompatActivity {
                     }
                 }
                 break;
-            case VIDEO://not in use
-                // view = inflater.inflate(R.layout.video_container, currentContainerLayout, false);
+            case VIDEO:
                 view = inflater.inflate(R.layout.video_container, null);
                 break;
             case QUIZ:
-                // view = inflater.inflate(R.layout.quiz_container, currentContainerLayout, false);
                 view = inflater.inflate(R.layout.quiz_container, null);
                 break;
         }

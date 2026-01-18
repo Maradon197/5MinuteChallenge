@@ -15,6 +15,7 @@ public class ContainerFillInTheGaps extends ContentContainer {
     private List<String> wordOptions; // All word options to choose from
     private List<String> userFilledWords; // Words user has filled in
     private int currentGapIndex;
+    private int userSelectedWordIndex = -1; // Stores the index of the word selected by the user from wordOptions
     
     public ContainerFillInTheGaps(int id) {
         super(id, Types.FILL_IN_THE_GAPS);
@@ -103,5 +104,13 @@ public class ContainerFillInTheGaps extends ContentContainer {
             displayText = displayText.replaceFirst("\\{\\}", word);
         }
         return displayText;
+    }
+
+    public int getUserSelectedWordIndex() {
+        return userSelectedWordIndex;
+    }
+
+    public void setUserSelectedWordIndex(int userSelectedWordIndex) {
+        this.userSelectedWordIndex = userSelectedWordIndex;
     }
 }

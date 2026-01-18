@@ -49,21 +49,17 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
                 .inflate(R.layout.quiz_option_item, parent, false);
         return new ViewHolder(view);
     }
-    
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.textView.setText(items.get(position));
-        
-        if (onItemClickListener != null) {
-            holder.itemView.setOnClickListener(v -> {
-                int adapterPosition = holder.getBindingAdapterPosition();
-                if (adapterPosition != RecyclerView.NO_POSITION) {
-                    onItemClickListener.onItemClick(adapterPosition);
-                }
-            });
-        }
+        holder.itemView.setOnClickListener(v -> {
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(position);
+            }
+        });
     }
-    
+
     @Override
     public int getItemCount() {
         return items.size();
