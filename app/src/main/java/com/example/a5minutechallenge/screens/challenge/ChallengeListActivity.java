@@ -30,7 +30,7 @@ public class ChallengeListActivity extends AppCompatActivity {
     private static final int COUNTDOWN_ANIMATION_DELAY_MS = 500;
     private static final int MAX_TITLE_LENGTH = 30;
     private static final int TRUNCATED_TITLE_LENGTH = MAX_TITLE_LENGTH - 3; // Reserve 3 chars for "..."
-    
+
     private ArrayList<Challenge> challengeList;
     private ChallengeListAdapter adapter;
     private String topicName;
@@ -48,7 +48,7 @@ public class ChallengeListActivity extends AppCompatActivity {
 
         TextView titleTextView = findViewById(R.id.challenge_screen_title);
         titleTextView.setText("5-Minute Challenges");
-        
+
         TextView topicNameTextView = findViewById(R.id.topic_name_display);
         topicNameTextView.setText(topicName);
 
@@ -65,11 +65,10 @@ public class ChallengeListActivity extends AppCompatActivity {
         });
     }
 
-
-
     /**
      * Loads challenges for a given topic.
      * In a real application, this would load from a database or API.
+     * 
      * @param topicName The name of the topic
      * @return ArrayList of challenges
      */
@@ -78,8 +77,7 @@ public class ChallengeListActivity extends AppCompatActivity {
         Subject subject = new Subject(subjectId);
         ArrayList<Topic> topics = subject.getTopics(context);
 
-
-        //match topic name because i was too dumb to implement an id in topic.java
+        // match topic name because i was too dumb to implement an id in topic.java
         int topicId = 0;
         for (int i = 0; i < topics.size(); i++) {
             if (topics.get(i).getTitle().equals(topicName)) {
@@ -88,20 +86,17 @@ public class ChallengeListActivity extends AppCompatActivity {
             }
         }
 
-        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        //
         ArrayList<Challenge> challenges = topics.get(topicId).getChallenges();
-        for (Challenge challenge : challenges) {
-            challenges.add(new Challenge(challenge.getTitle(), challenge.getDescription()));
-        }
-        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        //
         return challenges;
     }
 
-
     /**
      * Shows a countdown dialog before starting the challenge.
+     * 
      * @param challenge The challenge to start
-     * @param position The position of the challenge in the list
+     * @param position  The position of the challenge in the list
      */
     private void showCountdownDialog(Challenge challenge, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -111,7 +106,7 @@ public class ChallengeListActivity extends AppCompatActivity {
 
         TextView countdownNumber = dialogView.findViewById(R.id.countdown_number);
         TextView countdownTitle = dialogView.findViewById(R.id.countdown_title);
-        
+
         // Truncate title if too long to prevent layout issues
         String title = challenge.getTitle();
         if (title.length() > MAX_TITLE_LENGTH) {
@@ -132,24 +127,26 @@ public class ChallengeListActivity extends AppCompatActivity {
 
     /**
      * Performs the countdown animation.
-     * @param textView The TextView displaying the countdown
-     * @param count Current countdown number
+     * 
+     * @param textView   The TextView displaying the countdown
+     * @param count      Current countdown number
      * @param onComplete Callback to run when countdown completes
      */
     private void startCountdown(TextView textView, int count, Runnable onComplete) {
         if (count > 0) {
             textView.setText(String.valueOf(count));
-            
+
             // Scale in animation
             Animation scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in);
             textView.startAnimation(scaleIn);
-            
+
             countdownHandler.postDelayed(() -> {
                 // Scale out animation
                 Animation scaleOut = AnimationUtils.loadAnimation(this, R.anim.scale_out);
                 scaleOut.setAnimationListener(new Animation.AnimationListener() {
                     @Override
-                    public void onAnimationStart(Animation animation) {}
+                    public void onAnimationStart(Animation animation) {
+                    }
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
@@ -157,7 +154,8 @@ public class ChallengeListActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onAnimationRepeat(Animation animation) {}
+                    public void onAnimationRepeat(Animation animation) {
+                    }
                 });
                 textView.startAnimation(scaleOut);
             }, COUNTDOWN_ANIMATION_DELAY_MS);
@@ -167,25 +165,26 @@ public class ChallengeListActivity extends AppCompatActivity {
             textView.setTextColor(getColor(R.color.success));
             Animation scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in);
             textView.startAnimation(scaleIn);
-            
+
             countdownHandler.postDelayed(onComplete, COUNTDOWN_ANIMATION_DELAY_MS);
         }
     }
 
     /**
      * Starts the selected challenge.
+     * 
      * @param challenge The challenge to start
-     * @param position The position of the challenge in the list
+     * @param position  The position of the challenge in the list
      */
     private void startChallenge(Challenge challenge, int position) {
         if (countdownDialog != null) {
             countdownDialog.dismiss();
             countdownDialog = null;
         }
-        
+
         challenge.incrementAttempts();
         adapter.notifyDataSetChanged();
-        
+
         Intent intent = new Intent(ChallengeListActivity.this, FiveMinuteActivity.class);
         intent.putExtra("SUBJECT_ID", subjectId);
         intent.putExtra("TOPIC_NAME", topicName);

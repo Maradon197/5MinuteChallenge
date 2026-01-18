@@ -51,6 +51,7 @@ public class GeminiContentProcessor {
     private static final long MAX_RETRY_DURATION_MS = 30 * 60 * 1000; // 30 minutes
     private static final long INITIAL_RETRY_DELAY_MS = 2000; // 2 seconds
     private static final long MAX_RETRY_DELAY_MS = 30000; // 30 seconds
+    private static final int MAX_STRUCTURE_RETRIES = 2; // Total 3 attempts (original + 2 retries)
 
     private final String apiKey;
     private final AtomicLong totalTokensProcessed = new AtomicLong(0);
@@ -224,8 +225,26 @@ public class GeminiContentProcessor {
             }
         }
 
-        String jsonResponse = callGemini(promptParts);
-        return parseSemanticSections(jsonResponse, documents);
+        int attempts = 0;
+        while (true) {
+            try {
+                String jsonResponse = callGemini(promptParts);
+                return parseSemanticSections(jsonResponse, documents);
+            } catch (JSONException | IOException e) {
+                attempts++;
+                if (attempts > MAX_STRUCTURE_RETRIES) {
+                    throw e;
+                }
+                Log.w(TAG, "Stage 0: Malformed structure (" + e.getMessage() + "), retrying... (Attempt "
+                        + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Interrupted during retry wait", ie);
+                }
+            }
+        }
     }
 
     private String buildDocumentAnalysisPrompt(String subjectTitle) {
@@ -345,8 +364,26 @@ public class GeminiContentProcessor {
             }
         }
 
-        String jsonResponse = callGemini(promptParts);
-        return parseTopicOutlines(jsonResponse);
+        int attempts = 0;
+        while (true) {
+            try {
+                String jsonResponse = callGemini(promptParts);
+                return parseTopicOutlines(jsonResponse);
+            } catch (JSONException | IOException e) {
+                attempts++;
+                if (attempts > MAX_STRUCTURE_RETRIES) {
+                    throw e;
+                }
+                Log.w(TAG, "Stage 1: Malformed structure (" + e.getMessage() + "), retrying... (Attempt "
+                        + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Interrupted during retry wait", ie);
+                }
+            }
+        }
     }
 
     private String buildTopicExtractionPrompt(String subjectTitle, List<SemanticSection> sections) {
@@ -493,109 +530,164 @@ public class GeminiContentProcessor {
             }
         }
 
-        String jsonResponse = callGemini(promptParts);
-
-        // Parse TOON response and convert to full JSON
-        JSONObject toonData = new JSONObject(jsonResponse);
-        return expandToonObject(toonData);
+        int attempts = 0;
+        while (true) {
+            try {
+                String jsonResponse = callGemini(promptParts);
+                // Parse TOON response and convert to full JSON
+                JSONObject toonData = new JSONObject(jsonResponse);
+                return expandToonObject(toonData);
+            } catch (JSONException | IOException e) {
+                attempts++;
+                if (attempts > MAX_STRUCTURE_RETRIES) {
+                    throw e;
+                }
+                Log.w(TAG, "Stage 2: Malformed structure for topic '" + topic.title + "' (" + e.getMessage()
+                        + "), retrying... (Attempt " + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Interrupted during retry wait", ie);
+                }
+            }
+        }
     }
 
     private String buildTopicContentPrompt(String topicTitle) {
         // Use String.format() for compatibility with API level 24
-        return String.format("""
-                Generate detailed learning content for the Topic: "%s".
-                Use ONLY the provided document context.
+        return String.format(
+                """
+                        Generate detailed learning content for the Topic: "%s".
+                        Use ONLY the provided document context.
 
-                Output a JSON object using TOON (Token Oriented Object Notation):
+                        Output a JSON object using TOON (Token Oriented Object Notation):
 
-                {
-                  "t": "%s",
-                  "cs": [
-                    {
-                      "t": "Challenge Title",
-                      "d": "Brief description",
-                      "cn": [
                         {
-                          "ty": "TEXT",
-                          "tx": "Explanatory content..."
-                        },
-                        {
-                          "ty": "MULTIPLE_CHOICE_QUIZ",
-                          "q": "Question?",
-                          "os": ["Option A", "Option B", "Option C", "Option D"],
-                          "ci": [0],
-                          "e": "Explanation..."
+                          "t": "%s",
+                          "cs": [
+                            {
+                              "t": "Challenge Title",
+                              "d": "Brief description",
+                              "cn": [
+                                {
+                                  "ty": "TEXT",
+                                  "tx": "Explanatory content..."
+                                },
+                                {
+                                  "ty": "MULTIPLE_CHOICE_QUIZ",
+                                  "q": "Question?",
+                                  "os": ["Option A", "Option B", "Option C", "Option D"],
+                                  "ci": [0],
+                                  "e": "Explanation..."
+                                }
+                              ]
+                            }
+                          ]
                         }
-                      ]
-                    }
-                  ]
-                }
 
-                TOON Key Reference:
-                - t: title
-                - d: description
-                - cs: challenges array
-                - cn: containers array
-                - ty: type (TITLE, TEXT, MULTIPLE_CHOICE_QUIZ, FILL_IN_THE_GAPS, SORTING_TASK, ERROR_SPOTTING, REVERSE_QUIZ, WIRE_CONNECTING)
-                - tx: text content
-                - q: question
-                - os: options array
-                - ci: correctAnswerIndices array
-                - e: explanationText
-                - am: allowMultipleAnswers
-                - tt: textTemplate (for FILL_IN_THE_GAPS, use {0}, {1} for gaps)
-                - cw: correctWords array
-                - wo: wordOptions array
-                - in: instructions
-                - co: correctOrder array
-                - is: items array
-                - ei: errorIndex
-                - a: answer
-                - qo: questionOptions array
-                - cqi: correctQuestionIndex
-                - li: leftItems array
-                - ri: rightItems array
-                - cm: correctMatches object {"0": 0, "1": 1}
+                        TOON Key Reference:
+                        - t: title
+                        - d: description
+                        - cs: challenges array
+                        - cn: containers array
+                        - ty: type (TITLE, TEXT, MULTIPLE_CHOICE_QUIZ, FILL_IN_THE_GAPS, SORTING_TASK, ERROR_SPOTTING, REVERSE_QUIZ, WIRE_CONNECTING)
+                        - tx: text content
+                        - q: question
+                        - os: options array
+                        - ci: correctAnswerIndices array
+                        - e: explanationText
+                        - am: allowMultipleAnswers
+                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {0}, {1} for gaps)
+                        - cw: correctWords array
+                        - wo: wordOptions array
+                        - in: instructions
+                        - co: correctOrder array
+                        - is: items array
+                        - ei: errorIndex
+                        - a: answer
+                        - qo: questionOptions array
+                        - cqi: correctQuestionIndex
+                        - li: leftItems array
+                        - ri: rightItems array
+                        - cm: correctMatches object {"0": 0, "1": 1}
 
-                Requirements:
-                1. Generate 3-5 challenges per topic.
-                2. Each challenge should have 4-7 containers.
-                3. Use diverse container types for engagement.
-                4. All content must come from the provided context.
-                5. Output valid JSON only.
-                """, topicTitle, topicTitle);
+                        Requirements:
+                        1. Generate 3-5 challenges per topic.
+                        2. Each challenge should have 4-7 containers.
+                        3. Use diverse container types for engagement.
+                        4. All content must come from the provided context.
+                        5. Output valid JSON only.
+                        """,
+                topicTitle, topicTitle);
     }
-
 
     // --- TOON Expansion ---
 
     private JSONObject expandToonObject(JSONObject toon) throws JSONException {
+        if (toon == null) {
+            Log.w(TAG, "Null TOON object received for expansion");
+            return new JSONObject().put("title", "Empty Topic").put("challenges", new JSONArray());
+        }
+
         JSONObject expanded = new JSONObject();
 
-        if (toon.has("t"))
-            expanded.put("title", toon.getString("t"));
+        // Use optString for title
+        expanded.put("title", toon.optString("t", "Untitled Topic"));
+
         if (toon.has("cs")) {
             JSONArray challenges = new JSONArray();
             JSONArray csArray = toon.getJSONArray("cs");
             for (int i = 0; i < csArray.length(); i++) {
-                challenges.put(expandChallenge(csArray.getJSONObject(i)));
+                try {
+                    JSONObject challengeObj = csArray.optJSONObject(i);
+                    JSONObject expandedChallenge = expandChallenge(challengeObj);
+                    if (expandedChallenge != null) {
+                        challenges.put(expandedChallenge);
+                    } else {
+                        Log.w(TAG, "Skipping null challenge at index " + i);
+                    }
+                } catch (JSONException e) {
+                    Log.w(TAG, "Error expanding challenge " + i + ": " + e.getMessage());
+                }
             }
             expanded.put("challenges", challenges);
+        } else {
+            // Ensure challenges array exists even if empty
+            expanded.put("challenges", new JSONArray());
         }
         return expanded;
     }
 
     private JSONObject expandChallenge(JSONObject toonC) throws JSONException {
+        if (toonC == null) {
+            Log.w(TAG, "Null TOON challenge received");
+            return null;
+        }
+
         JSONObject expanded = new JSONObject();
-        if (toonC.has("t"))
-            expanded.put("title", toonC.getString("t"));
-        if (toonC.has("d"))
+        // Use optString for title and description
+        expanded.put("title", toonC.optString("t", "Untitled Challenge"));
+        if (toonC.has("d")) {
             expanded.put("description", toonC.getString("d"));
+        }
+
         if (toonC.has("cn")) {
             JSONArray containers = new JSONArray();
             JSONArray cnArray = toonC.getJSONArray("cn");
             for (int i = 0; i < cnArray.length(); i++) {
-                containers.put(expandContainer(cnArray.getJSONObject(i)));
+                try {
+                    JSONObject containerObj = cnArray.optJSONObject(i);
+                    JSONObject expandedContainer = expandContainer(containerObj);
+                    if (expandedContainer != null) {
+                        containers.put(expandedContainer);
+                    } else {
+                        Log.w(TAG, "Skipping null container at index " + i + " in challenge: "
+                                + expanded.optString("title", "unknown"));
+                    }
+                } catch (JSONException e) {
+                    Log.w(TAG, "Error expanding container " + i + ": " + e.getMessage());
+                }
             }
             expanded.put("containers", containers);
         }
@@ -603,74 +695,81 @@ public class GeminiContentProcessor {
     }
 
     private JSONObject expandContainer(JSONObject toon) throws JSONException {
+        if (toon == null) {
+            Log.w(TAG, "Null TOON container received");
+            return null;
+        }
+
+        String type = toon.optString("ty", "");
+        if (type.isEmpty()) {
+            Log.w(TAG, "TOON container missing 'ty' (type) field: "
+                    + toon.toString().substring(0, Math.min(100, toon.toString().length())));
+            return null;
+        }
+
         JSONObject expanded = new JSONObject();
-        String type = toon.getString("ty");
         expanded.put("type", type);
 
-        // Common mappings
-        if (toon.has("in"))
+        // Common mappings - instructions are optional
+        if (toon.has("in")) {
             expanded.put("instructions", toon.getString("in"));
-        if (toon.has("e"))
-            expanded.put("explanationText", toon.getString("e"));
+        }
+        if (toon.has("e")) {
+            expanded.put("explanationText", toon.optString("e", ""));
+        }
 
         switch (type) {
             case "TITLE":
-                if (toon.has("t"))
-                    expanded.put("title", toon.getString("t"));
+                expanded.put("title", toon.optString("t", ""));
                 break;
             case "TEXT":
-                if (toon.has("tx"))
-                    expanded.put("text", toon.getString("tx"));
+                expanded.put("text", toon.optString("tx", ""));
                 break;
             case "MULTIPLE_CHOICE_QUIZ":
-                if (toon.has("q"))
-                    expanded.put("question", toon.getString("q"));
-                if (toon.has("os"))
-                    expanded.put("options", toon.getJSONArray("os"));
-                if (toon.has("ci"))
-                    expanded.put("correctAnswerIndices", toon.getJSONArray("ci"));
-                if (toon.has("am"))
-                    expanded.put("allowMultipleAnswers", toon.getBoolean("am"));
+                expanded.put("question", toon.optString("q", "No question provided"));
+                expanded.put("options", toon.optJSONArray("os") != null ? toon.getJSONArray("os") : new JSONArray());
+                expanded.put("correctAnswerIndices",
+                        toon.optJSONArray("ci") != null ? toon.getJSONArray("ci") : new JSONArray());
+                expanded.put("allowMultipleAnswers", toon.optBoolean("am", false));
                 break;
             case "FILL_IN_THE_GAPS":
-                if (toon.has("tt"))
-                    expanded.put("textTemplate", toon.getString("tt"));
-                if (toon.has("cw"))
-                    expanded.put("correctWords", toon.getJSONArray("cw"));
-                if (toon.has("wo"))
-                    expanded.put("wordOptions", toon.getJSONArray("wo"));
+                expanded.put("textTemplate", toon.optString("tt", "No template provided"));
+                expanded.put("correctWords",
+                        toon.optJSONArray("cw") != null ? toon.getJSONArray("cw") : new JSONArray());
+                expanded.put("wordOptions",
+                        toon.optJSONArray("wo") != null ? toon.getJSONArray("wo") : new JSONArray());
                 break;
             case "SORTING_TASK":
-                if (toon.has("co"))
-                    expanded.put("correctOrder", toon.getJSONArray("co"));
+                expanded.put("correctOrder",
+                        toon.optJSONArray("co") != null ? toon.getJSONArray("co") : new JSONArray());
                 break;
             case "ERROR_SPOTTING":
-                if (toon.has("is"))
-                    expanded.put("items", toon.getJSONArray("is"));
-                if (toon.has("ei"))
-                    expanded.put("errorIndex", toon.getInt("ei"));
+                expanded.put("items", toon.optJSONArray("is") != null ? toon.getJSONArray("is") : new JSONArray());
+                expanded.put("errorIndex", toon.optInt("ei", 0));
                 break;
             case "REVERSE_QUIZ":
-                if (toon.has("a"))
-                    expanded.put("answer", toon.getString("a"));
-                if (toon.has("qo"))
-                    expanded.put("questionOptions", toon.getJSONArray("qo"));
-                if (toon.has("cqi"))
-                    expanded.put("correctQuestionIndex", toon.getInt("cqi"));
+                expanded.put("answer", toon.optString("a", "No answer provided"));
+                expanded.put("questionOptions",
+                        toon.optJSONArray("qo") != null ? toon.getJSONArray("qo") : new JSONArray());
+                expanded.put("correctQuestionIndex", toon.optInt("cqi", 0));
                 break;
             case "WIRE_CONNECTING":
-                if (toon.has("li"))
-                    expanded.put("leftItems", toon.getJSONArray("li"));
-                if (toon.has("ri"))
-                    expanded.put("rightItems", toon.getJSONArray("ri"));
-                if (toon.has("cm"))
-                    expanded.put("correctMatches", toon.getJSONObject("cm"));
+                expanded.put("leftItems", toon.optJSONArray("li") != null ? toon.getJSONArray("li") : new JSONArray());
+                expanded.put("rightItems", toon.optJSONArray("ri") != null ? toon.getJSONArray("ri") : new JSONArray());
+                expanded.put("correctMatches",
+                        toon.optJSONObject("cm") != null ? toon.getJSONObject("cm") : new JSONObject());
                 break;
             case "RECAP":
-                if (toon.has("rt"))
-                    expanded.put("recapTitle", toon.getString("rt"));
-                if (toon.has("wc"))
-                    expanded.put("wrappedContainer", expandContainer(toon.getJSONObject("wc")));
+                expanded.put("recapTitle", toon.optString("rt", "Recap"));
+                if (toon.has("wc")) {
+                    JSONObject wrappedContainer = expandContainer(toon.getJSONObject("wc"));
+                    if (wrappedContainer != null) {
+                        expanded.put("wrappedContainer", wrappedContainer);
+                    }
+                }
+                break;
+            default:
+                Log.w(TAG, "Unknown TOON container type: " + type);
                 break;
         }
         return expanded;

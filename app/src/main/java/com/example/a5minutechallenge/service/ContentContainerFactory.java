@@ -20,105 +20,137 @@ public class ContentContainerFactory {
 
     private static int containerIdCounter = 0;
 
+    private static final String TAG = "ContentContainerFactory";
+
     /**
-     * Creates a ContentContainer from JSON data based on the type field
+     * Creates a ContentContainer from JSON data based on the type field.
+     * Uses defensive parsing with graceful handling of missing optional fields.
      * 
      * @param jsonObject JSON object containing container data
-     * @return ContentContainer instance or null if type is invalid
-     * @throws JSONException if JSON parsing fails
+     * @return ContentContainer instance or null if type is invalid/missing
+     * @throws JSONException if required field parsing fails
      */
     public static ContentContainer createFromJson(JSONObject jsonObject) throws JSONException {
-        String type = jsonObject.getString("type").toUpperCase();
+        if (jsonObject == null) {
+            android.util.Log.w(TAG, "Received null JSON object for container creation");
+            return null;
+        }
+
+        String type = jsonObject.optString("type", "").toUpperCase();
+        if (type.isEmpty()) {
+            android.util.Log.w(TAG, "Container missing 'type' field: "
+                    + jsonObject.toString().substring(0, Math.min(100, jsonObject.toString().length())));
+            return null;
+        }
+
         int id = containerIdCounter++;
 
-        switch (type) {
-            case "TITLE":
-                return createTitle(id, jsonObject);
-            case "TEXT":
-                return createText(id, jsonObject);
-            case "MULTIPLE_CHOICE_QUIZ":
-                return createMultipleChoiceQuiz(id, jsonObject);
-            case "FILL_IN_THE_GAPS":
-                return createFillInTheGaps(id, jsonObject);
-            case "SORTING_TASK":
-                return createSortingTask(id, jsonObject);
-            case "ERROR_SPOTTING":
-                return createErrorSpotting(id, jsonObject);
-            case "REVERSE_QUIZ":
-                return createReverseQuiz(id, jsonObject);
-            case "WIRE_CONNECTING":
-                return createWireConnecting(id, jsonObject);
-            case "RECAP":
-                return createRecap(id, jsonObject);
-            case "VIDEO":
-                return createVideo(id, jsonObject);
-            default:
-                return null;
+        try {
+            switch (type) {
+                case "TITLE":
+                    return createTitle(id, jsonObject);
+                case "TEXT":
+                    return createText(id, jsonObject);
+                case "MULTIPLE_CHOICE_QUIZ":
+                    return createMultipleChoiceQuiz(id, jsonObject);
+                case "FILL_IN_THE_GAPS":
+                    return createFillInTheGaps(id, jsonObject);
+                case "SORTING_TASK":
+                    return createSortingTask(id, jsonObject);
+                case "ERROR_SPOTTING":
+                    return createErrorSpotting(id, jsonObject);
+                case "REVERSE_QUIZ":
+                    return createReverseQuiz(id, jsonObject);
+                case "WIRE_CONNECTING":
+                    return createWireConnecting(id, jsonObject);
+                case "RECAP":
+                    return createRecap(id, jsonObject);
+                case "VIDEO":
+                    return createVideo(id, jsonObject);
+                default:
+                    android.util.Log.w(TAG, "Unknown container type: " + type);
+                    return null;
+            }
+        } catch (JSONException e) {
+            android.util.Log.e(TAG, "Error parsing " + type + " container: " + e.getMessage());
+            throw new JSONException("Failed to parse " + type + " container: " + e.getMessage());
         }
     }
 
     private static ContainerTitle createTitle(int id, JSONObject json) throws JSONException {
         ContainerTitle container = new ContainerTitle(id);
-        container.setTitle(json.getString("title"));
+        String title = json.optString("title", "");
+        if (title.isEmpty()) {
+            title = "Untitled";
+        }
+        container.setTitle(title);
         return container;
     }
 
     private static ContainerText createText(int id, JSONObject json) throws JSONException {
         ContainerText container = new ContainerText(id);
-        container.setText(json.getString("text"));
+        String text = json.optString("text", "");
+        if (text.isEmpty()) {
+            text = "(No content provided)";
+        }
+        container.setText(text);
         return container;
     }
 
     private static ContainerMultipleChoiceQuiz createMultipleChoiceQuiz(int id, JSONObject json) throws JSONException {
         ContainerMultipleChoiceQuiz container = new ContainerMultipleChoiceQuiz(id);
-        container.setQuestion(json.getString("question"));
+        container.setQuestion(json.optString("question", "No question provided"));
 
         // Parse options
-        JSONArray optionsArray = json.getJSONArray("options");
+        JSONArray optionsArray = json.optJSONArray("options");
         List<String> options = new ArrayList<>();
-        for (int i = 0; i < optionsArray.length(); i++) {
-            options.add(optionsArray.getString(i));
+        if (optionsArray != null) {
+            for (int i = 0; i < optionsArray.length(); i++) {
+                options.add(optionsArray.getString(i));
+            }
         }
         container.setOptions(options);
 
         // Parse correct answer indices
-        JSONArray correctArray = json.getJSONArray("correctAnswerIndices");
+        JSONArray correctArray = json.optJSONArray("correctAnswerIndices");
         List<Integer> correctIndices = new ArrayList<>();
-        for (int i = 0; i < correctArray.length(); i++) {
-            correctIndices.add(correctArray.getInt(i));
+        if (correctArray != null) {
+            for (int i = 0; i < correctArray.length(); i++) {
+                correctIndices.add(correctArray.getInt(i));
+            }
         }
         container.setCorrectAnswerIndices(correctIndices);
 
         // Set allow multiple answers
-        if (json.has("allowMultipleAnswers")) {
-            container.setAllowMultipleAnswers(json.getBoolean("allowMultipleAnswers"));
-        }
+        container.setAllowMultipleAnswers(json.optBoolean("allowMultipleAnswers", false));
 
         // Set explanation text
-        if (json.has("explanationText")) {
-            container.setExplanationText(json.getString("explanationText"));
-        }
+        container.setExplanationText(json.optString("explanationText", ""));
 
         return container;
     }
 
     private static ContainerFillInTheGaps createFillInTheGaps(int id, JSONObject json) throws JSONException {
         ContainerFillInTheGaps container = new ContainerFillInTheGaps(id);
-        container.setTextTemplate(json.getString("textTemplate"));
+        container.setTextTemplate(json.optString("textTemplate", "No template provided"));
 
         // Parse correct words
-        JSONArray correctWordsArray = json.getJSONArray("correctWords");
+        JSONArray correctWordsArray = json.optJSONArray("correctWords");
         List<String> correctWords = new ArrayList<>();
-        for (int i = 0; i < correctWordsArray.length(); i++) {
-            correctWords.add(correctWordsArray.getString(i));
+        if (correctWordsArray != null) {
+            for (int i = 0; i < correctWordsArray.length(); i++) {
+                correctWords.add(correctWordsArray.getString(i));
+            }
         }
         container.setCorrectWords(correctWords);
 
         // Parse word options
-        JSONArray wordOptionsArray = json.getJSONArray("wordOptions");
+        JSONArray wordOptionsArray = json.optJSONArray("wordOptions");
         List<String> wordOptions = new ArrayList<>();
-        for (int i = 0; i < wordOptionsArray.length(); i++) {
-            wordOptions.add(wordOptionsArray.getString(i));
+        if (wordOptionsArray != null) {
+            for (int i = 0; i < wordOptionsArray.length(); i++) {
+                wordOptions.add(wordOptionsArray.getString(i));
+            }
         }
         container.setWordOptions(wordOptions);
 
@@ -127,13 +159,16 @@ public class ContentContainerFactory {
 
     private static ContainerSortingTask createSortingTask(int id, JSONObject json) throws JSONException {
         ContainerSortingTask container = new ContainerSortingTask(id);
-        container.setInstructions(json.getString("instructions"));
+        // Use optString for instructions - provide default if missing
+        container.setInstructions(json.optString("instructions", "Arrange the items in the correct order"));
 
         // Parse correct order
-        JSONArray correctOrderArray = json.getJSONArray("correctOrder");
+        JSONArray correctOrderArray = json.optJSONArray("correctOrder");
         List<String> correctOrder = new ArrayList<>();
-        for (int i = 0; i < correctOrderArray.length(); i++) {
-            correctOrder.add(correctOrderArray.getString(i));
+        if (correctOrderArray != null) {
+            for (int i = 0; i < correctOrderArray.length(); i++) {
+                correctOrder.add(correctOrderArray.getString(i));
+            }
         }
         container.setCorrectOrder(correctOrder);
 
@@ -142,51 +177,58 @@ public class ContentContainerFactory {
 
     private static ContainerErrorSpotting createErrorSpotting(int id, JSONObject json) throws JSONException {
         ContainerErrorSpotting container = new ContainerErrorSpotting(id);
-        container.setInstructions(json.getString("instructions"));
+        // Use optString for instructions - provide default if missing
+        container.setInstructions(json.optString("instructions", "Find the error in the items below"));
 
         // Parse items
-        JSONArray itemsArray = json.getJSONArray("items");
+        JSONArray itemsArray = json.optJSONArray("items");
         List<String> items = new ArrayList<>();
-        for (int i = 0; i < itemsArray.length(); i++) {
-            items.add(itemsArray.getString(i));
+        if (itemsArray != null) {
+            for (int i = 0; i < itemsArray.length(); i++) {
+                items.add(itemsArray.getString(i));
+            }
         }
         container.setItems(items);
 
-        container.setErrorIndex(json.getInt("errorIndex"));
+        // Use optInt for errorIndex - default to 0 if missing
+        container.setErrorIndex(json.optInt("errorIndex", 0));
 
-        if (json.has("explanationText")) {
-            container.setExplanationText(json.getString("explanationText"));
-        }
+        container.setExplanationText(json.optString("explanationText", ""));
 
         return container;
     }
 
     private static ContainerReverseQuiz createReverseQuiz(int id, JSONObject json) throws JSONException {
         ContainerReverseQuiz container = new ContainerReverseQuiz(id);
-        container.setAnswer(json.getString("answer"));
+        container.setAnswer(json.optString("answer", "No answer provided"));
 
         // Parse question options
-        JSONArray questionOptionsArray = json.getJSONArray("questionOptions");
+        JSONArray questionOptionsArray = json.optJSONArray("questionOptions");
         List<String> questionOptions = new ArrayList<>();
-        for (int i = 0; i < questionOptionsArray.length(); i++) {
-            questionOptions.add(questionOptionsArray.getString(i));
+        if (questionOptionsArray != null) {
+            for (int i = 0; i < questionOptionsArray.length(); i++) {
+                questionOptions.add(questionOptionsArray.getString(i));
+            }
         }
         container.setQuestionOptions(questionOptions);
 
-        container.setCorrectQuestionIndex(json.getInt("correctQuestionIndex"));
+        container.setCorrectQuestionIndex(json.optInt("correctQuestionIndex", 0));
 
-        if (json.has("explanationText")) {
-            container.setExplanationText(json.getString("explanationText"));
-        }
+        container.setExplanationText(json.optString("explanationText", ""));
 
         return container;
     }
 
     private static ContainerWireConnecting createWireConnecting(int id, JSONObject json) throws JSONException {
         ContainerWireConnecting container = new ContainerWireConnecting(id);
-        container.setInstructions(json.getString("instructions"));
+        // Use optString for instructions - provide default if missing
+        container.setInstructions(
+                json.optString("instructions", "Match the items on the left with the items on the right"));
 
-        // Parse left items
+        // Parse left items - required field
+        if (!json.has("leftItems")) {
+            throw new JSONException("WIRE_CONNECTING requires 'leftItems' array");
+        }
         JSONArray leftItemsArray = json.getJSONArray("leftItems");
         List<String> leftItems = new ArrayList<>();
         for (int i = 0; i < leftItemsArray.length(); i++) {
@@ -194,7 +236,10 @@ public class ContentContainerFactory {
         }
         container.setLeftItems(leftItems);
 
-        // Parse right items
+        // Parse right items - required field
+        if (!json.has("rightItems")) {
+            throw new JSONException("WIRE_CONNECTING requires 'rightItems' array");
+        }
         JSONArray rightItemsArray = json.getJSONArray("rightItems");
         List<String> rightItems = new ArrayList<>();
         for (int i = 0; i < rightItemsArray.length(); i++) {
@@ -202,12 +247,19 @@ public class ContentContainerFactory {
         }
         container.setRightItems(rightItems);
 
-        // Parse correct matches
+        // Parse correct matches - required field
+        if (!json.has("correctMatches")) {
+            throw new JSONException("WIRE_CONNECTING requires 'correctMatches' object");
+        }
         JSONObject correctMatchesObj = json.getJSONObject("correctMatches");
         Map<Integer, Integer> correctMatches = new HashMap<>();
         for (Iterator<String> it = correctMatchesObj.keys(); it.hasNext();) {
             String key = it.next();
-            correctMatches.put(Integer.parseInt(key), correctMatchesObj.getInt(key));
+            try {
+                correctMatches.put(Integer.parseInt(key), correctMatchesObj.getInt(key));
+            } catch (NumberFormatException e) {
+                android.util.Log.w(TAG, "Invalid match key: " + key + ", skipping");
+            }
         }
         container.setCorrectMatches(correctMatches);
 
