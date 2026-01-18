@@ -501,7 +501,8 @@ public class GeminiContentProcessor {
     }
 
     private String buildTopicContentPrompt(String topicTitle) {
-        return """
+        // Use String.format() for compatibility with API level 24
+        return String.format("""
                 Generate detailed learning content for the Topic: "%s".
                 Use ONLY the provided document context.
 
@@ -562,9 +563,9 @@ public class GeminiContentProcessor {
                 3. Use diverse container types for engagement.
                 4. All content must come from the provided context.
                 5. Output valid JSON only.
-                """
-                .formatted(topicTitle, topicTitle);
+                """, topicTitle, topicTitle);
     }
+
 
     // --- TOON Expansion ---
 
