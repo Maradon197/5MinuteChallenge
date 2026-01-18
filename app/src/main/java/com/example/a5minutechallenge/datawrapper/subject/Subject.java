@@ -25,7 +25,6 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
- 
 
 public class Subject {
 
@@ -43,8 +42,9 @@ public class Subject {
     public Integer getSubjectId() {
         return subjectId;
     }
+
     public String getTitle() {
-        if(title == null) {
+        if (title == null) {
             // title may be lazily loaded from subject.json if available
         }
         return title;
@@ -67,7 +67,7 @@ public class Subject {
     }
 
     public String getDescription() {
-        if(description == null) {
+        if (description == null) {
             // description may be lazily loaded from subject.json if available
         }
         return description;
@@ -89,10 +89,12 @@ public class Subject {
      * into the subject_<id> folder.
      */
     public boolean saveMetaToStorage(Context context) {
-        if (context == null) return false;
+        if (context == null)
+            return false;
         try {
             File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
-            if (!subjectDir.exists()) subjectDir.mkdirs();
+            if (!subjectDir.exists())
+                subjectDir.mkdirs();
 
             JSONObject meta = new JSONObject();
             meta.put("subjectId", subjectId);
@@ -114,14 +116,18 @@ public class Subject {
      * Loads `subject.json` from the subject_<id> folder and sets title/description
      */
     private boolean loadMetaFromStorage(Context context) {
-        if (context == null) return false;
+        if (context == null)
+            return false;
         File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
-        if (!subjectDir.exists() || !subjectDir.isDirectory()) return false;
+        if (!subjectDir.exists() || !subjectDir.isDirectory())
+            return false;
 
         File metaFile = new File(subjectDir, "subject.json");
-        if (!metaFile.exists() || !metaFile.isFile()) return false;
+        if (!metaFile.exists() || !metaFile.isFile())
+            return false;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(metaFile), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(metaFile), StandardCharsets.UTF_8))) {
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -143,18 +149,21 @@ public class Subject {
      * Deletes the entire subject_<id> folder and its contents.
      */
     public boolean deleteSubjectStorage(Context context) {
-        if (context == null) return false;
+        if (context == null)
+            return false;
         File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
         return deleteRecursively(subjectDir);
     }
 
     private boolean deleteRecursively(File fileOrDir) {
-        if (fileOrDir == null || !fileOrDir.exists()) return true;
+        if (fileOrDir == null || !fileOrDir.exists())
+            return true;
         if (fileOrDir.isDirectory()) {
             File[] children = fileOrDir.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    if (!deleteRecursively(child)) return false;
+                    if (!deleteRecursively(child))
+                        return false;
                 }
             }
         }
@@ -173,6 +182,7 @@ public class Subject {
     /**
      * Returns topics for this subject. If topics are not yet loaded in memory,
      * attempts to load generated content JSON from storage.
+     * 
      * @param context The application context, required for loading from storage
      * @return ArrayList of topics, or empty list if none are available
      */
@@ -190,6 +200,7 @@ public class Subject {
      * Returns topics that have already been loaded into memory.
      * Use this only when topics have been explicitly set via setTopics() or
      * have already been loaded via getTopics(Context).
+     * 
      * @return ArrayList of topics, or empty list if none are loaded
      */
     public ArrayList<Topic> getTopics() {
@@ -212,6 +223,7 @@ public class Subject {
 
     /**
      * Gets all files for this subject. Extracts files from internal storage.
+     * 
      * @param context The application context
      * @return ArrayList of all files for this subject
      */
@@ -225,9 +237,10 @@ public class Subject {
 
     /**
      * Saves a file to internal storage organized by subjectID
-     * @param context The application context
+     * 
+     * @param context     The application context
      * @param inputStream The input stream of the file to save
-     * @param fileName The name of the file
+     * @param fileName    The name of the file
      * @return The SubjectFile object if successful, null otherwise
      */
     public SubjectFile saveFileToStorage(Context context, InputStream inputStream, String fileName) {
@@ -289,17 +302,21 @@ public class Subject {
      * Save a generated JSON string into subject_<id>/json/<fileName>
      */
     public SubjectFile saveGeneratedJson(Context context, String jsonContent, String fileName) {
-        if (context == null || jsonContent == null || fileName == null) return null;
+        if (context == null || jsonContent == null || fileName == null)
+            return null;
 
         String sanitizedFileName = fileutil.sanitizeFileName(fileName);
-        if (sanitizedFileName.isEmpty()) return null;
+        if (sanitizedFileName.isEmpty())
+            return null;
 
         try {
             File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
-            if (!subjectDir.exists()) subjectDir.mkdirs();
+            if (!subjectDir.exists())
+                subjectDir.mkdirs();
 
             File jsonDir = new File(subjectDir, "json");
-            if (!jsonDir.exists()) jsonDir.mkdirs();
+            if (!jsonDir.exists())
+                jsonDir.mkdirs();
 
             File file = new File(jsonDir, sanitizedFileName);
             try (FileOutputStream fos = new FileOutputStream(file)) {
@@ -314,7 +331,83 @@ public class Subject {
     }
 
     /**
+     * Saves the current subject state (including all topics, challenges, and
+     * progress)
+     * to internal storage. This overwrites the existing content.json file.
+     * 
+     * @param context The application context
+     * @return true if save was successful, false otherwise
+     */
+    public boolean saveToStorage(Context context) {
+        if (context == null || topics == null || topics.isEmpty()) {
+            return false;
+        }
+
+        try {
+            // Build the JSON structure matching what GeminiContentProcessor generates
+            JSONObject root = new JSONObject();
+            JSONArray topicsArray = new JSONArray();
+
+            for (Topic topic : topics) {
+                JSONObject topicJson = new JSONObject();
+                topicJson.put("title", topic.getTitle());
+
+                ArrayList<Challenge> challenges = topic.getChallenges();
+                if (challenges != null && !challenges.isEmpty()) {
+                    JSONArray challengesArray = new JSONArray();
+                    for (Challenge challenge : challenges) {
+                        JSONObject challengeJson = new JSONObject();
+                        challengeJson.put("title", challenge.getTitle());
+                        challengeJson.put("description", challenge.getDescription());
+                        // Save progress fields
+                        challengeJson.put("completed", challenge.isCompleted());
+                        challengeJson.put("bestScore", challenge.getBestScore());
+                        challengeJson.put("attempts", challenge.getAttempts());
+
+                        // Save containers
+                        ArrayList<ContentContainer> containers = challenge.getContainerlist();
+                        if (containers != null && !containers.isEmpty()) {
+                            JSONArray containersArray = new JSONArray();
+                            for (ContentContainer container : containers) {
+                                containersArray.put(containerToJSON(container));
+                            }
+                            challengeJson.put("containers", containersArray);
+                        }
+
+                        challengesArray.put(challengeJson);
+                    }
+                    topicJson.put("challenges", challengesArray);
+                }
+
+                topicsArray.put(topicJson);
+            }
+
+            root.put("topics", topicsArray);
+
+            // Save to content.json (overwrites existing)
+            File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+            if (!subjectDir.exists())
+                subjectDir.mkdirs();
+
+            File jsonDir = new File(subjectDir, "json");
+            if (!jsonDir.exists())
+                jsonDir.mkdirs();
+
+            File file = new File(jsonDir, "content.json");
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(root.toString().getBytes(StandardCharsets.UTF_8));
+            }
+
+            return true;
+        } catch (JSONException | IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Loads all files from internal storage for this subject
+     * 
      * @param context The application context
      */
     private void loadFilesFromStorage(Context context) {
@@ -338,19 +431,23 @@ public class Subject {
      * Returns true if at least one topic was loaded.
      */
     private boolean loadGeneratedContentFromStorage(Context context) {
-        if (context == null) return false;
+        if (context == null)
+            return false;
 
         File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
         File jsonDir = new File(subjectDir, "json");
-        if (!jsonDir.exists() || !jsonDir.isDirectory()) return false;
+        if (!jsonDir.exists() || !jsonDir.isDirectory())
+            return false;
 
-        File[] files = jsonDir.listFiles((d, name) -> name.toLowerCase().endsWith(".json") );
-        if (files == null || files.length == 0) return false;
+        File[] files = jsonDir.listFiles((d, name) -> name.toLowerCase().endsWith(".json"));
+        if (files == null || files.length == 0)
+            return false;
 
         ArrayList<Topic> loadedTopics = new ArrayList<>();
 
         for (File f : files) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8))) {
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -359,7 +456,8 @@ public class Subject {
 
                 String jsonText = sb.toString();
                 org.json.JSONObject root = new org.json.JSONObject(jsonText);
-                if (!root.has("topics")) continue;
+                if (!root.has("topics"))
+                    continue;
 
                 org.json.JSONArray topicsArray = root.getJSONArray("topics");
                 for (int i = 0; i < topicsArray.length(); i++) {
@@ -374,7 +472,26 @@ public class Subject {
                             org.json.JSONObject challengeJson = challengesArray.getJSONObject(j);
                             String cTitle = challengeJson.optString("title", "");
                             String cDesc = challengeJson.optString("description", "");
-                            com.example.a5minutechallenge.datawrapper.challenge.Challenge challenge = new com.example.a5minutechallenge.datawrapper.challenge.Challenge(cTitle, cDesc);
+                            com.example.a5minutechallenge.datawrapper.challenge.Challenge challenge = new com.example.a5minutechallenge.datawrapper.challenge.Challenge(
+                                    cTitle, cDesc);
+
+                            // Load progress fields
+                            if (challengeJson.has("completed")) {
+                                challenge.setCompleted(challengeJson.getBoolean("completed"));
+                            }
+                            if (challengeJson.has("bestScore")) {
+                                // Use direct field setting to allow loading any score
+                                int savedScore = challengeJson.getInt("bestScore");
+                                if (savedScore > 0) {
+                                    challenge.setBestScore(savedScore);
+                                }
+                            }
+                            if (challengeJson.has("attempts")) {
+                                int savedAttempts = challengeJson.getInt("attempts");
+                                for (int a = 0; a < savedAttempts; a++) {
+                                    challenge.incrementAttempts();
+                                }
+                            }
 
                             if (challengeJson.has("containers")) {
                                 org.json.JSONArray containersArray = challengeJson.getJSONArray("containers");
@@ -382,8 +499,10 @@ public class Subject {
                                 for (int k = 0; k < containersArray.length(); k++) {
                                     org.json.JSONObject containerJson = containersArray.getJSONObject(k);
                                     try {
-                                        com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer container = com.example.a5minutechallenge.service.ContentContainerFactory.createFromJson(containerJson);
-                                        if (container != null) containers.add(container);
+                                        com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer container = com.example.a5minutechallenge.service.ContentContainerFactory
+                                                .createFromJson(containerJson);
+                                        if (container != null)
+                                            containers.add(container);
                                     } catch (org.json.JSONException e) {
                                         e.printStackTrace();
                                     }
@@ -418,10 +537,12 @@ public class Subject {
      */
     public ArrayList<SubjectFile> getOtherFiles(Context context) {
         ArrayList<SubjectFile> otherFiles = new ArrayList<>();
-        if (context == null) return otherFiles;
+        if (context == null)
+            return otherFiles;
 
         File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
-        if (!subjectDir.exists() || !subjectDir.isDirectory()) return otherFiles;
+        if (!subjectDir.exists() || !subjectDir.isDirectory())
+            return otherFiles;
 
         File uploadsDir = new File(subjectDir, "uploads");
         addFilesRecursivelyExcluding(subjectDir, uploadsDir, otherFiles);
@@ -433,10 +554,12 @@ public class Subject {
      * excludeDir (and its children) if provided.
      */
     private void addFilesRecursivelyExcluding(File dir, File excludeDir, ArrayList<SubjectFile> list) {
-        if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+        if (dir == null || !dir.exists() || !dir.isDirectory())
+            return;
 
         File[] files = dir.listFiles();
-        if (files == null) return;
+        if (files == null)
+            return;
 
         for (File f : files) {
             if (excludeDir != null) {
@@ -449,7 +572,8 @@ public class Subject {
                     }
                 } catch (IOException e) {
                     // If canonicalization fails, fall back to path compare
-                    if (f.getAbsolutePath().startsWith(excludeDir.getAbsolutePath())) continue;
+                    if (f.getAbsolutePath().startsWith(excludeDir.getAbsolutePath()))
+                        continue;
                 }
             }
 
@@ -470,7 +594,8 @@ public class Subject {
         }
 
         File[] files = dir.listFiles();
-        if (files == null) return;
+        if (files == null)
+            return;
 
         for (File f : files) {
             if (f.isFile()) {
@@ -483,6 +608,7 @@ public class Subject {
 
     /**
      * Deletes a file from internal storage
+     * 
      * @param subjectFile The SubjectFile to delete
      * @return true if successful, false otherwise
      */
@@ -493,16 +619,17 @@ public class Subject {
 
         File file = new File(subjectFile.getFilePath());
         boolean deleted = file.exists() && file.delete();
-        
+
         if (deleted && subjectFiles != null) {
             subjectFiles.remove(subjectFile);
         }
-        
+
         return deleted;
     }
 
     /**
      * Renames a file in internal storage
+     * 
      * @param subjectFile The SubjectFile to rename
      * @param newFileName The new name for the file
      * @return true if successful, false otherwise
@@ -524,7 +651,7 @@ public class Subject {
         }
 
         File newFile = new File(oldFile.getParent(), sanitizedFileName);
-        
+
         // Check if target file already exists
         if (newFile.exists()) {
             return false;
@@ -541,6 +668,7 @@ public class Subject {
 
     /**
      * Converts the Subject to JSON for serialization
+     * 
      * @return JSONObject representation of the Subject
      * @throws JSONException if JSON creation fails
      */
@@ -549,7 +677,7 @@ public class Subject {
         json.put("subjectId", subjectId);
         json.put("title", title);
         json.put("description", description);
-        
+
         // Serialize topics
         if (topics != null && !topics.isEmpty()) {
             JSONArray topicsArray = new JSONArray();
@@ -558,12 +686,13 @@ public class Subject {
             }
             json.put("topics", topicsArray);
         }
-        
+
         return json;
     }
 
     /**
      * Creates a Subject from JSON data
+     * 
      * @param json JSONObject containing Subject data
      * @return Subject instance
      * @throws JSONException if JSON parsing fails
@@ -571,15 +700,15 @@ public class Subject {
     public static Subject fromJSON(JSONObject json) throws JSONException {
         Integer id = json.getInt("subjectId");
         Subject subject = new Subject(id);
-        
+
         if (json.has("title")) {
             subject.setTitle(json.getString("title"));
         }
-        
+
         if (json.has("description")) {
             subject.setDescription(json.getString("description"));
         }
-        
+
         if (json.has("topics")) {
             JSONArray topicsArray = json.getJSONArray("topics");
             ArrayList<Topic> topics = new ArrayList<>();
@@ -588,14 +717,14 @@ public class Subject {
             }
             subject.setTopics(topics);
         }
-        
+
         return subject;
     }
 
     private JSONObject topicToJSON(Topic topic) throws JSONException {
         JSONObject json = new JSONObject();
         json.put("title", topic.getTitle());
-        
+
         ArrayList<Challenge> challenges = topic.getChallenges();
         if (challenges != null && !challenges.isEmpty()) {
             JSONArray challengesArray = new JSONArray();
@@ -604,7 +733,7 @@ public class Subject {
             }
             json.put("challenges", challengesArray);
         }
-        
+
         return json;
     }
 
@@ -615,7 +744,7 @@ public class Subject {
         json.put("completed", challenge.isCompleted());
         json.put("bestScore", challenge.getBestScore());
         json.put("attempts", challenge.getAttempts());
-        
+
         ArrayList<ContentContainer> containers = challenge.getContainerlist();
         if (containers != null && !containers.isEmpty()) {
             JSONArray containersArray = new JSONArray();
@@ -624,22 +753,19 @@ public class Subject {
             }
             json.put("containers", containersArray);
         }
-        
+
         return json;
     }
 
     private JSONObject containerToJSON(ContentContainer container) throws JSONException {
-        JSONObject json = new JSONObject();
-        json.put("type", container.getType().toString());
-        json.put("id", container.getId());
-        // Note: Full serialization of container properties would require 
-        // type-specific handling in each container class
-        return json;
+        // Delegate to ContentContainerFactory for complete serialization of all
+        // container types
+        return com.example.a5minutechallenge.service.ContentContainerFactory.containerToJson(container);
     }
 
     private static Topic topicFromJSON(JSONObject json) throws JSONException {
         Topic topic = new Topic(json.getString("title"));
-        
+
         if (json.has("challenges")) {
             JSONArray challengesArray = json.getJSONArray("challenges");
             ArrayList<Challenge> challenges = new ArrayList<>();
@@ -648,26 +774,25 @@ public class Subject {
             }
             topic.setChallenges(challenges);
         }
-        
+
         return topic;
     }
 
     private static Challenge challengeFromJSON(JSONObject json) throws JSONException {
         Challenge challenge = new Challenge(
-            json.getString("title"),
-            json.getString("description")
-        );
-        
+                json.getString("title"),
+                json.getString("description"));
+
         if (json.has("completed")) {
             challenge.setCompleted(json.getBoolean("completed"));
         }
-        
+
         if (json.has("bestScore")) {
             challenge.setBestScore(json.getInt("bestScore"));
         }
-        
+
         // Note: Full deserialization of containers would use ContentContainerFactory
-        
+
         return challenge;
     }
 

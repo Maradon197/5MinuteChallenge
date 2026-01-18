@@ -13,10 +13,15 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.a5minutechallenge.R;
+import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
+import com.example.a5minutechallenge.datawrapper.subject.Subject;
+import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.screens.topic.TopicListActivity;
 
+import java.util.ArrayList;
+
 public class LessonOverActivity extends AppCompatActivity {
-    
+
     private TextView scoreText;
     private TextView accuracyText;
     private TextView streakText;
@@ -24,18 +29,18 @@ public class LessonOverActivity extends AppCompatActivity {
     private TextView accuracyBonusText;
     private Button continueButton;
     private Button backToTopicsButton;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lesson_over);
-        
+
         initViews();
         displayResults();
         setupButtons();
         animateResults();
     }
-    
+
     /**
      * Initializes all view references.
      */
@@ -48,7 +53,7 @@ public class LessonOverActivity extends AppCompatActivity {
         continueButton = findViewById(R.id.continue_button);
         backToTopicsButton = findViewById(R.id.back_to_topics_button);
     }
-    
+
     /**
      * Displays the lesson results from intent extras.
      */
@@ -62,38 +67,50 @@ public class LessonOverActivity extends AppCompatActivity {
         int challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
         int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
 
-        /*
-        Subject subject = new Subject(subjectId);
-        Challenge c = subject.getTopics(getApplicationContext()).get(index).getChallenges().get(challengePosition);
-        c.setCompleted(true);
-        subject.saveToStorage(getApplicationContext());
-
-        // Update challenge completion if this was from a challenge
+        // Save progress to storage
         if (topicName != null && challengePosition >= 0) {
-            ChallengeManager.getInstance().updateChallengeCompletion(topicName, challengePosition, totalScore);
-        }*/
-        
+            Subject subject = new Subject(subjectId);
+            ArrayList<Topic> topics = subject.getTopics(getApplicationContext());
+
+            // Find topic by name (primary key)
+            for (Topic topic : topics) {
+                if (topicName.equals(topic.getTitle())) {
+                    ArrayList<Challenge> challenges = topic.getChallenges();
+                    if (challenges != null && challengePosition < challenges.size()) {
+                        Challenge c = challenges.get(challengePosition);
+                        c.setCompleted(true);
+                        c.setBestScore(totalScore);
+                        c.incrementAttempts();
+                    }
+                    break;
+                }
+            }
+
+            // Save updated progress
+            subject.saveToStorage(getApplicationContext());
+        }
+
         scoreText.setText(getString(R.string.your_score, totalScore));
         accuracyText.setText(String.format("Accuracy: %.0f%%", accuracy * 100));
         streakText.setText(String.format("Max Streak: %d", maxStreak));
-        
+
         if (timeBonus > 0) {
             timeBonusText.setText(getString(R.string.time_bonus, timeBonus));
             timeBonusText.setVisibility(View.VISIBLE);
         }
-        
+
         if (accuracyBonus > 0) {
             accuracyBonusText.setText(getString(R.string.accuracy_bonus, accuracyBonus));
             accuracyBonusText.setVisibility(View.VISIBLE);
         }
     }
-    
+
     /**
      * Sets up button click listeners for navigation.
      */
     private void setupButtons() {
         int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
-        
+
         continueButton.setOnClickListener(v -> {
             Intent intent = new Intent(LessonOverActivity.this, TopicListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
@@ -101,7 +118,7 @@ public class LessonOverActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-        
+
         backToTopicsButton.setOnClickListener(v -> {
             Intent intent = new Intent(LessonOverActivity.this, TopicListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
@@ -110,35 +127,35 @@ public class LessonOverActivity extends AppCompatActivity {
             finish();
         });
     }
-    
+
     /**
      * Animates the result elements for visual appeal.
      */
     private void animateResults() {
         Animation scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in);
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
-        
+
         scoreText.startAnimation(scaleIn);
-        
+
         accuracyText.setVisibility(View.INVISIBLE);
         accuracyText.postDelayed(() -> {
             accuracyText.setVisibility(View.VISIBLE);
             accuracyText.startAnimation(fadeIn);
         }, 200);
-        
+
         streakText.setVisibility(View.INVISIBLE);
         streakText.postDelayed(() -> {
             streakText.setVisibility(View.VISIBLE);
             streakText.startAnimation(fadeIn);
         }, 400);
-        
+
         if (timeBonusText.getVisibility() == View.VISIBLE) {
             timeBonusText.setAlpha(0f);
             timeBonusText.postDelayed(() -> {
                 timeBonusText.animate().alpha(1f).setDuration(300).start();
             }, 600);
         }
-        
+
         if (accuracyBonusText.getVisibility() == View.VISIBLE) {
             accuracyBonusText.setAlpha(0f);
             accuracyBonusText.postDelayed(() -> {
