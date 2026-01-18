@@ -5,13 +5,11 @@
 package com.example.a5minutechallenge.datawrapper.subject;
 
 import android.content.Context;
-import android.widget.Toast;
 
-import com.example.a5minutechallenge.screens.storage.StorageListItem;
+import com.example.a5minutechallenge.datawrapper.topic.StorageListItem;
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
-import com.example.a5minutechallenge.service.SubjectGenerationService;
 import com.example.a5minutechallenge.util.fileutil.fileutil;
 
 import org.json.JSONArray;

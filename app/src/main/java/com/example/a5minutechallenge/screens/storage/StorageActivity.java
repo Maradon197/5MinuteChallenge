@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.subject.Subject;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
+import com.example.a5minutechallenge.datawrapper.topic.StorageListItem;
 import com.example.a5minutechallenge.screens.challenge.ChallengeListActivity;
 import com.example.a5minutechallenge.service.SubjectGenerationService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;

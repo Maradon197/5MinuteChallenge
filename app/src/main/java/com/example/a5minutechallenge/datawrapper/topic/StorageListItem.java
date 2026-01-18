@@ -2,7 +2,7 @@
  * unnecessary in the future
  * This is the displayed container, not the actual file!
  */
-package com.example.a5minutechallenge.screens.storage;
+package com.example.a5minutechallenge.datawrapper.topic;
 
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
 
@@ -30,4 +30,5 @@ public class StorageListItem {
         this.file = file;
     }
     //some data shit
+    //no data here actually because we have datawrappers for that now
 }

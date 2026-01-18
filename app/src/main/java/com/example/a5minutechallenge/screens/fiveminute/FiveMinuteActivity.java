@@ -4,13 +4,6 @@
  */
 package com.example.a5minutechallenge.screens.fiveminute;
 
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.ERROR_SPOTTING;
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.FILL_IN_THE_GAPS;
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.QUIZ;
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.REVERSE_QUIZ;
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.SORTING_TASK;
-import static com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer.Types.WIRE_CONNECTING;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.GestureDetector;
@@ -33,9 +26,7 @@ import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerFillInTheGaps;
 import com.example.a5minutechallenge.screens.challenge.LessonOverActivity;
 import com.example.a5minutechallenge.R;
-import com.example.a5minutechallenge.screens.challenge.TimerManager;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
-import com.example.a5minutechallenge.screens.challenge.ScoreManager;
 
 import java.util.List;
 

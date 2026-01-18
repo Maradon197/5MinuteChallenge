@@ -1,6 +1,6 @@
 /** Manages the scoring system for the 5-minute challenge including streaks, bonuses, and point calculations.
  **/
-package com.example.a5minutechallenge.screens.challenge;
+package com.example.a5minutechallenge.screens.fiveminute;
 
 public class ScoreManager {
     

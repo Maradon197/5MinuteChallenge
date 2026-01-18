@@ -1,6 +1,6 @@
 /** Manages the countdown timer for the 5-minute challenge with time refill capabilities.
  **/
-package com.example.a5minutechallenge.screens.challenge;
+package com.example.a5minutechallenge.screens.fiveminute;
 
 import android.os.Handler;
 import android.os.Looper;
