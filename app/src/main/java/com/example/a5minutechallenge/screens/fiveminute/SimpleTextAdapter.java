@@ -11,16 +11,21 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.R;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Simple RecyclerView adapter for displaying text items in a list.
  * Used by content containers to populate RecyclerViews with string data.
+ * Supports visual selection state for quiz options.
  */
 public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.ViewHolder> {
     private final List<String> items;
     @Nullable
     private final OnItemClickListener onItemClickListener;
+    private final Set<Integer> selectedIndices;
+    private boolean allowMultipleSelection;
 
     /**
      * Listener interface for item click events in the RecyclerView.
@@ -38,10 +43,80 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
     }
 
     public SimpleTextAdapter(List<String> items, @Nullable OnItemClickListener onItemClickListener) {
+        this(items, onItemClickListener, false);
+    }
+
+    public SimpleTextAdapter(List<String> items, @Nullable OnItemClickListener onItemClickListener, boolean allowMultipleSelection) {
         this.items = items;
         this.onItemClickListener = onItemClickListener;
+        this.selectedIndices = new HashSet<>();
+        this.allowMultipleSelection = allowMultipleSelection;
     }
-    
+
+    /**
+     * Sets whether multiple items can be selected at once.
+     * @param allowMultiple true to allow multiple selections
+     */
+    public void setAllowMultipleSelection(boolean allowMultiple) {
+        this.allowMultipleSelection = allowMultiple;
+    }
+
+    /**
+     * Toggles selection state for the item at the given position.
+     * For single selection mode, clears other selections first.
+     * @param position The position of the item to toggle
+     */
+    public void toggleSelection(int position) {
+        if (allowMultipleSelection) {
+            if (selectedIndices.contains(position)) {
+                selectedIndices.remove(position);
+            } else {
+                selectedIndices.add(position);
+            }
+            notifyItemChanged(position);
+        } else {
+            // Single selection mode: clear previous and select new
+            Set<Integer> previousSelection = new HashSet<>(selectedIndices);
+            selectedIndices.clear();
+            selectedIndices.add(position);
+            // Notify changed items for better performance
+            for (Integer prevIndex : previousSelection) {
+                if (prevIndex != position) {
+                    notifyItemChanged(prevIndex);
+                }
+            }
+            notifyItemChanged(position);
+        }
+    }
+
+    /**
+     * Sets the selected indices directly.
+     * @param indices Set of selected indices
+     */
+    public void setSelectedIndices(Set<Integer> indices) {
+        selectedIndices.clear();
+        if (indices != null) {
+            selectedIndices.addAll(indices);
+        }
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Gets the current selected indices.
+     * @return Set of selected indices
+     */
+    public Set<Integer> getSelectedIndices() {
+        return new HashSet<>(selectedIndices);
+    }
+
+    /**
+     * Clears all selections.
+     */
+    public void clearSelection() {
+        selectedIndices.clear();
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -53,9 +128,19 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.textView.setText(items.get(position));
+        
+        // Update visual selection state
+        boolean isSelected = selectedIndices.contains(position);
+        holder.itemView.setSelected(isSelected);
+        holder.itemView.setActivated(isSelected);
+        
         holder.itemView.setOnClickListener(v -> {
-            if (onItemClickListener != null) {
-                onItemClickListener.onItemClick(position);
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION) {
+                toggleSelection(adapterPosition);
+                if (onItemClickListener != null) {
+                    onItemClickListener.onItemClick(adapterPosition);
+                }
             }
         });
     }
