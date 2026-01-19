@@ -55,7 +55,7 @@ public class ContentContainerDataLoader {
 
 
         //copy to return
-        List<ContentContainer> populatedContainers = new ArrayList<>(containers);
+        List<ContentContainer> populatedContainers = new ArrayList<>();
 
         for (ContentContainer container : containers) {
             switch (container.getType()) {
