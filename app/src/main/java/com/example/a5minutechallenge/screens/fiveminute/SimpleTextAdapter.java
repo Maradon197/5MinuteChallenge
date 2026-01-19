@@ -73,12 +73,20 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
             } else {
                 selectedIndices.add(position);
             }
+            notifyItemChanged(position);
         } else {
             // Single selection mode: clear previous and select new
+            Set<Integer> previousSelection = new HashSet<>(selectedIndices);
             selectedIndices.clear();
             selectedIndices.add(position);
+            // Notify changed items for better performance
+            for (Integer prevIndex : previousSelection) {
+                if (prevIndex != position) {
+                    notifyItemChanged(prevIndex);
+                }
+            }
+            notifyItemChanged(position);
         }
-        notifyDataSetChanged();
     }
 
     /**
