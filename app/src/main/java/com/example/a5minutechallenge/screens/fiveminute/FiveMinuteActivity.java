@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import RecyclerView;
 
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerErrorSpotting;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
@@ -28,6 +29,7 @@ import com.example.a5minutechallenge.screens.challenge.LessonOverActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
 
+import Collections;
 import java.util.List;
 
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener, ContainerInflater.OnContainerItemSelectedListener {
@@ -279,7 +281,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
                 
                 // Update UI with correct/incorrect colors
-                androidx.recyclerview.widget.RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
+                RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
                 if (mcqRecyclerView != null) {
                     ContentContainerAdapter adapter = (ContentContainerAdapter) mcqRecyclerView.getTag(R.id.options_recycler_view);
                     if (adapter != null) {
@@ -292,23 +294,20 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 isCorrect = (reverseQuizContainer.getUserSelectedIndex() == reverseQuizContainer.getCorrectQuestionIndex());
                 
                 // Update UI with correct/incorrect colors
-                androidx.recyclerview.widget.RecyclerView reverseRecyclerView = containerView.findViewById(R.id.question_options_recycler_view);
+                RecyclerView reverseRecyclerView = containerView.findViewById(R.id.question_options_recycler_view);
                 if (reverseRecyclerView != null) {
                     ContentContainerAdapter adapter = (ContentContainerAdapter) reverseRecyclerView.getTag(R.id.question_options_recycler_view);
                     if (adapter != null) {
                         adapter.revealAnswers(
-                            java.util.Collections.singletonList(reverseQuizContainer.getCorrectQuestionIndex()),
-                            java.util.Collections.singletonList(reverseQuizContainer.getUserSelectedIndex())
+                            Collections.singletonList(reverseQuizContainer.getCorrectQuestionIndex()),
+                            Collections.singletonList(reverseQuizContainer.getUserSelectedIndex())
                         );
                     }
                 }
                 break;
             case FILL_IN_THE_GAPS:
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) currentContainerGeneric;
-                // Fill in the gaps logic will be handled here based on user selections
-                // probs compare gapsContainer.getUserSelectedWordIndex() with the correct answer
-                // For now, let's assume it's correct if a selection has been made (this will need refinement)
-                isCorrect = (gapsContainer.getUserSelectedWordIndex() != -1); // Assuming -1 means no selection
+                isCorrect = gapsContainer.isCorrect();
                 break;
             case SORTING_TASK:
                 //postponed
@@ -317,13 +316,13 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 isCorrect = (errorSpottingContainer.getUserSelectedIndex() == errorSpottingContainer.getErrorIndex());
                 
                 // Update UI with correct/incorrect colors
-                androidx.recyclerview.widget.RecyclerView errorRecyclerView = containerView.findViewById(R.id.items_recycler_view);
+                RecyclerView errorRecyclerView = containerView.findViewById(R.id.items_recycler_view);
                 if (errorRecyclerView != null) {
                     ContentContainerAdapter adapter = (ContentContainerAdapter) errorRecyclerView.getTag(R.id.items_recycler_view);
                     if (adapter != null) {
                         adapter.revealAnswers(
-                            java.util.Collections.singletonList(errorSpottingContainer.getErrorIndex()),
-                            java.util.Collections.singletonList(errorSpottingContainer.getUserSelectedIndex())
+                            Collections.singletonList(errorSpottingContainer.getErrorIndex()),
+                            Collections.singletonList(errorSpottingContainer.getUserSelectedIndex())
                         );
                     }
                 }
@@ -528,7 +527,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         switch (container.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
-                androidx.recyclerview.widget.RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
+                RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
                 if (mcqRecyclerView != null) {
                     adapter = (ContentContainerAdapter) mcqRecyclerView.getTag(R.id.options_recycler_view);
                 }
@@ -550,7 +549,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case REVERSE_QUIZ:
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
                 reverseQuizContainer.setUserSelectedIndex(position);
-                androidx.recyclerview.widget.RecyclerView reverseRecyclerView = containerView.findViewById(R.id.question_options_recycler_view);
+                RecyclerView reverseRecyclerView = containerView.findViewById(R.id.question_options_recycler_view);
                 if (reverseRecyclerView != null) {
                     adapter = (ContentContainerAdapter) reverseRecyclerView.getTag(R.id.question_options_recycler_view);
                     if (adapter != null) adapter.setSingleSelection(position);
@@ -559,7 +558,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case ERROR_SPOTTING:
                 ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) container;
                 errorSpottingContainer.setUserSelectedIndex(position);
-                androidx.recyclerview.widget.RecyclerView errorRecyclerView = containerView.findViewById(R.id.items_recycler_view);
+                RecyclerView errorRecyclerView = containerView.findViewById(R.id.items_recycler_view);
                 if (errorRecyclerView != null) {
                     adapter = (ContentContainerAdapter) errorRecyclerView.getTag(R.id.items_recycler_view);
                     if (adapter != null) adapter.setSingleSelection(position);
