@@ -30,7 +30,7 @@ public class ContentContainerLoader {
 
     /**
      * Loads content containers for a specific subject and topic.
-     * This loads actual data from generated JSON files stored for the subject.
+     * This loads actual data from generated datawrapper files stored for the subject.
      *
      * @param context           The application context for loading data from storage
      * @param subjectId         The ID of the subject

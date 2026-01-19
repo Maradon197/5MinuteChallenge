@@ -76,6 +76,7 @@ public class ContainerMultipleChoiceQuiz extends ContentContainer {
         }
         if (!userSelectedIndices.contains(index)) {
             userSelectedIndices.add(index);
+
         }
     }
     

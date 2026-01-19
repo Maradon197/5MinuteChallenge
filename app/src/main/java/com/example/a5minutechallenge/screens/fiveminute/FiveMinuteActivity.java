@@ -93,7 +93,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
         
         // Start timer after a short delay
-        timerText.postDelayed(() -> timerManager.start(), 1000);
+        timerText.postDelayed(() -> timerManager.start(), 3000);
     }
 
     /**
@@ -146,6 +146,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         // Load content from ContentContainerLoader based on subject topic challenge and start index
         contentContainers = ContentContainerLoader.loadContent(this, subjectId, topicName, challengePosition, 0);
 
+        //init container display
         if (!contentContainers.isEmpty()) {
             displayContainer(currentContainerIndex);
         }
@@ -167,7 +168,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         View containerView = inflateContainerView(container);
         currentContainerLayout.addView(containerView);
         
-        /*// Display preview of next container if available, ill leave it as an idea but this is not intended to be used
+        /*// Display preview of next container if available, ill leave it here as an idea but this is not intended to be used
         if (index + 1 < contentContainers.size()) {
             ContentContainer nextContainer = contentContainers.get(index + 1);
             nextContainerLayout.removeAllViews();
@@ -184,7 +185,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
     /**
      * Inflates the appropriate view for a content container.
-     * Since its an outragingly long switchcase, i moved it to a new class
+     * Since it requires an outragingly long switchcase, i moved it to a new class.
+     * This right here may seem duplicate but i think
+     * its good to keep it around in case i ever want to add something
+     * to this algorithm
      * @param container The content container
      * @return The inflated view
      */
@@ -213,9 +217,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     }
 
 
-
     /**
-     * Handles the check button click event.
+     * Handles the check button click or swipe event.
      */
     private void onCheckButtonClicked() {
         ContentContainer currentContainerGeneric = contentContainers.get(currentContainerIndex);
