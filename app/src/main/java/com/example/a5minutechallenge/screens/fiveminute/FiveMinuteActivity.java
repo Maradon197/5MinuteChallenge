@@ -143,8 +143,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Loads and displays the content containers for this lesson.
      */
     private void loadContent() {
-        // Load content from ContentContainerLoader based on subject topic challenge and start index
-        contentContainers = ContentContainerLoader.loadContent(this, subjectId, topicName, challengePosition, 0);
+        // Load content from ContentContainerDataLoader based on subject topic challenge and start index
+        contentContainers = ContentContainerDataLoader.loadContent(this, subjectId, topicName, challengePosition, 0);
 
         //init container display
         if (!contentContainers.isEmpty()) {
@@ -239,7 +239,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 for(int i: currentContainer.getUserSelectedIndices()) {
                     if(currentContainer.getCorrectAnswerIndices().get(i) != currentContainer.getUserSelectedIndices().get(i)) {//if any answer is wrong
                         isCorrect = false;
-                        //managing button presses is missing
                         break;
                     }
                 }
@@ -255,7 +254,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 userResponseExpected = true;
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) currentContainerGeneric;
                 // Fill in the gaps logic will be handled here based on user selections
-                // You'll need to compare gapsContainer.getUserSelectedWordIndex() with the correct answer
+                // probs compare gapsContainer.getUserSelectedWordIndex() with the correct answer
                 // For now, let's assume it's correct if a selection has been made (this will need refinement)
                 isCorrect = (gapsContainer.getUserSelectedWordIndex() != -1); // Assuming -1 means no selection
                 break;

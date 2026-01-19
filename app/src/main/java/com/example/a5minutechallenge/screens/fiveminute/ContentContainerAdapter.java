@@ -17,7 +17,7 @@ import java.util.List;
  * Simple RecyclerView adapter for displaying text items in a list.
  * Used by content containers to populate RecyclerViews with string data.
  */
-public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.ViewHolder> {
+public class ContentContainerAdapter extends RecyclerView.Adapter<ContentContainerAdapter.ViewHolder> {
     private final List<String> items;
     @Nullable
     private final OnItemClickListener onItemClickListener;
@@ -32,21 +32,15 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
          */
         void onItemClick(int position);
     }
-
-    public SimpleTextAdapter(List<String> items) {
-        this(items, null);
-    }
-
-    public SimpleTextAdapter(List<String> items, @Nullable OnItemClickListener onItemClickListener) {
+    public ContentContainerAdapter(List<String> items, @Nullable OnItemClickListener onItemClickListener) {
         this.items = items;
         this.onItemClickListener = onItemClickListener;
     }
-    
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.quiz_option_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.text_container, parent, false);//this is wrong
         return new ViewHolder(view);
     }
 
@@ -64,13 +58,13 @@ public class SimpleTextAdapter extends RecyclerView.Adapter<SimpleTextAdapter.Vi
     public int getItemCount() {
         return items.size();
     }
-    
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView textView;
         
         ViewHolder(View itemView) {
             super(itemView);
-            textView = itemView.findViewById(R.id.option_text);
+            textView = itemView.findViewById(R.id.text_content);//thgis is wrong
         }
     }
 }

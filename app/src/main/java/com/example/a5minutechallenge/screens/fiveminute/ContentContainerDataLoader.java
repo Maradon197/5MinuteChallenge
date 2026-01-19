@@ -23,10 +23,9 @@ import com.example.a5minutechallenge.datawrapper.topic.Topic;
 
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class ContentContainerLoader {
+public class ContentContainerDataLoader {
 
     /**
      * Loads content containers for a specific subject and topic.

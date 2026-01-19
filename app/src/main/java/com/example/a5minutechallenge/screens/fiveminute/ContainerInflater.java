@@ -3,6 +3,7 @@ package com.example.a5minutechallenge.screens.fiveminute;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -67,15 +68,18 @@ public class ContainerInflater extends AppCompatActivity {
             case MULTIPLE_CHOICE_QUIZ:
                 view = inflater.inflate(R.layout.multiple_choice_quiz_container, null);
                 TextView questionText = view.findViewById(R.id.question_text);
+                Button checkButton = view.findViewById(R.id.submit_button);
+
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
                 questionText.setText(mcqContainer.getQuestion());
 
                 RecyclerView optionsRecyclerView = view.findViewById(R.id.options_recycler_view);
-                if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener mcqClickListener = (listener != null)
+
+                if (optionsRecyclerView != null && mcqContainer.getOptions() != null && !mcqContainer.getOptions().isEmpty()) {//if not empty
+                    ContentContainerAdapter.OnItemClickListener mcqClickListener = (listener != null)
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions(), mcqClickListener);
+                    ContentContainerAdapter optionsAdapter = new ContentContainerAdapter(mcqContainer.getOptions(), mcqClickListener);
                     optionsRecyclerView.setAdapter(optionsAdapter);
                     optionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -88,10 +92,10 @@ public class ContainerInflater extends AppCompatActivity {
 
                 RecyclerView questionOptionsRecyclerView = view.findViewById(R.id.question_options_recycler_view);
                 if (questionOptionsRecyclerView != null && reverseQuizContainer.getQuestionOptions() != null && !reverseQuizContainer.getQuestionOptions().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener reverseQuizClickListener = listener != null
+                    ContentContainerAdapter.OnItemClickListener reverseQuizClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions(), reverseQuizClickListener);
+                    ContentContainerAdapter questionOptionsAdapter = new ContentContainerAdapter(reverseQuizContainer.getQuestionOptions(), reverseQuizClickListener);
                     questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
                     questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -104,20 +108,20 @@ public class ContainerInflater extends AppCompatActivity {
 
                 RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
                 if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener leftItemsClickListener = listener != null
+                    ContentContainerAdapter.OnItemClickListener leftItemsClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter leftItemsAdapter = new SimpleTextAdapter(wireContainer.getLeftItems(), leftItemsClickListener);
+                    ContentContainerAdapter leftItemsAdapter = new ContentContainerAdapter(wireContainer.getLeftItems(), leftItemsClickListener);
                     leftItemsRecyclerView.setAdapter(leftItemsAdapter);
                     leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
 
                 RecyclerView rightItemsRecyclerView = view.findViewById(R.id.right_items_recycler_view);
                 if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener rightItemsClickListener = listener != null
+                    ContentContainerAdapter.OnItemClickListener rightItemsClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter rightItemsAdapter = new SimpleTextAdapter(wireContainer.getRightItems(), rightItemsClickListener);
+                    ContentContainerAdapter rightItemsAdapter = new ContentContainerAdapter(wireContainer.getRightItems(), rightItemsClickListener);
                     rightItemsRecyclerView.setAdapter(rightItemsAdapter);
                     rightItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -153,10 +157,10 @@ public class ContainerInflater extends AppCompatActivity {
 
                 RecyclerView sortableItemsRecyclerView = view.findViewById(R.id.sortable_items_recycler_view);
                 if (sortableItemsRecyclerView != null && sortContainer.getCurrentOrder() != null && !sortContainer.getCurrentOrder().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener sortableItemsClickListener = listener != null
+                    ContentContainerAdapter.OnItemClickListener sortableItemsClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter sortableItemsAdapter = new SimpleTextAdapter(sortContainer.getCurrentOrder(), sortableItemsClickListener);
+                    ContentContainerAdapter sortableItemsAdapter = new ContentContainerAdapter(sortContainer.getCurrentOrder(), sortableItemsClickListener);
                     sortableItemsRecyclerView.setAdapter(sortableItemsAdapter);
                     sortableItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -169,10 +173,10 @@ public class ContainerInflater extends AppCompatActivity {
 
                 RecyclerView itemsRecyclerView = view.findViewById(R.id.items_recycler_view);
                 if (itemsRecyclerView != null && errorContainer.getItems() != null && !errorContainer.getItems().isEmpty()) {
-                    SimpleTextAdapter.OnItemClickListener errorSpottingClickListener = listener != null
+                    ContentContainerAdapter.OnItemClickListener errorSpottingClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems(), errorSpottingClickListener);
+                    ContentContainerAdapter itemsAdapter = new ContentContainerAdapter(errorContainer.getItems(), errorSpottingClickListener);
                     itemsRecyclerView.setAdapter(itemsAdapter);
                     itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
