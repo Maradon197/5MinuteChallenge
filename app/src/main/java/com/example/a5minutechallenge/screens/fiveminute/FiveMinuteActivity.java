@@ -227,43 +227,30 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         switch (currentContainerGeneric.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
                 userResponseExpected = true;
-                ContainerMultipleChoiceQuiz currentContainer = (ContainerMultipleChoiceQuiz)  currentContainerGeneric;
-                isCorrect = true;
-                if(currentContainer.getUserSelectedIndices().size() != currentContainer.getCorrectAnswerIndices().size()) {//if answer count is wrong
-                    isCorrect = false;
-                    break;
-                }
-                for(int i: currentContainer.getUserSelectedIndices()) {
-                    if(currentContainer.getCorrectAnswerIndices().get(i) != currentContainer.getUserSelectedIndices().get(i)) {//if any answer is wrong
-                        isCorrect = false;
-                        //managing button presses is missing
-                        break;
-                    }
-                }
+                ContainerMultipleChoiceQuiz currentContainer = (ContainerMultipleChoiceQuiz) currentContainerGeneric;
+                // Use the existing isCorrect() method which properly checks if user-selected indices match correct answer indices
+                isCorrect = currentContainer.isCorrect();
                 break;
             case REVERSE_QUIZ:
                 userResponseExpected = true;
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) currentContainerGeneric;
-                isCorrect = true;
-                if(reverseQuizContainer.getUserSelectedIndex() != reverseQuizContainer.getCorrectQuestionIndex())
-                    isCorrect = false;
+                // Use the existing isCorrect() method
+                isCorrect = reverseQuizContainer.isCorrect();
                 break;
             case FILL_IN_THE_GAPS:
                 userResponseExpected = true;
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) currentContainerGeneric;
-                // Fill in the gaps logic will be handled here based on user selections
-                // You'll need to compare gapsContainer.getUserSelectedWordIndex() with the correct answer
-                // For now, let's assume it's correct if a selection has been made (this will need refinement)
-                isCorrect = (gapsContainer.getUserSelectedWordIndex() != -1); // Assuming -1 means no selection
+                // Use the existing isCorrect() method
+                isCorrect = gapsContainer.isCorrect();
                 break;
             case SORTING_TASK:
                 //postponed
+                break;
             case ERROR_SPOTTING:
                 userResponseExpected = true;
                 ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) currentContainerGeneric;
-                isCorrect = true;
-                if(errorSpottingContainer.getUserSelectedIndex() != errorSpottingContainer.getErrorIndex())
-                    isCorrect = false;
+                // Use the existing isCorrect() method
+                isCorrect = errorSpottingContainer.isCorrect();
                 break;
             case WIRE_CONNECTING:
                 //postponed

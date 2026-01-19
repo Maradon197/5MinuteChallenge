@@ -75,7 +75,7 @@ public class ContainerInflater extends AppCompatActivity {
                     SimpleTextAdapter.OnItemClickListener mcqClickListener = (listener != null)
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions(), mcqClickListener);
+                    SimpleTextAdapter optionsAdapter = new SimpleTextAdapter(mcqContainer.getOptions(), mcqClickListener, mcqContainer.isAllowMultipleAnswers());
                     optionsRecyclerView.setAdapter(optionsAdapter);
                     optionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -91,7 +91,7 @@ public class ContainerInflater extends AppCompatActivity {
                     SimpleTextAdapter.OnItemClickListener reverseQuizClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions(), reverseQuizClickListener);
+                    SimpleTextAdapter questionOptionsAdapter = new SimpleTextAdapter(reverseQuizContainer.getQuestionOptions(), reverseQuizClickListener, false);
                     questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
                     questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
@@ -172,7 +172,7 @@ public class ContainerInflater extends AppCompatActivity {
                     SimpleTextAdapter.OnItemClickListener errorSpottingClickListener = listener != null
                             ? position -> listener.onContainerItemSelected(container, position)
                             : null;
-                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems(), errorSpottingClickListener);
+                    SimpleTextAdapter itemsAdapter = new SimpleTextAdapter(errorContainer.getItems(), errorSpottingClickListener, false);
                     itemsRecyclerView.setAdapter(itemsAdapter);
                     itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
                 }
