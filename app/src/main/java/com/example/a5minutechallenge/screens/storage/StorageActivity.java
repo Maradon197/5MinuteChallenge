@@ -21,7 +21,7 @@ import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.subject.Subject;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
 import com.example.a5minutechallenge.datawrapper.topic.StorageListItem;
-import com.example.a5minutechallenge.screens.topic.TopicListActivity;
+import com.example.a5minutechallenge.screens.challenge.ChallengeListActivity;
 import com.example.a5minutechallenge.service.SubjectGenerationService;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -96,10 +96,9 @@ public class StorageActivity extends AppCompatActivity {
                     genContentFab.setEnabled(true);
                     Toast.makeText(StorageActivity.this, "Content generated successfully!", Toast.LENGTH_LONG).show();
 
-                    // Navigate to TopicListActivity to show the generated topics
-                    Intent intent = new Intent(StorageActivity.this, TopicListActivity.class);
+                    // Navigate to the next screen to show the generated content
+                    Intent intent = new Intent(StorageActivity.this, ChallengeListActivity.class);
                     intent.putExtra("SUBJECT_ID", updatedSubject.getSubjectId());
-                    intent.putExtra("SUBJECT_TITLE", updatedSubject.getTitle(StorageActivity.this));
                     startActivity(intent);
                     finish(); // Finish this activity
                 }
