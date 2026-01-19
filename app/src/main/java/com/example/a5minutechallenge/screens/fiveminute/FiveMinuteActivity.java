@@ -19,7 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerErrorSpotting;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
@@ -29,7 +29,7 @@ import com.example.a5minutechallenge.screens.challenge.LessonOverActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
 
-import Collections;
+import java.util.Collections;
 import java.util.List;
 
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener, ContainerInflater.OnContainerItemSelectedListener {
@@ -268,17 +268,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         switch (currentContainerGeneric.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
                 ContainerMultipleChoiceQuiz currentContainer = (ContainerMultipleChoiceQuiz)  currentContainerGeneric;
-                isCorrect = true;
-                if(currentContainer.getUserSelectedIndices().size() != currentContainer.getCorrectAnswerIndices().size()) {//if answer count is wrong
-                    isCorrect = false;
-                } else {
-                    for(int i: currentContainer.getUserSelectedIndices()) {
-                        if(!currentContainer.getCorrectAnswerIndices().contains(i)) {//if any answer is wrong
-                            isCorrect = false;
-                            break;
-                        }
-                    }
-                }
+                isCorrect = currentContainer.isCorrect();
                 
                 // Update UI with correct/incorrect colors
                 RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
