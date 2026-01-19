@@ -82,6 +82,8 @@ public class ContainerInflater extends AppCompatActivity {
                     ContentContainerAdapter optionsAdapter = new ContentContainerAdapter(mcqContainer.getOptions(), mcqClickListener);
                     optionsRecyclerView.setAdapter(optionsAdapter);
                     optionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+                    // Tag the RecyclerView with adapter for later access
+                    optionsRecyclerView.setTag(R.id.options_recycler_view, optionsAdapter);
                 }
                 break;
             case REVERSE_QUIZ:
@@ -98,6 +100,8 @@ public class ContainerInflater extends AppCompatActivity {
                     ContentContainerAdapter questionOptionsAdapter = new ContentContainerAdapter(reverseQuizContainer.getQuestionOptions(), reverseQuizClickListener);
                     questionOptionsRecyclerView.setAdapter(questionOptionsAdapter);
                     questionOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+                    // Tag the RecyclerView with adapter for later access
+                    questionOptionsRecyclerView.setTag(R.id.question_options_recycler_view, questionOptionsAdapter);
                 }
                 break;
             case WIRE_CONNECTING:
@@ -179,6 +183,8 @@ public class ContainerInflater extends AppCompatActivity {
                     ContentContainerAdapter itemsAdapter = new ContentContainerAdapter(errorContainer.getItems(), errorSpottingClickListener);
                     itemsRecyclerView.setAdapter(itemsAdapter);
                     itemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+                    // Tag the RecyclerView with adapter for later access
+                    itemsRecyclerView.setTag(R.id.items_recycler_view, itemsAdapter);
                 }
                 break;
             case RECAP:

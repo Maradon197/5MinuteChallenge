@@ -48,6 +48,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     
     private List<ContentContainer> contentContainers;
     private int currentContainerIndex = 0;
+    private boolean currentAnswerChecked = false;
     
     private String topicName;
     private int subjectId;
@@ -163,6 +164,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         
         ContentContainer container = contentContainers.get(index);
         
+        // Reset answer checked state for new container
+        currentAnswerChecked = false;
+        
         // Inflate and display vurrent container
         currentContainerLayout.removeAllViews();
         View containerView = inflateContainerView(container);
@@ -223,35 +227,83 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void onCheckButtonClicked() {
         ContentContainer currentContainerGeneric = contentContainers.get(currentContainerIndex);
         
+        // Determine if this container requires user response
+        boolean userResponseExpected = false;
+        switch (currentContainerGeneric.getType()) {
+            case MULTIPLE_CHOICE_QUIZ:
+            case REVERSE_QUIZ:
+            case FILL_IN_THE_GAPS:
+            case ERROR_SPOTTING:
+                userResponseExpected = true;
+                break;
+            default:
+                userResponseExpected = false;
+                break;
+        }
+        
+        // If user response is expected and answer hasn't been checked yet, check it
+        if (userResponseExpected && !currentAnswerChecked) {
+            checkAnswer();
+            currentAnswerChecked = true;
+            checkButton.setText(R.string.next_question);
+            return; // Don't progress yet
+        }
+        
+        // Otherwise, progress to next container
+        progressToNextContainer();
+    }
+
+    /**
+     * Checks the answer for the current container and provides feedback
+     */
+    private void checkAnswer() {
+        ContentContainer currentContainerGeneric = contentContainers.get(currentContainerIndex);
+        View containerView = currentContainerLayout.getChildAt(0);
+        
         // For interactive containers (quizzes, etc.), validate the answer
         boolean isCorrect = false;
-        boolean userResponseExpected = false;
         
         switch (currentContainerGeneric.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
-                userResponseExpected = true;
                 ContainerMultipleChoiceQuiz currentContainer = (ContainerMultipleChoiceQuiz)  currentContainerGeneric;
                 isCorrect = true;
                 if(currentContainer.getUserSelectedIndices().size() != currentContainer.getCorrectAnswerIndices().size()) {//if answer count is wrong
                     isCorrect = false;
-                    break;
+                } else {
+                    for(int i: currentContainer.getUserSelectedIndices()) {
+                        if(!currentContainer.getCorrectAnswerIndices().contains(i)) {//if any answer is wrong
+                            isCorrect = false;
+                            break;
+                        }
+                    }
                 }
-                for(int i: currentContainer.getUserSelectedIndices()) {
-                    if(currentContainer.getCorrectAnswerIndices().get(i) != currentContainer.getUserSelectedIndices().get(i)) {//if any answer is wrong
-                        isCorrect = false;
-                        break;
+                
+                // Update UI with correct/incorrect colors
+                androidx.recyclerview.widget.RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
+                if (mcqRecyclerView != null) {
+                    ContentContainerAdapter adapter = (ContentContainerAdapter) mcqRecyclerView.getTag(R.id.options_recycler_view);
+                    if (adapter != null) {
+                        adapter.revealAnswers(currentContainer.getCorrectAnswerIndices(), currentContainer.getUserSelectedIndices());
                     }
                 }
                 break;
             case REVERSE_QUIZ:
-                userResponseExpected = true;
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) currentContainerGeneric;
-                isCorrect = true;
-                if(reverseQuizContainer.getUserSelectedIndex() != reverseQuizContainer.getCorrectQuestionIndex())
-                    isCorrect = false;
+                isCorrect = (reverseQuizContainer.getUserSelectedIndex() == reverseQuizContainer.getCorrectQuestionIndex());
+                
+                // Update UI with correct/incorrect colors
+                androidx.recyclerview.widget.RecyclerView reverseRecyclerView = containerView.findViewById(R.id.question_options_recycler_view);
+                if (reverseRecyclerView != null) {
+                    ContentContainerAdapter adapter = (ContentContainerAdapter) reverseRecyclerView.getTag(R.id.question_options_recycler_view);
+                    if (adapter != null) {
+                        adapter.revealAnswers(
+                            java.util.Collections.singletonList(reverseQuizContainer.getCorrectQuestionIndex()),
+                            java.util.Collections.singletonList(reverseQuizContainer.getUserSelectedIndex())
+                        );
+                    }
+                }
                 break;
             case FILL_IN_THE_GAPS:
-                userResponseExpected = true;
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) currentContainerGeneric;
                 // Fill in the gaps logic will be handled here based on user selections
                 // probs compare gapsContainer.getUserSelectedWordIndex() with the correct answer
@@ -261,11 +313,20 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case SORTING_TASK:
                 //postponed
             case ERROR_SPOTTING:
-                userResponseExpected = true;
                 ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) currentContainerGeneric;
-                isCorrect = true;
-                if(errorSpottingContainer.getUserSelectedIndex() != errorSpottingContainer.getErrorIndex())
-                    isCorrect = false;
+                isCorrect = (errorSpottingContainer.getUserSelectedIndex() == errorSpottingContainer.getErrorIndex());
+                
+                // Update UI with correct/incorrect colors
+                androidx.recyclerview.widget.RecyclerView errorRecyclerView = containerView.findViewById(R.id.items_recycler_view);
+                if (errorRecyclerView != null) {
+                    ContentContainerAdapter adapter = (ContentContainerAdapter) errorRecyclerView.getTag(R.id.items_recycler_view);
+                    if (adapter != null) {
+                        adapter.revealAnswers(
+                            java.util.Collections.singletonList(errorSpottingContainer.getErrorIndex()),
+                            java.util.Collections.singletonList(errorSpottingContainer.getUserSelectedIndex())
+                        );
+                    }
+                }
                 break;
             case WIRE_CONNECTING:
                 //postponed
@@ -273,15 +334,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case QUIZ:
                 //deprecated
                 break;
-
-            default:// TEXT, TITLE, VIDEO, RECAP don't need validation
-                userResponseExpected = false;
-                break;
         }
         
-        if (userResponseExpected) {onAnswer(isCorrect);}
-        
-        progressToNextContainer();
+        onAnswer(isCorrect);
     }
 
     /**
@@ -466,29 +521,49 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     // OnContainerItemSelectedListener implementation from interface
     @Override
     public void onContainerItemSelected(ContentContainer container, int position) {
-        //THIS IS LACKING USER INPUT FEEDBACK
+        // Get the current container view and its RecyclerView
+        View containerView = currentContainerLayout.getChildAt(0);
+        ContentContainerAdapter adapter = null;
+        
         switch (container.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;
+                androidx.recyclerview.widget.RecyclerView mcqRecyclerView = containerView.findViewById(R.id.options_recycler_view);
+                if (mcqRecyclerView != null) {
+                    adapter = (ContentContainerAdapter) mcqRecyclerView.getTag(R.id.options_recycler_view);
+                }
+                
                 if (mcqContainer.isAllowMultipleAnswers()) {
                     //Toggle selection for multiple answer mode
                     if (mcqContainer.getUserSelectedIndices().contains(position)) {
                         mcqContainer.removeUserSelectedIndex(position);
                     } else {
-                        mcqContainer.addUserSelectedIndex(position);//Add UI feedback!!
+                        mcqContainer.addUserSelectedIndex(position);
                     }
+                    if (adapter != null) adapter.toggleSelection(position);
                 } else {
                     //Single answer, adding an option clears previous
                     mcqContainer.addUserSelectedIndex(position);
+                    if (adapter != null) adapter.setSingleSelection(position);
                 }
                 break;
             case REVERSE_QUIZ:
                 ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) container;
                 reverseQuizContainer.setUserSelectedIndex(position);
+                androidx.recyclerview.widget.RecyclerView reverseRecyclerView = containerView.findViewById(R.id.question_options_recycler_view);
+                if (reverseRecyclerView != null) {
+                    adapter = (ContentContainerAdapter) reverseRecyclerView.getTag(R.id.question_options_recycler_view);
+                    if (adapter != null) adapter.setSingleSelection(position);
+                }
                 break;
             case ERROR_SPOTTING:
                 ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) container;
                 errorSpottingContainer.setUserSelectedIndex(position);
+                androidx.recyclerview.widget.RecyclerView errorRecyclerView = containerView.findViewById(R.id.items_recycler_view);
+                if (errorRecyclerView != null) {
+                    adapter = (ContentContainerAdapter) errorRecyclerView.getTag(R.id.items_recycler_view);
+                    if (adapter != null) adapter.setSingleSelection(position);
+                }
                 break;
             case FILL_IN_THE_GAPS:
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
