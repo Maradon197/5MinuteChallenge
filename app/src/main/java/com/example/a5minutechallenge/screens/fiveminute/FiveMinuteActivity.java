@@ -461,9 +461,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         //pause/resume UI feedback here?
     }
 
-    // OnContainerItemSelectedListener implementation
+    // OnContainerItemSelectedListener implementation from interface
     @Override
     public void onContainerItemSelected(ContentContainer container, int position) {
+        //THIS IS LACKING USER INPUT FEEDBACK
         switch (container.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
                 ContainerMultipleChoiceQuiz mcqContainer = (ContainerMultipleChoiceQuiz) container;

@@ -55,14 +55,14 @@ public class ContentContainerLoader {
         List<ContentContainer> containers = challenges.get(challengePosition).getContainerlist();
 
 
-        //copy to iterate over
+        //copy to return
         List<ContentContainer> populatedContainers = new ArrayList<>(containers);
 
-        for (ContentContainer container : populatedContainers) {
+        for (ContentContainer container : containers) {
             switch (container.getType()) {
                 case ERROR_SPOTTING:
                     ContainerErrorSpotting errorSpotting = (ContainerErrorSpotting) container;
-                    containers.add(new ContainerErrorSpotting(start_container++)
+                    populatedContainers.add(new ContainerErrorSpotting(start_container++)
                             .setInstructions(errorSpotting.getInstructions())
                             .setItems(errorSpotting.getItems())
                             .setErrorIndex(errorSpotting.getErrorIndex())
@@ -71,7 +71,7 @@ public class ContentContainerLoader {
 
                 case FILL_IN_THE_GAPS:
                     ContainerFillInTheGaps fillInGaps = (ContainerFillInTheGaps) container;
-                    containers.add(new ContainerFillInTheGaps(start_container++)
+                    populatedContainers.add(new ContainerFillInTheGaps(start_container++)
                             .setTextTemplate(fillInGaps.getTextTemplate())
                             .setCorrectWords(fillInGaps.getCorrectWords())
                             .setWordOptions(fillInGaps.getWordOptions()));
@@ -79,7 +79,7 @@ public class ContentContainerLoader {
 
                 case MULTIPLE_CHOICE_QUIZ:
                     ContainerMultipleChoiceQuiz mcQuiz = (ContainerMultipleChoiceQuiz) container;
-                    containers.add(new ContainerMultipleChoiceQuiz(start_container++)
+                    populatedContainers.add(new ContainerMultipleChoiceQuiz(start_container++)
                             .setQuestion(mcQuiz.getQuestion())
                             .setOptions(mcQuiz.getOptions())
                             .setCorrectAnswerIndices(mcQuiz.getCorrectAnswerIndices())
@@ -94,12 +94,12 @@ public class ContentContainerLoader {
                     if (recap.getWrappedContainer() != null) {
                         newRecap.setWrappedContainer(recap.getWrappedContainer());
                     }
-                    containers.add(newRecap);
+                    populatedContainers.add(newRecap);
                     break;
 
                 case REVERSE_QUIZ:
                     ContainerReverseQuiz reverseQuiz = (ContainerReverseQuiz) container;
-                    containers.add(new ContainerReverseQuiz(start_container++)
+                    populatedContainers.add(new ContainerReverseQuiz(start_container++)
                             .setAnswer(reverseQuiz.getAnswer())
                             .setQuestionOptions(reverseQuiz.getQuestionOptions())
                             .setCorrectQuestionIndex(reverseQuiz.getCorrectQuestionIndex())
@@ -108,32 +108,32 @@ public class ContentContainerLoader {
 
                 case SORTING_TASK:
                     ContainerSortingTask sortingTask = (ContainerSortingTask) container;
-                    containers.add(new ContainerSortingTask(start_container++)
+                    populatedContainers.add(new ContainerSortingTask(start_container++)
                             .setInstructions(sortingTask.getInstructions())
                             .setCorrectOrder(sortingTask.getCorrectOrder()));
                     break;
 
                 case TEXT:
                     ContainerText text = (ContainerText) container;
-                    containers.add(new ContainerText(start_container++)
+                    populatedContainers.add(new ContainerText(start_container++)
                             .setText(text.getText()));
                     break;
 
                 case TITLE:
                     ContainerTitle title = (ContainerTitle) container;
-                    containers.add(new ContainerTitle(start_container++)
+                    populatedContainers.add(new ContainerTitle(start_container++)
                             .setTitle(title.getTitle()));
                     break;
 
                 case VIDEO:
                     ContainerVideo video = (ContainerVideo) container;
-                    containers.add(new ContainerVideo(start_container++)
+                    populatedContainers.add(new ContainerVideo(start_container++)
                             .setUrl(video.getUrl()));
                     break;
 
                 case WIRE_CONNECTING:
                     ContainerWireConnecting wireConnecting = (ContainerWireConnecting) container;
-                    containers.add(new ContainerWireConnecting(start_container++)
+                    populatedContainers.add(new ContainerWireConnecting(start_container++)
                             .setInstructions(wireConnecting.getInstructions())
                             .setLeftItems(wireConnecting.getLeftItems())
                             .setRightItems(wireConnecting.getRightItems())
@@ -141,7 +141,7 @@ public class ContentContainerLoader {
                     break;
 
                 default:
-                    // Unknown container type - skip it
+                    // Unknown container type, skip
                     break;
             }
         }
