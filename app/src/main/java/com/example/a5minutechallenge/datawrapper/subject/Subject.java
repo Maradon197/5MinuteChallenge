@@ -6,7 +6,6 @@ package com.example.a5minutechallenge.datawrapper.subject;
 
 import android.content.Context;
 
-import com.example.a5minutechallenge.datawrapper.topic.StorageListItem;
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;

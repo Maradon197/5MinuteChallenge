@@ -8,7 +8,7 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/my_icon_high_res"
+        android:src="@drawable/my_icon_high_res_blue"
         android:scaleType="centerCrop" />
 
     <View
@@ -62,7 +62,7 @@
         android:layout_marginTop="@dimen/spacing_xxl"
         android:layout_marginBottom="@dimen/spacing_xxl"
         android:text="@string/ciis_project_subtitle"
-        android:textColor="@color/text_tertiary"
+        android:textColor="@color/black"
         android:textSize="@dimen/text_size_md"
         android:alpha="0.8"
         app:layout_constraintBottom_toBottomOf="parent"

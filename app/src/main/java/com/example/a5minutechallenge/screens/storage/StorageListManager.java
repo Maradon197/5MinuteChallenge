@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
-import com.example.a5minutechallenge.datawrapper.topic.StorageListItem;
+import com.example.a5minutechallenge.datawrapper.subject.StorageListItem;
 
 import java.io.File;
 import java.util.ArrayList;

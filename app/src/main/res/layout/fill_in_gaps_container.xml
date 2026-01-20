@@ -63,18 +63,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_scroll_view" />
 
-    <Button
-        android:id="@+id/check_button"
-        android:layout_width="0dp"
-        android:layout_height="@dimen/button_height"
-        android:layout_marginTop="@dimen/spacing_md"
-        android:background="@drawable/button_primary"
-        android:text="@string/check_answer"
-        android:textColor="@color/white"
-        android:textSize="@dimen/text_size_md"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/word_options_chip_group" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

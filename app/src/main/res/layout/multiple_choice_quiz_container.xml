@@ -41,19 +41,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/instruction_text" />
 
-    <Button
-        android:id="@+id/submit_button"
-        android:layout_width="0dp"
-        android:layout_height="@dimen/button_height"
-        android:layout_marginTop="@dimen/spacing_md"
-        android:background="@drawable/button_primary"
-        android:text="@string/submit_answer"
-        android:textColor="@color/white"
-        android:textSize="@dimen/text_size_md"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/options_recycler_view" />
 
     <TextView
         android:id="@+id/explanation_text"

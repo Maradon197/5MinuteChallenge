@@ -38,7 +38,7 @@
         android:layout_gravity="bottom|start"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_save"
-        app:backgroundTint="@color/design_default_color_primary"
+        app:backgroundTint="@color/accent"
         app:tint="@android:color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

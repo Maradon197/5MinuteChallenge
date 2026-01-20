@@ -2,9 +2,7 @@
  * unnecessary in the future
  * This is the displayed container, not the actual file!
  */
-package com.example.a5minutechallenge.datawrapper.topic;
-
-import com.example.a5minutechallenge.datawrapper.subject.SubjectFile;
+package com.example.a5minutechallenge.datawrapper.subject;
 
 public class StorageListItem {
     private String title;

@@ -21,7 +21,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="@color/design_default_color_primary"
+        app:backgroundTint="@color/accent"
         app:tint="@android:color/white" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -32,8 +32,8 @@
 
         android:layout_gravity="bottom|start"
         android:layout_margin="16dp"
-        android:src="@android:drawable/presence_audio_busy"
-        app:backgroundTint="@color/design_default_color_primary"
+        android:src="@android:drawable/ic_media_play"
+        app:backgroundTint="@color/accent"
         app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

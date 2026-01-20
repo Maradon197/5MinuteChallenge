@@ -207,7 +207,7 @@ public class ContainerInflater extends AppCompatActivity {
                 view = inflater.inflate(R.layout.video_container, null);
                 break;
             case QUIZ:
-                view = inflater.inflate(R.layout.quiz_container, null);
+                //deprecated
                 break;
         }
 

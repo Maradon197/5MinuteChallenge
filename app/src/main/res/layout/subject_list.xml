@@ -18,13 +18,13 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/subject_recycler_view"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipToPadding="false"
-        android:padding="8dp"
+        android:padding="10dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:layout_anchor="@id/subject_list_title"
-        app:layout_anchorGravity="bottom|center"
+        app:layout_anchorGravity="bottom"
         app:spanCount="1" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -34,7 +34,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="@color/design_default_color_primary"
+        app:backgroundTint="@color/accent"
         app:tint="@android:color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

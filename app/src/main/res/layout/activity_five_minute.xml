@@ -54,7 +54,7 @@
         </LinearLayout>
 
         <!-- Timer Bar
-        We have to use the "style" cmd (65) because android default seems to be circular-->
+        use "style" cmd (65) because android default seems to be circular wth-->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/timer_height_thick"
@@ -86,11 +86,6 @@
 
     </LinearLayout>
 
-
-
-
-
-    <!-- Streak Indicator, is managed nowhere right now so it doesnt display  -->
     <TextView
         android:id="@+id/streak_indicator"
 
@@ -112,7 +107,6 @@
         app:layout_constraintTop_toBottomOf="@+id/timer_container" />
 
 
-    <!-- Score Popup Overlay, also not managed right now -->
     <TextView
         android:id="@+id/score_popup"
 
@@ -190,6 +184,7 @@
         app:iconGravity="end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/button_primary"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
