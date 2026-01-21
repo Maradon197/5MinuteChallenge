@@ -16,14 +16,12 @@ public class ContainerWireConnecting extends ContentContainer {
     private List<String> leftItems;
     private List<String> rightItems;
     private Map<Integer, Integer> correctMatches; // leftIndex -> rightIndex
-    private Map<Integer, Integer> userMatches; // leftIndex -> rightIndex
     
     public ContainerWireConnecting(int id) {
         super(id, Types.WIRE_CONNECTING);
         this.leftItems = new ArrayList<>();
         this.rightItems = new ArrayList<>();
         this.correctMatches = new HashMap<>();
-        this.userMatches = new HashMap<>();
     }
     
     public ContainerWireConnecting setInstructions(String instructions) {
@@ -60,18 +58,6 @@ public class ContainerWireConnecting extends ContentContainer {
     
     public Map<Integer, Integer> getCorrectMatches() {
         return correctMatches;
-    }
-    
-    public void addUserMatch(int leftIndex, int rightIndex) {
-        userMatches.put(leftIndex, rightIndex);
-    }
-    
-    public void removeUserMatch(int leftIndex) {
-        userMatches.remove(leftIndex);
-    }
-    
-    public Map<Integer, Integer> getUserMatches() {
-        return userMatches;
     }
     
     /**
