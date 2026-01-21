@@ -594,7 +594,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                     lowTimeOverlay.setAlpha(0f);
                 }
                 if (lowTimeOverlay != null) {
-                    float warningAlpha = (60f - remainingSeconds) / 60f * 0.3f;
+                    float warningAlpha = ((float) TimerManager.WARNING_TIME - remainingSeconds) / (float) TimerManager.WARNING_TIME * 0.3f;
                     lowTimeOverlay.setAlpha(warningAlpha);
                 }
             } else {
