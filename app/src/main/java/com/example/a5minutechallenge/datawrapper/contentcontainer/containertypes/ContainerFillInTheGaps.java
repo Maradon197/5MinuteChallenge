@@ -116,7 +116,7 @@ public class ContainerFillInTheGaps extends ContentContainer {
         }
         for (int i = 0; i < correctWords.size(); i++) {
             int clickedIndex = userClickOrder.get(i);
-            if (clickedIndex >= wordOptions.size()) {
+            if (clickedIndex < 0 || clickedIndex >= wordOptions.size()) {
                 return false;
             }
             String clickedWord = wordOptions.get(clickedIndex);
