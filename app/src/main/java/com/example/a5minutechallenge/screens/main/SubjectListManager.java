@@ -6,10 +6,13 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.R;
@@ -17,11 +20,13 @@ import com.example.a5minutechallenge.datawrapper.subject.Subject;
 import com.example.a5minutechallenge.screens.topic.TopicListActivity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.ViewHolder> {
 
     private final Context context;
-    private final ArrayList<Subject> subjects;
+    private final ArrayList<Subject> allSubjects;
+    private List<Subject> filteredSubjects;
     private final OnItemLongClickListener longClickListener;
 
     public interface OnItemLongClickListener {
@@ -36,7 +41,8 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
      */
     public SubjectListManager(Context context, ArrayList<Subject> subjects, OnItemLongClickListener longClickListener) {
         this.context = context;
-        this.subjects = subjects;
+        this.allSubjects = subjects;
+        this.filteredSubjects = new ArrayList<>(subjects);
         this.longClickListener = longClickListener;
     }
 
@@ -61,8 +67,48 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
      */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Subject subject = subjects.get(position);
+        Subject subject = filteredSubjects.get(position);
         holder.title.setText(subject.getTitle());
+
+        // Load topics data for progress display
+        subject.getTopics(context);
+
+        // Update topics preview
+        String topicsPreview = subject.getTopicsPreview(context, 3);
+        if (topicsPreview != null && !topicsPreview.isEmpty()) {
+            holder.topicsPreview.setText(topicsPreview);
+            holder.topicsPreview.setVisibility(View.VISIBLE);
+        } else {
+            holder.topicsPreview.setVisibility(View.GONE);
+        }
+
+        // Update status indicator
+        if (subject.isCompleted()) {
+            holder.status.setText("✓");
+            holder.status.setTextColor(ContextCompat.getColor(context, R.color.success));
+            holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.card_background));
+            holder.card.setStrokeColor(ContextCompat.getColor(context, R.color.success));
+            holder.card.setStrokeWidth(context.getResources().getDimensionPixelSize(R.dimen.card_stroke_width));
+        } else if (subject.getTotalAttempts() > 0) {
+            holder.status.setText("◐");
+            holder.status.setTextColor(ContextCompat.getColor(context, R.color.warning));
+            holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.card_background));
+            holder.card.setStrokeColor(ContextCompat.getColor(context, R.color.warning));
+            holder.card.setStrokeWidth(context.getResources().getDimensionPixelSize(R.dimen.card_stroke_width));
+        } else {
+            holder.status.setText("○");
+            holder.status.setTextColor(ContextCompat.getColor(context, R.color.text_tertiary));
+            holder.card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.card_background));
+            holder.card.setStrokeColor(ContextCompat.getColor(context, R.color.card_stroke));
+            holder.card.setStrokeWidth(context.getResources().getDimensionPixelSize(R.dimen.card_stroke_width));
+        }
+
+        // Update score and attempts
+        holder.bestScore.setText("Best: " + subject.getBestScore());
+        holder.attempts.setText("Attempts: " + subject.getTotalAttempts());
+
+        // Update progress
+        holder.progress.setProgress(subject.getProgressPercentage());
 
         holder.itemView.setOnClickListener(v -> {
             Toast.makeText(context, "Subject ID: " + subject.getSubjectId(), Toast.LENGTH_SHORT).show();
@@ -74,7 +120,8 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
 
         holder.itemView.setOnLongClickListener(v -> {
             if (longClickListener != null) {
-                longClickListener.onItemLongClick(position);
+                int actualPosition = allSubjects.indexOf(subject);
+                longClickListener.onItemLongClick(actualPosition);
             }
             return true;
         });
@@ -82,15 +129,56 @@ public class SubjectListManager extends RecyclerView.Adapter<SubjectListManager.
 
     @Override
     public int getItemCount() {
-        return subjects.size();
+        return filteredSubjects.size();
+    }
+
+    /**
+     * Filters the subject list based on the search query.
+     * @param query The search query string
+     */
+    public void filter(String query) {
+        filteredSubjects.clear();
+        if (query == null || query.isEmpty()) {
+            filteredSubjects.addAll(allSubjects);
+        } else {
+            String lowerQuery = query.toLowerCase();
+            for (Subject subject : allSubjects) {
+                String title = subject.getTitle();
+                if (title != null && title.toLowerCase().contains(lowerQuery)) {
+                    filteredSubjects.add(subject);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Resets filter to show all subjects.
+     */
+    public void resetFilter() {
+        filteredSubjects.clear();
+        filteredSubjects.addAll(allSubjects);
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        com.google.android.material.card.MaterialCardView card;
         TextView title;
+        TextView topicsPreview;
+        TextView status;
+        TextView bestScore;
+        TextView attempts;
+        ProgressBar progress;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            card = itemView.findViewById(R.id.subject_card);
             title = itemView.findViewById(R.id.subject_list_title);
+            topicsPreview = itemView.findViewById(R.id.subject_topics_preview);
+            status = itemView.findViewById(R.id.subject_status);
+            bestScore = itemView.findViewById(R.id.subject_best_score);
+            attempts = itemView.findViewById(R.id.subject_attempts);
+            progress = itemView.findViewById(R.id.subject_progress);
         }
     }
 }

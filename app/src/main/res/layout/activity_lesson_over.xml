@@ -74,6 +74,16 @@
             app:layout_constraintTop_toBottomOf="@+id/score_text">
 
             <TextView
+                android:id="@+id/base_points_text"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_md"
+                android:padding="@dimen/spacing_sm"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/accuracy_text"
 
                 android:layout_width="match_parent"

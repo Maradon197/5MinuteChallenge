@@ -3,6 +3,8 @@ package com.example.a5minutechallenge.screens.topic;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -27,6 +29,7 @@ public class TopicListActivity extends AppCompatActivity {
     private ArrayList<Topic> topicList;
     private TopicListAdapter adapter;
     private Subject subject;
+    private EditText searchBar;
 
     /**
      * Initializes the TopicListActivity activity with a topic list for the selected subject.
@@ -55,8 +58,23 @@ public class TopicListActivity extends AppCompatActivity {
         adapter = new TopicListAdapter(this, topicList);
         topicListView.setAdapter(adapter);
 
+        // Setup search bar
+        searchBar = findViewById(R.id.topic_search_bar);
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
         topicListView.setOnItemClickListener((parent, view, position, id) -> {
-            Topic selectedTopic = topicList.get(position);
+            Topic selectedTopic = adapter.getItem(position);
             Intent intent = new Intent(TopicListActivity.this, ChallengeListActivity.class);
             intent.putExtra("SUBJECT_ID", subjectId);
             intent.putExtra("TOPIC_NAME", selectedTopic.getTitle());

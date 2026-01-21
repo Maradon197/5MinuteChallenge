@@ -4,6 +4,7 @@
  */
 package com.example.a5minutechallenge.screens.fiveminute;
 
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.GestureDetector;
@@ -11,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -44,7 +46,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private TextView scoreDisplay;
     private TextView streakIndicator;
     private TextView scorePopup;
+    private TextView timeBonusPopup;
     private ProgressBar timerProgress;
+    private View lowTimeOverlay;
+    private View correctFlashOverlay;
     
     private ScoreManager scoreManager;
     private TimerManager timerManager;
@@ -53,6 +58,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private List<ContentContainer> contentContainers;
     private int currentContainerIndex = 0;
     private boolean currentAnswerChecked = false;
+    private int totalInteractiveContainers = 0;
+    private int correctAnswersCount = 0;
     
     private String topicName;
     private int subjectId;
@@ -77,7 +84,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         scoreDisplay = findViewById(R.id.score_display);
         streakIndicator = findViewById(R.id.streak_indicator);
         scorePopup = findViewById(R.id.score_popup);
+        timeBonusPopup = findViewById(R.id.time_bonus_popup);
         timerProgress = findViewById(R.id.timer_progress);
+        lowTimeOverlay = findViewById(R.id.low_time_overlay);
+        correctFlashOverlay = findViewById(R.id.correct_flash_overlay);
         
         checkButton.setOnClickListener(v -> onCheckButtonClicked());
     }
@@ -150,6 +160,22 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void loadContent() {
         // Load content from ContentContainerDataLoader based on subject topic challenge and start index
         contentContainers = ContentContainerDataLoader.loadContent(this, subjectId, topicName, challengePosition, 0);
+
+        // Count total interactive containers for progress bar
+        for (ContentContainer c : contentContainers) {
+            switch (c.getType()) {
+                case MULTIPLE_CHOICE_QUIZ:
+                case REVERSE_QUIZ:
+                case FILL_IN_THE_GAPS:
+                case ERROR_SPOTTING:
+                case SORTING_TASK:
+                case WIRE_CONNECTING:
+                    totalInteractiveContainers++;
+                    break;
+                default:
+                    break;
+            }
+        }
 
         //init container display
         if (!contentContainers.isEmpty()) {
@@ -379,12 +405,15 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     public void onAnswer(boolean isCorrect) {
         if (isCorrect) {
+            correctAnswersCount++;
             int points = scoreManager.recordCorrectAnswer();
             timerManager.addCorrectAnswerBonus();
 
             updateScoreDisplay();
             showScorePopup(points);
             updateStreakDisplay();
+            updateCorrectAnswersProgress();
+            showCorrectFlash();
 
             // Play bounce animation on score display
             Animation bounce = AnimationUtils.loadAnimation(this, R.anim.bounce);
@@ -397,6 +426,59 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             // Shake animation for incorrect answer
             Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);
             scoreDisplay.startAnimation(shake);
+        }
+    }
+
+    /**
+     * Updates the correct answers progress bar with animation.
+     */
+    private void updateCorrectAnswersProgress() {
+        if (totalInteractiveContainers > 0) {
+            int targetProgress = (correctAnswersCount * 100) / totalInteractiveContainers;
+            ObjectAnimator progressAnimator = ObjectAnimator.ofInt(timerProgress, "progress", timerProgress.getProgress(), targetProgress);
+            progressAnimator.setDuration(500);
+            progressAnimator.setInterpolator(new DecelerateInterpolator());
+            progressAnimator.start();
+        }
+    }
+
+    /**
+     * Shows a quick green flash on the edges for correct answers.
+     */
+    private void showCorrectFlash() {
+        if (correctFlashOverlay != null) {
+            correctFlashOverlay.setVisibility(View.VISIBLE);
+            correctFlashOverlay.setAlpha(0.3f);
+            correctFlashOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() -> correctFlashOverlay.setVisibility(View.GONE))
+                    .start();
+        }
+    }
+
+    /**
+     * Shows the time bonus popup.
+     */
+    private void showTimeBonusPopup(int bonusSeconds) {
+        if (timeBonusPopup != null) {
+            timeBonusPopup.setText("+" + bonusSeconds + "s");
+            timeBonusPopup.setVisibility(View.VISIBLE);
+
+            Animation popupAnim = AnimationUtils.loadAnimation(this, R.anim.score_popup);
+            popupAnim.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {}
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    timeBonusPopup.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {}
+            });
+            timeBonusPopup.startAnimation(popupAnim);
         }
     }
 
@@ -487,11 +569,17 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     public void onTimeUpdate(int remainingSeconds, float percentage) {
         runOnUiThread(() -> {
             updateTimerDisplay();
-            timerProgress.setProgress((int) (percentage * 100));
+            // Note: timerProgress is now used for correct answers, not time
             
             // Change timer color based on remaining time
             if (timerManager.isCritical()) {
                 timerText.setTextColor(getColor(R.color.timer_low));
+                
+                // Show low time overlay with animation
+                if (lowTimeOverlay != null && lowTimeOverlay.getVisibility() != View.VISIBLE) {
+                    lowTimeOverlay.setVisibility(View.VISIBLE);
+                    lowTimeOverlay.animate().alpha(0.5f).setDuration(1000).start();
+                }
                 
                 // Pulse animation when critical
                 if (remainingSeconds % 2 == 0 && timerText.getAnimation() == null) {
@@ -500,8 +588,21 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
             } else if (timerManager.isWarning()) {
                 timerText.setTextColor(getColor(R.color.timer_medium));
+                // Slowly start showing the overlay
+                if (lowTimeOverlay != null && lowTimeOverlay.getVisibility() != View.VISIBLE) {
+                    lowTimeOverlay.setVisibility(View.VISIBLE);
+                    lowTimeOverlay.setAlpha(0f);
+                }
+                if (lowTimeOverlay != null) {
+                    float warningAlpha = (60f - remainingSeconds) / 60f * 0.3f;
+                    lowTimeOverlay.setAlpha(warningAlpha);
+                }
             } else {
                 timerText.setTextColor(getColor(R.color.text_primary));
+                if (lowTimeOverlay != null) {
+                    lowTimeOverlay.setVisibility(View.GONE);
+                    lowTimeOverlay.setAlpha(0f);
+                }
             }
         });
     }
@@ -514,6 +615,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     @Override
     public void onTimerStateChanged(boolean isRunning) {
         //pause/resume UI feedback here?
+    }
+
+    @Override
+    public void onTimeBonusAwarded(int bonusSeconds) {
+        runOnUiThread(() -> showTimeBonusPopup(bonusSeconds));
     }
 
     // OnContainerItemSelectedListener implementation from interface

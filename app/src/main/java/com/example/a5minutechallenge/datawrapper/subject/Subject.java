@@ -795,4 +795,115 @@ public class Subject {
         return challenge;
     }
 
+    // ===== Aggregation helpers for progress tracking =====
+
+    /**
+     * Returns the total number of topics in this subject.
+     */
+    public int getTotalTopics() {
+        return getTopics().size();
+    }
+
+    /**
+     * Returns the number of completed topics in this subject.
+     * A topic is complete when all its challenges are complete.
+     */
+    public int getCompletedTopics() {
+        int count = 0;
+        for (Topic t : getTopics()) {
+            if (t.isCompleted()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Returns the total number of challenges across all topics.
+     */
+    public int getTotalChallenges() {
+        int count = 0;
+        for (Topic t : getTopics()) {
+            count += t.getTotalChallenges();
+        }
+        return count;
+    }
+
+    /**
+     * Returns the number of completed challenges across all topics.
+     */
+    public int getCompletedChallenges() {
+        int count = 0;
+        for (Topic t : getTopics()) {
+            count += t.getCompletedChallenges();
+        }
+        return count;
+    }
+
+    /**
+     * Returns the progress percentage (0-100) based on completed challenges.
+     */
+    public int getProgressPercentage() {
+        int total = getTotalChallenges();
+        if (total == 0) return 0;
+        return (getCompletedChallenges() * 100) / total;
+    }
+
+    /**
+     * Returns true if all challenges in this subject are completed.
+     */
+    public boolean isCompleted() {
+        int total = getTotalChallenges();
+        return total > 0 && getCompletedChallenges() == total;
+    }
+
+    /**
+     * Returns total attempts across all challenges in this subject.
+     */
+    public int getTotalAttempts() {
+        int total = 0;
+        for (Topic t : getTopics()) {
+            total += t.getTotalAttempts();
+        }
+        return total;
+    }
+
+    /**
+     * Returns the best score among all challenges in this subject.
+     */
+    public int getBestScore() {
+        int best = 0;
+        for (Topic t : getTopics()) {
+            int topicBest = t.getBestScore();
+            if (topicBest > best) {
+                best = topicBest;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Returns a short description string listing topic names, e.g. "Algebra • Geometry • ..."
+     * @param context The application context for loading topics if needed
+     * @param maxTopics Maximum number of topics to show before truncating with "..."
+     */
+    public String getTopicsPreview(Context context, int maxTopics) {
+        ArrayList<Topic> topicsList = getTopics(context);
+        if (topicsList == null || topicsList.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        int count = Math.min(topicsList.size(), maxTopics);
+        for (int i = 0; i < count; i++) {
+            if (i > 0) {
+                sb.append(" • ");
+            }
+            sb.append(topicsList.get(i).getTitle());
+        }
+        if (topicsList.size() > maxTopics) {
+            sb.append(" • …");
+        }
+        return sb.toString();
+    }
+
 }
