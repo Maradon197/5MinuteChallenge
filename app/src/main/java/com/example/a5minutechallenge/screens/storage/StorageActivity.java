@@ -54,8 +54,8 @@ public class StorageActivity extends AppCompatActivity {
         ArrayList<SubjectFile> subjectfiles = subject.getFiles(getApplicationContext());
         for(SubjectFile currentFile: subjectfiles) {
             subject.addStorageItem(currentFile);
-            storageListAdapter.notifyDataSetChanged();
         }
+        storageListAdapter.notifyItemsChanged();
 
         // Setup search bar
         searchBar = findViewById(R.id.storage_search_bar);
@@ -85,7 +85,7 @@ public class StorageActivity extends AppCompatActivity {
                                     SubjectFile savedFile = subject.saveFileToStorage(this, inputStream, fileName);
                                     if (savedFile != null) {
                                         subject.addStorageItem(savedFile);
-                                        storageListAdapter.notifyDataSetChanged();
+                                        storageListAdapter.notifyItemsChanged();
                                     }
                                 }
                             } catch (Exception e) {

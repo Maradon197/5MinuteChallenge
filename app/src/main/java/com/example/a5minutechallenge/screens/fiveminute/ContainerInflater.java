@@ -140,7 +140,8 @@ public class ContainerInflater extends AppCompatActivity {
                 view = inflater.inflate(R.layout.fill_in_gaps_container, null);
                 TextView gapsText = view.findViewById(R.id.text_with_gaps);
                 ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) container;
-                gapsText.setText(gapsContainer.getDisplayText());
+                String placeholder = context.getString(R.string.gap_placeholder);
+                gapsText.setText(gapsContainer.getDisplayTextWithPlaceholder(placeholder));
 
                 ChipGroup wordOptionsChipGroup = view.findViewById(R.id.word_options_chip_group);
                 if (wordOptionsChipGroup != null && gapsContainer.getWordOptions() != null && !gapsContainer.getWordOptions().isEmpty()) {
@@ -152,9 +153,22 @@ public class ContainerInflater extends AppCompatActivity {
                         chip.setClickable(true);
                         chip.setCheckable(false);
                         final int chipPosition = i; // Make final for use in anonymous class
-                        if (listener != null) {
-                            chip.setOnClickListener(v -> listener.onContainerItemSelected(container, chipPosition));
-                        }
+                        final TextView gapsTextView = gapsText;
+                        final String placeholderStr = placeholder;
+                        chip.setOnClickListener(v -> {
+                            // Fill the gap with this word
+                            if (gapsContainer.fillGapWithIndex(chipPosition)) {
+                                // Update the display text
+                                gapsTextView.setText(gapsContainer.getDisplayTextWithPlaceholder(placeholderStr));
+                                // Disable the chip after use
+                                chip.setEnabled(false);
+                                chip.setAlpha(0.5f);
+                            }
+                            // Notify listener
+                            if (listener != null) {
+                                listener.onContainerItemSelected(container, chipPosition);
+                            }
+                        });
                         wordOptionsChipGroup.addView(chip);
                     }
                 }

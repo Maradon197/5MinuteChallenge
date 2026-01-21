@@ -14,6 +14,7 @@ public class ContainerFillInTheGaps extends ContentContainer {
     private List<String> correctWords; // Correct words for each gap in order
     private List<String> wordOptions; // All word options to choose from
     private List<String> userFilledWords; // Words user has filled in
+    private List<Integer> userClickOrder; // Order of chip clicks (indices from wordOptions)
     private int currentGapIndex;
     private int userSelectedWordIndex = -1; // Stores the index of the word selected by the user from wordOptions
     
@@ -22,6 +23,7 @@ public class ContainerFillInTheGaps extends ContentContainer {
         this.correctWords = new ArrayList<>();
         this.wordOptions = new ArrayList<>();
         this.userFilledWords = new ArrayList<>();
+        this.userClickOrder = new ArrayList<>();
         this.currentGapIndex = 0;
     }
     
@@ -58,10 +60,29 @@ public class ContainerFillInTheGaps extends ContentContainer {
             currentGapIndex++;
         }
     }
+
+    /**
+     * Fills the next gap with the word at the given index and records the click order.
+     * @param wordIndex The index of the word in wordOptions
+     * @return true if a gap was filled, false if all gaps are already filled
+     */
+    public boolean fillGapWithIndex(int wordIndex) {
+        if (currentGapIndex < correctWords.size() && wordIndex >= 0 && wordIndex < wordOptions.size()) {
+            String word = wordOptions.get(wordIndex);
+            userFilledWords.add(word);
+            userClickOrder.add(wordIndex);
+            currentGapIndex++;
+            return true;
+        }
+        return false;
+    }
     
     public void removeLastFilledWord() {
         if (!userFilledWords.isEmpty()) {
             userFilledWords.remove(userFilledWords.size() - 1);
+            if (!userClickOrder.isEmpty()) {
+                userClickOrder.remove(userClickOrder.size() - 1);
+            }
             currentGapIndex--;
         }
     }
@@ -76,6 +97,34 @@ public class ContainerFillInTheGaps extends ContentContainer {
     
     public List<String> getUserFilledWords() {
         return userFilledWords;
+    }
+
+    /**
+     * Returns the order in which chips were clicked (indices from wordOptions).
+     */
+    public List<Integer> getUserClickOrder() {
+        return userClickOrder;
+    }
+
+    /**
+     * Checks if the click order matches the expected order for correct words.
+     * The expected order is the indices of correctWords in wordOptions.
+     */
+    public boolean isClickOrderCorrect() {
+        if (userClickOrder.size() != correctWords.size()) {
+            return false;
+        }
+        for (int i = 0; i < correctWords.size(); i++) {
+            int clickedIndex = userClickOrder.get(i);
+            if (clickedIndex < 0 || clickedIndex >= wordOptions.size()) {
+                return false;
+            }
+            String clickedWord = wordOptions.get(clickedIndex);
+            if (!correctWords.get(i).equalsIgnoreCase(clickedWord)) {
+                return false;
+            }
+        }
+        return true;
     }
     
     public int getCurrentGapIndex() {
@@ -96,6 +145,21 @@ public class ContainerFillInTheGaps extends ContentContainer {
             }
         }
         return true;
+    }
+    
+    /**
+     * Returns display text with placeholders replaced by filled words or placeholder markers.
+     * @param placeholder The placeholder string to use for unfilled gaps (e.g., "___")
+     */
+    public String getDisplayTextWithPlaceholder(String placeholder) {
+        String displayText = textTemplate;
+        // Replace filled gaps with user words
+        for (String word : userFilledWords) {
+            displayText = displayText.replaceFirst("\\{\\}", "[" + word + "]");
+        }
+        // Replace remaining gaps with placeholder
+        displayText = displayText.replace("{}", placeholder);
+        return displayText;
     }
     
     public String getDisplayText() {

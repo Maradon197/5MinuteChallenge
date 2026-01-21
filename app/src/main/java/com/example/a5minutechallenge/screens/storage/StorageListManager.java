@@ -102,6 +102,17 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
     }
 
     /**
+     * Notifies the adapter that the underlying data has changed.
+     * This ensures filteredItems is synchronized with allItems when not filtering.
+     */
+    public void notifyItemsChanged() {
+        // If no filter is active (search bar is empty), sync filteredItems with allItems
+        filteredItems.clear();
+        filteredItems.addAll(allItems);
+        notifyDataSetChanged();
+    }
+
+    /**
      * Opens a file using the appropriate application
      * @param subjectFile The SubjectFile to open
      */

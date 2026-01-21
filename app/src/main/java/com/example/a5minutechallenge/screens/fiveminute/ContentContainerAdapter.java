@@ -1,9 +1,14 @@
 package com.example.a5minutechallenge.screens.fiveminute;
 
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -29,6 +34,7 @@ public class ContentContainerAdapter extends RecyclerView.Adapter<ContentContain
     private final Set<Integer> correctIndices = new HashSet<>();
     private final Set<Integer> incorrectIndices = new HashSet<>();
     private boolean answersRevealed = false;
+    private boolean shouldAnimateReveal = false;
 
     /**
      * Listener interface for item click events in the RecyclerView.
@@ -59,12 +65,27 @@ public class ContentContainerAdapter extends RecyclerView.Adapter<ContentContain
         // Update background color based on state
         Context context = holder.itemView.getContext();
         if (answersRevealed) {
+            int targetColor;
             if (correctIndices.contains(position)) {
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.correct_answer));
+                targetColor = ContextCompat.getColor(context, R.color.correct_answer);
             } else if (incorrectIndices.contains(position)) {
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.incorrect_answer));
+                targetColor = ContextCompat.getColor(context, R.color.incorrect_answer);
             } else {
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.unselected_answer));
+                targetColor = ContextCompat.getColor(context, R.color.unselected_answer);
+            }
+            
+            // Apply fade-in animation for answer reveal
+            if (shouldAnimateReveal && (correctIndices.contains(position) || incorrectIndices.contains(position))) {
+                int currentColor = ContextCompat.getColor(context, 
+                        selectedIndices.contains(position) ? R.color.selected_answer : R.color.unselected_answer);
+                ColorDrawable[] colorLayers = new ColorDrawable[2];
+                colorLayers[0] = new ColorDrawable(currentColor);
+                colorLayers[1] = new ColorDrawable(targetColor);
+                TransitionDrawable transition = new TransitionDrawable(colorLayers);
+                holder.itemView.setBackground(transition);
+                transition.startTransition(300);
+            } else {
+                holder.itemView.setBackgroundColor(targetColor);
             }
         } else if (selectedIndices.contains(position)) {
             holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.selected_answer));
@@ -106,10 +127,11 @@ public class ContentContainerAdapter extends RecyclerView.Adapter<ContentContain
     }
 
     /**
-     * Reveals answers with correct/incorrect highlighting
+     * Reveals answers with correct/incorrect highlighting and fade-in animation
      */
     public void revealAnswers(List<Integer> correctAnswerIndices, List<Integer> userSelectedIndices) {
         answersRevealed = true;
+        shouldAnimateReveal = true;
         correctIndices.clear();
         incorrectIndices.clear();
         
@@ -124,6 +146,11 @@ public class ContentContainerAdapter extends RecyclerView.Adapter<ContentContain
         }
         
         notifyDataSetChanged();
+        
+        // Reset the animation flag after a delay to avoid re-animating on scroll
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            shouldAnimateReveal = false;
+        }, 400);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
