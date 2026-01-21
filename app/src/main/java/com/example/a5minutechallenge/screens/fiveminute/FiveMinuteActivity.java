@@ -25,6 +25,8 @@ import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerReverseQuiz;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerFillInTheGaps;
+import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerSortingTask;
+import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerWireConnecting;
 import com.example.a5minutechallenge.screens.challenge.LessonOverActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
@@ -236,6 +238,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             case REVERSE_QUIZ:
             case FILL_IN_THE_GAPS:
             case ERROR_SPOTTING:
+            case SORTING_TASK:
+            case WIRE_CONNECTING:
                 userResponseExpected = true;
                 break;
             default:
@@ -300,7 +304,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 isCorrect = gapsContainer.isCorrect();
                 break;
             case SORTING_TASK:
-                //postponed
+                ContainerSortingTask sortingContainer = (ContainerSortingTask) currentContainerGeneric;
+                isCorrect = sortingContainer.isCorrect();
+                // No visual feedback needed for sorting - the order itself is the feedback
+                break;
             case ERROR_SPOTTING:
                 ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) currentContainerGeneric;
                 isCorrect = (errorSpottingContainer.getUserSelectedIndex() == errorSpottingContainer.getErrorIndex());
@@ -318,7 +325,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
                 break;
             case WIRE_CONNECTING:
-                //postponed
+                ContainerWireConnecting wireConnectingContainer = (ContainerWireConnecting) currentContainerGeneric;
+                isCorrect = wireConnectingContainer.isCorrect();
+                // No visual feedback needed for wire connecting - the arrangement itself is the feedback
                 break;
             case QUIZ:
                 //deprecated

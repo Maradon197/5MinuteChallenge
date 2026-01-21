@@ -16,14 +16,12 @@ public class ContainerWireConnecting extends ContentContainer {
     private List<String> leftItems;
     private List<String> rightItems;
     private Map<Integer, Integer> correctMatches; // leftIndex -> rightIndex
-    private Map<Integer, Integer> userMatches; // leftIndex -> rightIndex
     
     public ContainerWireConnecting(int id) {
         super(id, Types.WIRE_CONNECTING);
         this.leftItems = new ArrayList<>();
         this.rightItems = new ArrayList<>();
         this.correctMatches = new HashMap<>();
-        this.userMatches = new HashMap<>();
     }
     
     public ContainerWireConnecting setInstructions(String instructions) {
@@ -62,25 +60,31 @@ public class ContainerWireConnecting extends ContentContainer {
         return correctMatches;
     }
     
-    public void addUserMatch(int leftIndex, int rightIndex) {
-        userMatches.put(leftIndex, rightIndex);
-    }
-    
-    public void removeUserMatch(int leftIndex) {
-        userMatches.remove(leftIndex);
-    }
-    
-    public Map<Integer, Integer> getUserMatches() {
-        return userMatches;
-    }
-    
+    /**
+     * Checks if the current arrangement is correct.
+     * For wire connecting without actual wires, items are matched by position:
+     * leftItems[i] should match with rightItems[i] based on the correct matches mapping.
+     */
     public boolean isCorrect() {
-        if (userMatches.size() != correctMatches.size()) {
-            return false;
-        }
-        for (Map.Entry<Integer, Integer> entry : correctMatches.entrySet()) {
-            if (!userMatches.containsKey(entry.getKey()) || 
-                !userMatches.get(entry.getKey()).equals(entry.getValue())) {
+        // Check if each left item at position i correctly matches the right item at position i
+        for (int i = 0; i < Math.min(leftItems.size(), rightItems.size()); i++) {
+            // Get what right index should be at position i based on correct matches
+            Integer expectedRightIndex = correctMatches.get(i);
+            if (expectedRightIndex == null) {
+                continue; // No match required for this position
+            }
+            
+            // Bounds check
+            if (expectedRightIndex < 0 || expectedRightIndex >= rightItems.size()) {
+                return false;
+            }
+            
+            // Find the item that should be at position i based on correct matches
+            String expectedRightItem = rightItems.get(expectedRightIndex);
+            
+            // In the current implementation, rightItems maintains its actual current order
+            // So we check if the item at position i matches what we expect
+            if (i >= rightItems.size() || !rightItems.get(i).equals(expectedRightItem)) {
                 return false;
             }
         }

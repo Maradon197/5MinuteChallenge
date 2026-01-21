@@ -112,22 +112,28 @@ public class ContainerInflater extends AppCompatActivity {
 
                 RecyclerView leftItemsRecyclerView = view.findViewById(R.id.left_items_recycler_view);
                 if (leftItemsRecyclerView != null && wireContainer.getLeftItems() != null && !wireContainer.getLeftItems().isEmpty()) {
-                    ContentContainerAdapter.OnItemClickListener leftItemsClickListener = listener != null
-                            ? position -> listener.onContainerItemSelected(container, position)
+                    DraggableAdapter.OnItemMovedListener leftItemMovedListener = listener != null
+                            ? (fromPosition, toPosition) -> listener.onContainerItemSelected(container, -1) // Signal move occurred
                             : null;
-                    ContentContainerAdapter leftItemsAdapter = new ContentContainerAdapter(wireContainer.getLeftItems(), leftItemsClickListener);
+                    DraggableAdapter leftItemsAdapter = new DraggableAdapter(wireContainer.getLeftItems(), null, leftItemMovedListener);
                     leftItemsRecyclerView.setAdapter(leftItemsAdapter);
                     leftItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+                    leftItemsAdapter.attachToRecyclerView(leftItemsRecyclerView);
+                    // Tag the RecyclerView with adapter for later access
+                    leftItemsRecyclerView.setTag(R.id.left_items_recycler_view, leftItemsAdapter);
                 }
 
                 RecyclerView rightItemsRecyclerView = view.findViewById(R.id.right_items_recycler_view);
                 if (rightItemsRecyclerView != null && wireContainer.getRightItems() != null && !wireContainer.getRightItems().isEmpty()) {
-                    ContentContainerAdapter.OnItemClickListener rightItemsClickListener = listener != null
-                            ? position -> listener.onContainerItemSelected(container, position)
+                    DraggableAdapter.OnItemMovedListener rightItemMovedListener = listener != null
+                            ? (fromPosition, toPosition) -> listener.onContainerItemSelected(container, -1) // Signal move occurred
                             : null;
-                    ContentContainerAdapter rightItemsAdapter = new ContentContainerAdapter(wireContainer.getRightItems(), rightItemsClickListener);
+                    DraggableAdapter rightItemsAdapter = new DraggableAdapter(wireContainer.getRightItems(), null, rightItemMovedListener);
                     rightItemsRecyclerView.setAdapter(rightItemsAdapter);
                     rightItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+                    rightItemsAdapter.attachToRecyclerView(rightItemsRecyclerView);
+                    // Tag the RecyclerView with adapter for later access
+                    rightItemsRecyclerView.setTag(R.id.right_items_recycler_view, rightItemsAdapter);
                 }
                 break;
             case FILL_IN_THE_GAPS:
@@ -161,12 +167,20 @@ public class ContainerInflater extends AppCompatActivity {
 
                 RecyclerView sortableItemsRecyclerView = view.findViewById(R.id.sortable_items_recycler_view);
                 if (sortableItemsRecyclerView != null && sortContainer.getCurrentOrder() != null && !sortContainer.getCurrentOrder().isEmpty()) {
-                    ContentContainerAdapter.OnItemClickListener sortableItemsClickListener = listener != null
-                            ? position -> listener.onContainerItemSelected(container, position)
+                    DraggableAdapter.OnItemMovedListener sortItemMovedListener = listener != null
+                            ? (fromPosition, toPosition) -> {
+                                // Update the container's internal state
+                                sortContainer.moveItem(fromPosition, toPosition);
+                                // Notify listener that a move occurred
+                                listener.onContainerItemSelected(container, -1);
+                            }
                             : null;
-                    ContentContainerAdapter sortableItemsAdapter = new ContentContainerAdapter(sortContainer.getCurrentOrder(), sortableItemsClickListener);
+                    DraggableAdapter sortableItemsAdapter = new DraggableAdapter(sortContainer.getCurrentOrder(), null, sortItemMovedListener);
                     sortableItemsRecyclerView.setAdapter(sortableItemsAdapter);
                     sortableItemsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+                    sortableItemsAdapter.attachToRecyclerView(sortableItemsRecyclerView);
+                    // Tag the RecyclerView with adapter for later access
+                    sortableItemsRecyclerView.setTag(R.id.sortable_items_recycler_view, sortableItemsAdapter);
                 }
                 break;
             case ERROR_SPOTTING:
