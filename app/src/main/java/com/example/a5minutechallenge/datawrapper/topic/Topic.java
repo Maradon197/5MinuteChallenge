@@ -35,7 +35,7 @@ public class Topic {
         getChallenges().add(challenge);
     }
 
-    // ===== Aggregation helpers for progress tracking =====
+    //Aggregation helpers for progress tracking
 
     /**
      * Returns the total number of challenges in this topic.

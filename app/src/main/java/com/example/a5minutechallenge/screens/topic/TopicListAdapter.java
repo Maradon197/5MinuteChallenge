@@ -160,4 +160,10 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
         filteredTopics.addAll(allTopics);
         notifyDataSetChanged();
     }
+
+    public void updateTopics(List<Topic> newTopics) {
+        this.allTopics.clear();
+        this.allTopics.addAll(newTopics);
+        filter(""); // Apply the current filter (or no filter)
+    }
 }

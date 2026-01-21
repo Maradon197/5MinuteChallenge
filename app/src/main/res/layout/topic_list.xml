@@ -66,7 +66,6 @@
 
     </LinearLayout>
 
-    <!-- Empty state overlay -->
     <FrameLayout
         android:id="@+id/empty_topics_overlay"
         android:layout_width="match_parent"

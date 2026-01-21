@@ -117,7 +117,7 @@ public class TopicListActivity extends AppCompatActivity {
         // Refresh the topic list when returning to this activity
         topicList.clear();
         topicList.addAll(subject.getTopics(getApplicationContext()));
-        adapter.notifyDataSetChanged();
+        adapter.updateTopics(topicList);
         updateEmptyState();
     }
 
