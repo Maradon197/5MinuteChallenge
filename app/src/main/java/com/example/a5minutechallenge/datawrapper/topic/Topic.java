@@ -35,4 +35,67 @@ public class Topic {
         getChallenges().add(challenge);
     }
 
+    // ===== Aggregation helpers for progress tracking =====
+
+    /**
+     * Returns the total number of challenges in this topic.
+     */
+    public int getTotalChallenges() {
+        return getChallenges().size();
+    }
+
+    /**
+     * Returns the number of completed challenges in this topic.
+     */
+    public int getCompletedChallenges() {
+        int count = 0;
+        for (Challenge c : getChallenges()) {
+            if (c.isCompleted()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Returns the progress percentage (0-100) based on completed challenges.
+     */
+    public int getProgressPercentage() {
+        int total = getTotalChallenges();
+        if (total == 0) return 0;
+        return (getCompletedChallenges() * 100) / total;
+    }
+
+    /**
+     * Returns true if all challenges in this topic are completed.
+     */
+    public boolean isCompleted() {
+        int total = getTotalChallenges();
+        return total > 0 && getCompletedChallenges() == total;
+    }
+
+    /**
+     * Returns total attempts across all challenges in this topic.
+     */
+    public int getTotalAttempts() {
+        int total = 0;
+        for (Challenge c : getChallenges()) {
+            total += c.getAttempts();
+        }
+        return total;
+    }
+
+    /**
+     * Returns the best score among all challenges in this topic.
+     */
+    public int getBestScore() {
+        int best = 0;
+        for (Challenge c : getChallenges()) {
+            if (c.getBestScore() > best) {
+                best = c.getBestScore();
+            }
+        }
+        return best;
+    }
+
 }

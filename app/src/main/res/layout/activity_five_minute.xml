@@ -5,6 +5,15 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background">
 
+    <!-- Low time overlay (cinematic red gradient) -->
+    <View
+        android:id="@+id/low_time_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/low_time_gradient"
+        android:alpha="0"
+        android:visibility="gone" />
+
     <!-- Timer Container -->
     <LinearLayout
         android:id="@+id/timer_container"
@@ -20,7 +29,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- He<ader bar -->
+        <!-- Header bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,15 +39,18 @@
             <TextView
                 android:id="@+id/timer_text"
 
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
-                android:layout_weight="1"
                 android:text="5:00"
                 android:textColor="@color/text_primary"
-                android:textSize="@dimen/text_size_lg"
-                android:textStyle="bold"
+                android:textSize="@dimen/text_size_md"
                 android:fontFamily="sans-serif-medium" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
             <TextView
                 android:id="@+id/score_display"
@@ -53,8 +65,7 @@
 
         </LinearLayout>
 
-        <!-- Timer Bar
-        use "style" cmd (65) because android default seems to be circular wth-->
+        <!-- Correct Answers Progress Bar (replaced timer bar) -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/timer_height_thick"
@@ -79,8 +90,8 @@
                 android:layout_height="match_parent"
 
                 android:max="100"
-                android:progress="50"
-                android:progressDrawable="@drawable/timer_progress_gradient" />
+                android:progress="0"
+                android:progressDrawable="@drawable/progress_correct_answers" />
 
         </FrameLayout>
 
@@ -106,6 +117,26 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/timer_container" />
 
+    <!-- Time bonus popup -->
+    <TextView
+        android:id="@+id/time_bonus_popup"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_md"
+
+        android:background="@drawable/card_elevated"
+        android:padding="@dimen/spacing_sm"
+        android:text="+10s"
+        android:textColor="@color/secondary"
+
+        android:textSize="@dimen/text_size_md"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:elevation="@dimen/elevation_xl"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/timer_container" />
 
     <TextView
         android:id="@+id/score_popup"
@@ -123,6 +154,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Correct answer flash overlay -->
+    <View
+        android:id="@+id/correct_flash_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/success"
+        android:alpha="0"
+        android:visibility="gone" />
 
     <!-- Content Container Area -->
     <FrameLayout
@@ -172,19 +211,22 @@
 
     </FrameLayout>
 
-    <!-- Check/Next Button -->
+    <!-- Check/Next Button - Made bigger -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/check_button"
 
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/button_height_large"
+        android:layout_margin="@dimen/spacing_md"
         android:text="@string/check_answer"
-        android:textSize="@dimen/text_size_md"
+        android:textSize="@dimen/text_size_lg"
+        android:textStyle="bold"
         app:icon="@android:drawable/ic_menu_upload"
         app:iconGravity="end"
+        app:cornerRadius="@dimen/corner_radius_lg"
+        app:backgroundTint="@color/accent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:background="@drawable/button_primary"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

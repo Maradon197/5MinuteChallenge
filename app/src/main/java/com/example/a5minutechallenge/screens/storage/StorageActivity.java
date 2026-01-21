@@ -5,6 +5,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +36,7 @@ public class StorageActivity extends AppCompatActivity {
     private StorageListManager storageListAdapter;
     private ActivityResultLauncher<Intent> filePickerLauncher;
     private Subject subject;
+    private EditText searchBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +56,21 @@ public class StorageActivity extends AppCompatActivity {
             subject.addStorageItem(currentFile);
             storageListAdapter.notifyDataSetChanged();
         }
+
+        // Setup search bar
+        searchBar = findViewById(R.id.storage_search_bar);
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                storageListAdapter.filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),

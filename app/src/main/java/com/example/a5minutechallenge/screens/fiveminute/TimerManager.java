@@ -7,10 +7,11 @@ import android.os.Looper;
 
 public class TimerManager {
 
-    private static final int INITIAL_TIME_SECONDS = 30; // 5 minutes
+    private static final int INITIAL_TIME_SECONDS = 300; // 5 minutes
     private static final int CORRECT_ANSWER_BONUS_SECONDS = 10;
     private static final int UPDATE_INTERVAL_MS = 100; // Update 10 times per second for smooth animation
     public static final int LOW_TIME = 30;
+    public static final int WARNING_TIME = 60;
 
     private int remainingTimeSeconds;
     private long lastUpdateTime;
@@ -18,11 +19,13 @@ public class TimerManager {
     private Handler handler;
     private Runnable updateRunnable;
     private TimerListener listener;
+    private int lastBonusAwarded = 0; // Track last bonus for popup
     
     public interface TimerListener {
         void onTimeUpdate(int remainingSeconds, float percentage);
         void onTimeOver();
         void onTimerStateChanged(boolean isRunning);
+        default void onTimeBonusAwarded(int bonusSeconds) {} // Optional callback for time bonus popup
     }
     
     public TimerManager(TimerListener listener) {
@@ -107,6 +110,7 @@ public class TimerManager {
      * @param seconds Seconds to add
      */
     public void addTime(int seconds) {
+        lastBonusAwarded = seconds;
         remainingTimeSeconds += seconds;
         if (remainingTimeSeconds > INITIAL_TIME_SECONDS) {
             remainingTimeSeconds = INITIAL_TIME_SECONDS; // Cap at initial time
@@ -114,6 +118,7 @@ public class TimerManager {
         
         if (listener != null) {
             listener.onTimeUpdate(remainingTimeSeconds, getPercentage());
+            listener.onTimeBonusAwarded(seconds);
         }
     }
     
@@ -122,6 +127,13 @@ public class TimerManager {
      */
     public void addCorrectAnswerBonus() {
         addTime(CORRECT_ANSWER_BONUS_SECONDS);
+    }
+
+    /**
+     * Gets the last bonus amount awarded.
+     */
+    public int getLastBonusAwarded() {
+        return lastBonusAwarded;
     }
     
     /**
@@ -153,7 +165,7 @@ public class TimerManager {
      * @return true if less than 60 seconds remaining
      */
     public boolean isWarning() {
-        return remainingTimeSeconds < 60 && remainingTimeSeconds >= 30;
+        return remainingTimeSeconds < WARNING_TIME && remainingTimeSeconds >= LOW_TIME;
     }
     
     public boolean isRunning() {

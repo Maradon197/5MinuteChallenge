@@ -2,11 +2,15 @@
  **/
 package com.example.a5minutechallenge.screens.challenge;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -22,7 +26,9 @@ import java.util.ArrayList;
 
 public class LessonOverActivity extends AppCompatActivity {
 
+    private TextView titleText;
     private TextView scoreText;
+    private TextView basePointsText;
     private TextView accuracyText;
     private TextView streakText;
     private TextView timeBonusText;
@@ -30,42 +36,60 @@ public class LessonOverActivity extends AppCompatActivity {
     private Button continueButton;
     private Button backToTopicsButton;
 
+    private int totalScore;
+    private int basePoints;
+    private int timeBonus;
+    private int accuracyBonus;
+    private Handler animationHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lesson_over);
 
+        animationHandler = new Handler(Looper.getMainLooper());
         initViews();
-        displayResults();
+        saveProgress();
         setupButtons();
-        animateResults();
+        animateSettlementScore();
     }
 
     /**
      * Initializes all view references.
      */
     private void initViews() {
+        titleText = findViewById(R.id.title_text);
         scoreText = findViewById(R.id.score_text);
+        basePointsText = findViewById(R.id.base_points_text);
         accuracyText = findViewById(R.id.accuracy_text);
         streakText = findViewById(R.id.streak_text);
         timeBonusText = findViewById(R.id.time_bonus_text);
         accuracyBonusText = findViewById(R.id.accuracy_bonus_text);
         continueButton = findViewById(R.id.continue_button);
         backToTopicsButton = findViewById(R.id.back_to_topics_button);
+
+        // Get values from intent
+        totalScore = getIntent().getIntExtra("TOTAL_SCORE", 0);
+        timeBonus = getIntent().getIntExtra("TIME_BONUS", 0);
+        accuracyBonus = getIntent().getIntExtra("ACCURACY_BONUS", 0);
+        // Calculate base points (total minus bonuses)
+        basePoints = totalScore - timeBonus - accuracyBonus;
+        if (basePoints < 0) basePoints = 0;
     }
 
     /**
-     * Displays the lesson results from intent extras.
+     * Saves progress to storage.
      */
-    private void displayResults() {
-        int totalScore = getIntent().getIntExtra("TOTAL_SCORE", 0);
+    private void saveProgress() {
         double accuracy = getIntent().getDoubleExtra("ACCURACY", 0.0);
         int maxStreak = getIntent().getIntExtra("MAX_STREAK", 0);
-        int timeBonus = getIntent().getIntExtra("TIME_BONUS", 0);
-        int accuracyBonus = getIntent().getIntExtra("ACCURACY_BONUS", 0);
         String topicName = getIntent().getStringExtra("TOPIC_NAME");
         int challengePosition = getIntent().getIntExtra("CHALLENGE_POSITION", -1);
         int subjectId = getIntent().getIntExtra("SUBJECT_ID", 0);
+
+        // Set text values for display
+        accuracyText.setText(String.format("Accuracy: %.0f%%", accuracy * 100));
+        streakText.setText(String.format("Max Streak: %d", maxStreak));
 
         // Save progress to storage
         if (topicName != null && challengePosition >= 0) {
@@ -89,20 +113,99 @@ public class LessonOverActivity extends AppCompatActivity {
             // Save updated progress
             subject.saveToStorage(getApplicationContext());
         }
+    }
 
-        scoreText.setText(getString(R.string.your_score, totalScore));
-        accuracyText.setText(String.format("Accuracy: %.0f%%", accuracy * 100));
-        streakText.setText(String.format("Max Streak: %d", maxStreak));
+    /**
+     * Animates the settlement score like a "settlement" - shows base then adds bonuses.
+     */
+    private void animateSettlementScore() {
+        // Initial state - hide everything
+        scoreText.setAlpha(0f);
+        if (basePointsText != null) basePointsText.setAlpha(0f);
+        accuracyText.setAlpha(0f);
+        streakText.setAlpha(0f);
+        timeBonusText.setAlpha(0f);
+        timeBonusText.setVisibility(View.GONE);
+        accuracyBonusText.setAlpha(0f);
+        accuracyBonusText.setVisibility(View.GONE);
 
-        if (timeBonus > 0) {
-            timeBonusText.setText(getString(R.string.time_bonus, timeBonus));
-            timeBonusText.setVisibility(View.VISIBLE);
+        // Fade in title
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
+        titleText.startAnimation(fadeIn);
+
+        // Step 1: Show base points and count up
+        animationHandler.postDelayed(() -> {
+            if (basePointsText != null) {
+                basePointsText.setVisibility(View.VISIBLE);
+                basePointsText.setText("Base Points: 0");
+                basePointsText.animate().alpha(1f).setDuration(300).start();
+            }
+            
+            scoreText.setVisibility(View.VISIBLE);
+            animateCountUp(scoreText, 0, basePoints, "Score: %d", 600, () -> {
+                // Step 2: Show accuracy and streak
+                animationHandler.postDelayed(() -> {
+                    accuracyText.animate().alpha(1f).setDuration(300).start();
+                    streakText.animate().alpha(1f).setDuration(300).start();
+                    
+                    // Step 3: Add time bonus if any
+                    if (timeBonus > 0) {
+                        animationHandler.postDelayed(() -> {
+                            timeBonusText.setText(getString(R.string.time_bonus, timeBonus));
+                            timeBonusText.setVisibility(View.VISIBLE);
+                            timeBonusText.animate().alpha(1f).setDuration(300).start();
+                            
+                            // Count up score with time bonus
+                            animateCountUp(scoreText, basePoints, basePoints + timeBonus, "Score: %d", 400, () -> {
+                                // Step 4: Add accuracy bonus if any
+                                if (accuracyBonus > 0) {
+                                    animationHandler.postDelayed(() -> {
+                                        accuracyBonusText.setText(getString(R.string.accuracy_bonus, accuracyBonus));
+                                        accuracyBonusText.setVisibility(View.VISIBLE);
+                                        accuracyBonusText.animate().alpha(1f).setDuration(300).start();
+                                        
+                                        // Count up final score
+                                        animateCountUp(scoreText, basePoints + timeBonus, totalScore, "Score: %d", 400, null);
+                                    }, 300);
+                                }
+                            });
+                        }, 400);
+                    } else if (accuracyBonus > 0) {
+                        // No time bonus, just accuracy bonus
+                        animationHandler.postDelayed(() -> {
+                            accuracyBonusText.setText(getString(R.string.accuracy_bonus, accuracyBonus));
+                            accuracyBonusText.setVisibility(View.VISIBLE);
+                            accuracyBonusText.animate().alpha(1f).setDuration(300).start();
+                            
+                            animateCountUp(scoreText, basePoints, totalScore, "Score: %d", 400, null);
+                        }, 400);
+                    }
+                }, 300);
+            });
+        }, 500);
+    }
+
+    /**
+     * Animates a count-up effect on a TextView.
+     */
+    private void animateCountUp(TextView textView, int from, int to, String format, long duration, Runnable onComplete) {
+        textView.setAlpha(1f);
+        ValueAnimator animator = ValueAnimator.ofInt(from, to);
+        animator.setDuration(duration);
+        animator.setInterpolator(new DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            int value = (int) animation.getAnimatedValue();
+            textView.setText(String.format(format, value));
+        });
+        if (onComplete != null) {
+            animator.addListener(new android.animation.AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(android.animation.Animator animation) {
+                    onComplete.run();
+                }
+            });
         }
-
-        if (accuracyBonus > 0) {
-            accuracyBonusText.setText(getString(R.string.accuracy_bonus, accuracyBonus));
-            accuracyBonusText.setVisibility(View.VISIBLE);
-        }
+        animator.start();
     }
 
     /**
@@ -128,39 +231,11 @@ public class LessonOverActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Animates the result elements for visual appeal.
-     */
-    private void animateResults() {
-        Animation scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in);
-        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
-
-        scoreText.startAnimation(scaleIn);
-
-        accuracyText.setVisibility(View.INVISIBLE);
-        accuracyText.postDelayed(() -> {
-            accuracyText.setVisibility(View.VISIBLE);
-            accuracyText.startAnimation(fadeIn);
-        }, 200);
-
-        streakText.setVisibility(View.INVISIBLE);
-        streakText.postDelayed(() -> {
-            streakText.setVisibility(View.VISIBLE);
-            streakText.startAnimation(fadeIn);
-        }, 400);
-
-        if (timeBonusText.getVisibility() == View.VISIBLE) {
-            timeBonusText.setAlpha(0f);
-            timeBonusText.postDelayed(() -> {
-                timeBonusText.animate().alpha(1f).setDuration(300).start();
-            }, 600);
-        }
-
-        if (accuracyBonusText.getVisibility() == View.VISIBLE) {
-            accuracyBonusText.setAlpha(0f);
-            accuracyBonusText.postDelayed(() -> {
-                accuracyBonusText.animate().alpha(1f).setDuration(300).start();
-            }, 800);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (animationHandler != null) {
+            animationHandler.removeCallbacksAndMessages(null);
         }
     }
 }

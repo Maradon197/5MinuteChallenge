@@ -5,27 +5,67 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background">
 
-    <TextView
-        android:id="@+id/subject_list_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/example_title"
-        android:layout_margin="@dimen/icon_size_md"
-        android:textSize="20sp"
-        android:textColor="@color/white"
-        android:layout_gravity="center_horizontal"
-        />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/subject_recycler_view"
-
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipToPadding="false"
-        android:padding="10dp"
-        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:layout_anchorGravity="bottom"
-        app:spanCount="1" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Header Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_md">
+
+            <TextView
+                android:id="@+id/subject_list_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textSize="@dimen/text_size_xl"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:layout_gravity="center_horizontal" />
+
+            <TextView
+                android:id="@+id/subject_list_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pick_subject_header"
+                android:textSize="@dimen/text_size_sm"
+                android:textColor="@color/text_secondary"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/spacing_xs" />
+
+            <!-- Search Bar -->
+            <EditText
+                android:id="@+id/subject_search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:background="@drawable/card_elevated"
+                android:padding="@dimen/spacing_md"
+                android:hint="@string/search_subjects"
+                android:textColorHint="@color/text_tertiary"
+                android:textColor="@color/text_primary"
+                android:inputType="text"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="@dimen/spacing_sm"
+                android:drawableTint="@color/text_tertiary" />
+
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/subject_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:padding="10dp"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="1" />
+
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_subject_button"

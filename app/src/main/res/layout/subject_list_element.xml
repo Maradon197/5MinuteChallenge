@@ -1,29 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/subject_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/spacing_sm"
-    android:background="@drawable/card_elevated"
-    android:padding="@dimen/spacing_lg"
-    android:minHeight="@dimen/card_min_height"
-    android:elevation="@dimen/elevation_md">
+    app:cardBackgroundColor="@color/card_background"
+    app:cardElevation="@dimen/elevation_md"
+    app:cardCornerRadius="@dimen/corner_radius_lg"
+    app:strokeWidth="@dimen/card_stroke_width"
+    app:strokeColor="@color/card_stroke">
 
-    <TextView
-        android:id="@+id/subject_list_title"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/example_title"
-        android:textColor="@color/text_primary"
-        android:textSize="@dimen/text_size_xl"
-        android:textStyle="bold"
-        android:fontFamily="sans-serif-medium"
-        android:maxLines="2"
-        android:ellipsize="end"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_lg"
+        android:minHeight="@dimen/card_min_height">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/subject_list_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/example_title"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_xl"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/subject_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:text="○"
+                android:textColor="@color/text_tertiary" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/subject_topics_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:textSize="@dimen/text_size_sm"
+            android:textColor="@color/text_secondary"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/subject_best_score"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="@dimen/text_size_xs"
+                android:textColor="@color/score_gold"
+                android:text="Best: 0" />
+
+            <TextView
+                android:id="@+id/subject_attempts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_xs"
+                android:textColor="@color/text_tertiary"
+                android:text="Attempts: 0" />
+
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/subject_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:max="100"
+            android:progress="0"
+            android:progressTint="@color/primary" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,6 +1,8 @@
 package com.example.a5minutechallenge.screens.main;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Subject> subjectList;
     private ArrayList<Integer> subjectIds;
     private SubjectListManager subjectListAdapter;
+    private EditText searchBar;
 
     /**
      * Initializes the MainActivity with subject list display and adds a FAB for
@@ -59,6 +62,21 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView subjectRecyclerView = findViewById(R.id.subject_recycler_view);
         subjectListAdapter = new SubjectListManager(this, subjectList, position -> showEditOptionsDialog(position));
         subjectRecyclerView.setAdapter(subjectListAdapter);
+
+        // Setup search bar
+        searchBar = findViewById(R.id.subject_search_bar);
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                subjectListAdapter.filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
         FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_button);
         addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());

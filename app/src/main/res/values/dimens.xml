@@ -50,6 +50,7 @@
     
     <!-- Button Dimensions -->
     <dimen name="button_height">48dp</dimen>
+    <dimen name="button_height_large">64dp</dimen>
     <dimen name="button_min_width">120dp</dimen>
     
     <!-- FAB Margin -->

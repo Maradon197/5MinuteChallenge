@@ -21,11 +21,13 @@ import com.example.a5minutechallenge.datawrapper.subject.StorageListItem;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class StorageListManager extends RecyclerView.Adapter<StorageListManager.ViewHolder> {
 
     private final Context context;
-    private final ArrayList<StorageListItem> storageItems;
+    private final ArrayList<StorageListItem> allItems;
+    private List<StorageListItem> filteredItems;
     private final OnItemLongClickListener longClickListener;
 
     public interface OnItemLongClickListener {
@@ -34,7 +36,8 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
     public StorageListManager(Context context, ArrayList<StorageListItem> storageItems, OnItemLongClickListener longClickListener) {
         this.context = context;
-        this.storageItems = storageItems;
+        this.allItems = storageItems;
+        this.filteredItems = new ArrayList<>(storageItems);
         this.longClickListener = longClickListener;
     }
 
@@ -47,7 +50,7 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        StorageListItem item = storageItems.get(position);
+        StorageListItem item = filteredItems.get(position);
         holder.title.setText(item.getTitle());
 
         holder.itemView.setOnClickListener(v -> {
@@ -57,7 +60,8 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
         holder.itemView.setOnLongClickListener(v -> {
             if (longClickListener != null) {
-                longClickListener.onItemLongClick(position);
+                int actualPosition = allItems.indexOf(item);
+                longClickListener.onItemLongClick(actualPosition);
             }
             return true;
         });
@@ -65,7 +69,36 @@ public class StorageListManager extends RecyclerView.Adapter<StorageListManager.
 
     @Override
     public int getItemCount() {
-        return storageItems.size();
+        return filteredItems.size();
+    }
+
+    /**
+     * Filters the storage list based on the search query.
+     * @param query The search query string
+     */
+    public void filter(String query) {
+        filteredItems.clear();
+        if (query == null || query.isEmpty()) {
+            filteredItems.addAll(allItems);
+        } else {
+            String lowerQuery = query.toLowerCase();
+            for (StorageListItem item : allItems) {
+                String title = item.getTitle();
+                if (title != null && title.toLowerCase().contains(lowerQuery)) {
+                    filteredItems.add(item);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Resets filter to show all items.
+     */
+    public void resetFilter() {
+        filteredItems.clear();
+        filteredItems.addAll(allItems);
+        notifyDataSetChanged();
     }
 
     /**
