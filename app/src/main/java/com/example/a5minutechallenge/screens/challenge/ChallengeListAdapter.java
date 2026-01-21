@@ -31,6 +31,9 @@ public class ChallengeListAdapter extends ArrayAdapter<Challenge> {
         }
 
         Challenge challenge = getItem(position);
+        if (challenge == null) {
+            return convertView;
+        }
 
         TextView titleTextView = convertView.findViewById(R.id.challenge_title);
         TextView descriptionTextView = convertView.findViewById(R.id.challenge_description);
@@ -39,8 +42,9 @@ public class ChallengeListAdapter extends ArrayAdapter<Challenge> {
         TextView attemptsTextView = convertView.findViewById(R.id.challenge_attempts);
         ProgressBar progressBar = convertView.findViewById(R.id.challenge_progress);
 
-        titleTextView.setText(challenge.getTitle());
-        descriptionTextView.setText(challenge.getDescription());
+        // Set title and description
+        titleTextView.setText(challenge.getTitle() != null ? challenge.getTitle() : "");
+        descriptionTextView.setText(challenge.getDescription() != null ? challenge.getDescription() : "");
         
         // Update status indicator
         if (challenge.isCompleted()) {
@@ -51,9 +55,11 @@ public class ChallengeListAdapter extends ArrayAdapter<Challenge> {
             statusTextView.setTextColor(getContext().getColor(R.color.text_tertiary));
         }
         
-        // Update score and attempts
-        bestScoreTextView.setText("Best: " + challenge.getBestScore());
-        attemptsTextView.setText("Attempts: " + challenge.getAttempts());
+        // Update score and attempts - ensure proper string formatting
+        int bestScore = challenge.getBestScore();
+        int attempts = challenge.getAttempts();
+        bestScoreTextView.setText(getContext().getString(R.string.best_score_format, bestScore));
+        attemptsTextView.setText(getContext().getString(R.string.attempts_format, attempts));
         
         // Update progress
         progressBar.setProgress(challenge.getProgressPercentage());

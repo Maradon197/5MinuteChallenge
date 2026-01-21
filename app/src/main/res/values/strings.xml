@@ -91,4 +91,18 @@
     <!-- Recap -->
     <string name="recap">Recap</string>
     <string name="review_time">Let\'s review what you\'ve learned</string>
+
+    <!-- Empty States -->
+    <string name="no_topics_yet">No topics yet</string>
+    <string name="add_files_to_generate">Tap the storage button to add files\nand generate learning content</string>
+
+    <!-- Fill in Gaps -->
+    <string name="gap_placeholder">___</string>
+
+    <!-- Light Mode -->
+    <string name="light_mode">Light Mode</string>
+
+    <!-- Challenge List Formats -->
+    <string name="best_score_format">Best: %d</string>
+    <string name="attempts_format">Attempts: %d</string>
 </resources>

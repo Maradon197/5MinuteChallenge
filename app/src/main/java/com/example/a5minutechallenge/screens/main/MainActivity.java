@@ -6,9 +6,11 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 //import com.google.ai.client.generativeai.common.client.GenerationConfig;
@@ -30,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Integer> subjectIds;
     private SubjectListManager subjectListAdapter;
     private EditText searchBar;
+    private SwitchCompat lightModeSwitch;
 
     /**
      * Initializes the MainActivity with subject list display and adds a FAB for
@@ -80,6 +83,13 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton addSubjectFab = findViewById(R.id.add_subject_button);
         addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());
+
+        // Setup light mode toggle (functionality not yet implemented)
+        lightModeSwitch = findViewById(R.id.light_mode_switch);
+        lightModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Light mode functionality will be implemented in a future update
+            Toast.makeText(this, "Light mode coming soon!", Toast.LENGTH_SHORT).show();
+        });
     }
 
     /**

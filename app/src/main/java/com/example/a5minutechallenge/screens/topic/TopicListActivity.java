@@ -8,6 +8,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -30,6 +31,7 @@ public class TopicListActivity extends AppCompatActivity {
     private TopicListAdapter adapter;
     private Subject subject;
     private EditText searchBar;
+    private FrameLayout emptyTopicsOverlay;
 
     /**
      * Initializes the TopicListActivity activity with a topic list for the selected subject.
@@ -92,6 +94,31 @@ public class TopicListActivity extends AppCompatActivity {
             intent.putExtra("SUBJECT_ID", subjectId);
             startActivity(intent);
         });
+
+        // Setup empty state overlay
+        emptyTopicsOverlay = findViewById(R.id.empty_topics_overlay);
+        updateEmptyState();
+    }
+
+    /**
+     * Shows or hides the empty state overlay based on whether there are topics.
+     */
+    private void updateEmptyState() {
+        if (topicList == null || topicList.isEmpty()) {
+            emptyTopicsOverlay.setVisibility(View.VISIBLE);
+        } else {
+            emptyTopicsOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh the topic list when returning to this activity
+        topicList.clear();
+        topicList.addAll(subject.getTopics(getApplicationContext()));
+        adapter.notifyDataSetChanged();
+        updateEmptyState();
     }
 
 

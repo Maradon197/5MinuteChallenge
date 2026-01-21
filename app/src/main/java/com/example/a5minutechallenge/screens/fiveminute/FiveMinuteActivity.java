@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerErrorSpotting;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerMultipleChoiceQuiz;
+import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerRecap;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerReverseQuiz;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerFillInTheGaps;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.containertypes.ContainerSortingTask;
@@ -33,6 +34,7 @@ import com.example.a5minutechallenge.screens.challenge.LessonOverActivity;
 import com.example.a5minutechallenge.R;
 import com.example.a5minutechallenge.datawrapper.contentcontainer.ContentContainer;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,6 +62,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private boolean currentAnswerChecked = false;
     private int totalInteractiveContainers = 0;
     private int correctAnswersCount = 0;
+    private boolean lastAnswerWasCorrect = false;
+    private int recapIdCounter = 10000; // Counter for generating unique recap container IDs
     
     private String topicName;
     private int subjectId;
@@ -404,6 +408,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * @param isCorrect Wether the answer was correct or not
      */
     public void onAnswer(boolean isCorrect) {
+        lastAnswerWasCorrect = isCorrect;
+        
         if (isCorrect) {
             correctAnswersCount++;
             int points = scoreManager.recordCorrectAnswer();
@@ -426,6 +432,77 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             // Shake animation for incorrect answer
             Animation shake = AnimationUtils.loadAnimation(this, R.anim.shake);
             scoreDisplay.startAnimation(shake);
+            
+            // Queue current container for recap
+            addCurrentContainerToRecap();
+        }
+    }
+
+    /**
+     * Adds the current container wrapped in a recap container to the end of the pipeline.
+     */
+    private void addCurrentContainerToRecap() {
+        ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
+        
+        // Create a new recap container wrapping a fresh copy of the current container
+        ContainerRecap recapContainer = new ContainerRecap(recapIdCounter++);
+        recapContainer.setRecapTitle(getString(R.string.recap) + ": " + getString(R.string.review_time));
+        
+        // Create a fresh copy of the container for recap (resets user selections)
+        ContentContainer freshContainer = createFreshContainerCopy(currentContainer);
+        if (freshContainer != null) {
+            recapContainer.setWrappedContainer(freshContainer);
+            contentContainers.add(recapContainer);
+        }
+    }
+
+    /**
+     * Creates a fresh copy of a container with user selections reset.
+     */
+    private ContentContainer createFreshContainerCopy(ContentContainer original) {
+        switch (original.getType()) {
+            case MULTIPLE_CHOICE_QUIZ:
+                ContainerMultipleChoiceQuiz mcq = (ContainerMultipleChoiceQuiz) original;
+                return new ContainerMultipleChoiceQuiz(recapIdCounter++)
+                        .setQuestion(mcq.getQuestion())
+                        .setOptions(new ArrayList<>(mcq.getOptions()))
+                        .setCorrectAnswerIndices(new ArrayList<>(mcq.getCorrectAnswerIndices()))
+                        .setAllowMultipleAnswers(mcq.isAllowMultipleAnswers())
+                        .setExplanationText(mcq.getExplanationText());
+            case REVERSE_QUIZ:
+                ContainerReverseQuiz rq = (ContainerReverseQuiz) original;
+                return new ContainerReverseQuiz(recapIdCounter++)
+                        .setAnswer(rq.getAnswer())
+                        .setQuestionOptions(new ArrayList<>(rq.getQuestionOptions()))
+                        .setCorrectQuestionIndex(rq.getCorrectQuestionIndex())
+                        .setExplanationText(rq.getExplanationText());
+            case ERROR_SPOTTING:
+                ContainerErrorSpotting es = (ContainerErrorSpotting) original;
+                return new ContainerErrorSpotting(recapIdCounter++)
+                        .setInstructions(es.getInstructions())
+                        .setItems(new ArrayList<>(es.getItems()))
+                        .setErrorIndex(es.getErrorIndex())
+                        .setExplanationText(es.getExplanationText());
+            case FILL_IN_THE_GAPS:
+                ContainerFillInTheGaps fitg = (ContainerFillInTheGaps) original;
+                return new ContainerFillInTheGaps(recapIdCounter++)
+                        .setTextTemplate(fitg.getTextTemplate())
+                        .setCorrectWords(new ArrayList<>(fitg.getCorrectWords()))
+                        .setWordOptions(new ArrayList<>(fitg.getWordOptions()));
+            case SORTING_TASK:
+                ContainerSortingTask st = (ContainerSortingTask) original;
+                return new ContainerSortingTask(recapIdCounter++)
+                        .setInstructions(st.getInstructions())
+                        .setCorrectOrder(new ArrayList<>(st.getCorrectOrder()));
+            case WIRE_CONNECTING:
+                ContainerWireConnecting wc = (ContainerWireConnecting) original;
+                return new ContainerWireConnecting(recapIdCounter++)
+                        .setInstructions(wc.getInstructions())
+                        .setLeftItems(new ArrayList<>(wc.getLeftItems()))
+                        .setRightItems(new ArrayList<>(wc.getRightItems()))
+                        .setCorrectMatches(wc.getCorrectMatches());
+            default:
+                return null;
         }
     }
 
