@@ -74,12 +74,16 @@ public class ContainerWireConnecting extends ContentContainer {
                 continue; // No match required for this position
             }
             
-            // Find current position of the expected right item
+            // Bounds check
+            if (expectedRightIndex < 0 || expectedRightIndex >= rightItems.size()) {
+                return false;
+            }
+            
+            // Find the item that should be at position i based on correct matches
             String expectedRightItem = rightItems.get(expectedRightIndex);
             
-            // Check if the expected item is at position i in the right list's current order
-            // This would need to track the current order of right items
-            // For simplicity, we'll compare based on position alignment
+            // In the current implementation, rightItems maintains its actual current order
+            // So we check if the item at position i matches what we expect
             if (i >= rightItems.size() || !rightItems.get(i).equals(expectedRightItem)) {
                 return false;
             }

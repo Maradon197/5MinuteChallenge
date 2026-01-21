@@ -1,8 +1,5 @@
 package com.example.a5minutechallenge.screens.fiveminute;
 
-import android.view.MotionEvent;
-import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -87,19 +84,7 @@ public class DraggableAdapter extends ContentContainerAdapter {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         super.onBindViewHolder(holder, position);
         
-        // Add visual feedback for draggable items
-        holder.itemView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                // Slight scale down on touch to indicate draggability
-                v.setScaleX(0.98f);
-                v.setScaleY(0.98f);
-            } else if (event.getAction() == MotionEvent.ACTION_UP || 
-                       event.getAction() == MotionEvent.ACTION_CANCEL) {
-                // Return to normal size
-                v.setScaleX(1.0f);
-                v.setScaleY(1.0f);
-            }
-            return false;
-        });
+        // Visual indicator that items are draggable (optional)
+        // The long press will trigger the drag operation
     }
 }
