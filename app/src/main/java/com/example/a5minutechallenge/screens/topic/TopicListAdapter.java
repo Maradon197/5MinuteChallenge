@@ -29,7 +29,7 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
     public TopicListAdapter(@NonNull Context context, List<Topic> topics) {
         super(context, 0, topics);
         this.allTopics = new ArrayList<>(topics);
-        this.filteredTopics = topics;
+        this.filteredTopics = new ArrayList<>(topics);
     }
 
     @Override
@@ -163,7 +163,11 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
 
     public void updateTopics(List<Topic> newTopics) {
         this.allTopics.clear();
-        this.allTopics.addAll(newTopics);
-        filter(""); // Apply the current filter (or no filter)
+        this.filteredTopics.clear();
+        if (newTopics != null) {
+            this.allTopics.addAll(newTopics);
+            this.filteredTopics.addAll(newTopics);
+        }
+        notifyDataSetChanged();
     }
 }
