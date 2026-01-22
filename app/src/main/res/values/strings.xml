@@ -109,7 +109,7 @@
     <!-- Loading Dialog -->
     <string name="generating_content">Generating Content</string>
     <string name="loading_please_wait">Please wait…</string>
-    <string name="loading_processing_files">Processing files…</string>
-    <string name="loading_analyzing_content">Analyzing content…</string>
-    <string name="loading_creating_challenges">Creating challenges…</string>
+    <string name="loading_processing_files">Analyzing Document Structure...</string>
+    <string name="loading_analyzing_content">Extracting Topics...</string>
+    <string name="loading_creating_challenges">Creating Challenges...</string>
 </resources>

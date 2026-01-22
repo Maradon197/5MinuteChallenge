@@ -266,12 +266,6 @@ public class StorageActivity extends AppCompatActivity {
 
         loadingDialog = builder.create();
         loadingDialog.show();
-
-        // Start animated progress simulation
-        // Note: The backend doesn't currently provide progress callbacks,
-        // so we simulate progress with placeholder stages.
-        // TODO: If backend progress becomes available, replace this simulation
-        // with real progress updates from SubjectGenerationService.
         startLoadingAnimation();
     }
 
@@ -309,14 +303,14 @@ public class StorageActivity extends AppCompatActivity {
         Runnable animationRunnable = new Runnable() {
             @Override
             public void run() {
-                if (loadingProgress != null && loadingStatus != null && loadingAnimationStep < statusMessages.length) {
+                if(loadingProgress != null && loadingStatus != null && loadingAnimationStep < statusMessages.length) {
                     loadingStatus.setText(statusMessages[loadingAnimationStep]);
                     loadingProgress.setProgress(LOADING_PROGRESS_VALUES[loadingAnimationStep]);
-                    loadingAnimationStep++;
-                    // Schedule next step
-                    if (loadingAnimationStep < statusMessages.length) {
+
+                    if (loadingAnimationStep < statusMessages.length) {//backend hook needed
                         loadingAnimationHandler.postDelayed(this, LOADING_STEP_DELAY_MS);
                     }
+                    loadingAnimationStep++;
                 }
             }
         };
