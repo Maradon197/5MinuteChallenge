@@ -137,8 +137,9 @@ public class TopicListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // Refresh the topic list when returning to this activity
+        // Use reloadTopics to force refresh from storage and get updated progress
         topicList.clear();
-        topicList.addAll(subject.getTopics(getApplicationContext()));
+        topicList.addAll(subject.reloadTopics(getApplicationContext()));
         adapter.updateTopics(topicList);
         updateIsEmptyOverlay();
     }

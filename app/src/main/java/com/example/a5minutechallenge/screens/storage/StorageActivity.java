@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -11,6 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -32,11 +36,20 @@ import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
 
+    // Loading animation configuration
+    private static final long LOADING_STEP_DELAY_MS = 2500; // Delay between loading status updates
+    private static final int[] LOADING_PROGRESS_VALUES = {10, 35, 60, 85}; // Progress bar percentages for each step
+
     private ArrayList<StorageListItem> storageList;
     private StorageListManager storageListAdapter;
     private ActivityResultLauncher<Intent> filePickerLauncher;
     private Subject subject;
     private EditText searchBar;
+    private AlertDialog loadingDialog;
+    private ProgressBar loadingProgress;
+    private TextView loadingStatus;
+    private Handler loadingAnimationHandler;
+    private int loadingAnimationStep = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,8 +114,8 @@ public class StorageActivity extends AppCompatActivity {
 
         FloatingActionButton genContentFab = findViewById(R.id.gen_content_fab);
         genContentFab.setOnClickListener(v -> {
-            // Show a loading indicator and disable the button
-            Toast.makeText(StorageActivity.this, "Generating content, this may take a moment...", Toast.LENGTH_LONG).show();
+            // Show loading dialog and disable the button
+            showLoadingDialog();
             genContentFab.setEnabled(false);
 
             // Instantiate and call the asynchronous service
@@ -111,6 +124,7 @@ public class StorageActivity extends AppCompatActivity {
                 @Override
                 public void onGenerationSuccess(Subject updatedSubject) {
                     // This is executed on the main thread
+                    dismissLoadingDialog();
                     genContentFab.setEnabled(true);
                     Toast.makeText(StorageActivity.this, "Content generated successfully!", Toast.LENGTH_LONG).show();
 
@@ -124,6 +138,7 @@ public class StorageActivity extends AppCompatActivity {
                 @Override
                 public void onGenerationFailure(Exception e) {
                     // This is executed on the main thread
+                    dismissLoadingDialog();
                     genContentFab.setEnabled(true);
                     Log.e("GenerationFailed", "Error generating content", e);
                     new AlertDialog.Builder(StorageActivity.this)
@@ -234,6 +249,96 @@ public class StorageActivity extends AppCompatActivity {
         builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.cancel());
 
         builder.show();
+    }
+
+    /**
+     * Shows a loading dialog during content generation.
+     * Uses the same visual style as the countdown dialog with a progress bar.
+     */
+    private void showLoadingDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_loading, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+
+        loadingProgress = dialogView.findViewById(R.id.loading_progress);
+        loadingStatus = dialogView.findViewById(R.id.loading_status);
+
+        loadingDialog = builder.create();
+        loadingDialog.show();
+
+        // Start animated progress simulation
+        // Note: The backend doesn't currently provide progress callbacks,
+        // so we simulate progress with placeholder stages.
+        // TODO: If backend progress becomes available, replace this simulation
+        // with real progress updates from SubjectGenerationService.
+        startLoadingAnimation();
+    }
+
+    /**
+     * Dismisses the loading dialog if it's showing.
+     */
+    private void dismissLoadingDialog() {
+        stopLoadingAnimation();
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+        loadingDialog = null;
+        loadingProgress = null;
+        loadingStatus = null;
+    }
+
+    /**
+     * Starts the loading animation with simulated progress stages.
+     * This provides user feedback during the generation process.
+     * Note: The backend (SubjectGenerationService) doesn't currently provide progress callbacks,
+     * so progress is simulated. When/if the backend exposes a GenerationProgressListener interface,
+     * replace this simulation with actual progress updates.
+     */
+    private void startLoadingAnimation() {
+        loadingAnimationHandler = new Handler(Looper.getMainLooper());
+        loadingAnimationStep = 0;
+
+        String[] statusMessages = {
+                getString(R.string.loading_processing_files),
+                getString(R.string.loading_analyzing_content),
+                getString(R.string.loading_creating_challenges),
+                getString(R.string.loading_please_wait)
+        };
+
+        Runnable animationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (loadingProgress != null && loadingStatus != null && loadingAnimationStep < statusMessages.length) {
+                    loadingStatus.setText(statusMessages[loadingAnimationStep]);
+                    loadingProgress.setProgress(LOADING_PROGRESS_VALUES[loadingAnimationStep]);
+                    loadingAnimationStep++;
+                    // Schedule next step
+                    if (loadingAnimationStep < statusMessages.length) {
+                        loadingAnimationHandler.postDelayed(this, LOADING_STEP_DELAY_MS);
+                    }
+                }
+            }
+        };
+
+        // Start immediately
+        loadingAnimationHandler.post(animationRunnable);
+    }
+
+    /**
+     * Stops the loading animation.
+     */
+    private void stopLoadingAnimation() {
+        if (loadingAnimationHandler != null) {
+            loadingAnimationHandler.removeCallbacksAndMessages(null);
+            loadingAnimationHandler = null;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dismissLoadingDialog();
     }
 
     interface OnNameEnteredListener {

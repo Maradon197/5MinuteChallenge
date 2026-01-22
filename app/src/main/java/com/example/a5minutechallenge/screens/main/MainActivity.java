@@ -92,6 +92,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh subject data when returning to this activity
+        // Re-load topics to update gamification data (progress, scores, attempts)
+        for (Subject subject : subjectList) {
+            subject.reloadTopics(this); // Force reload topics from storage
+        }
+        subjectListAdapter.notifyDataSetChanged();
+    }
+
     /**
      * Displays a dialog to add a new subject to the list.
      * Creates a new Subject with auto-generated ID and adds it to the subject list.

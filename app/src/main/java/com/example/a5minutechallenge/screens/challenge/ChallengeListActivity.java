@@ -197,6 +197,10 @@ public class ChallengeListActivity extends AppCompatActivity {
         super.onResume();
         // Refresh the list in case challenges were completed
         if (adapter != null) {
+            // Reload challenges from storage to get updated progress
+            ArrayList<Challenge> refreshedChallenges = loadChallengesForTopic(this, topicName, subjectId);
+            challengeList.clear();
+            challengeList.addAll(refreshedChallenges);
             adapter.notifyDataSetChanged();
         }
     }

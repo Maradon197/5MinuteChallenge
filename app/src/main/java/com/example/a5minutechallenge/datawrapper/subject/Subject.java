@@ -196,6 +196,18 @@ public class Subject {
     }
 
     /**
+     * Forces a reload of topics from storage, clearing any cached data.
+     * Use this to refresh progress/gamification data after changes.
+     * 
+     * @param context The application context, required for loading from storage
+     * @return ArrayList of topics, or empty list if none are available
+     */
+    public ArrayList<Topic> reloadTopics(Context context) {
+        topics = null; // Clear cached topics to force reload
+        return getTopics(context);
+    }
+
+    /**
      * Returns topics that have already been loaded into memory.
      * Use this only when topics have been explicitly set via setTopics() or
      * have already been loaded via getTopics(Context).

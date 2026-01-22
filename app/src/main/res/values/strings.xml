@@ -105,4 +105,11 @@
     <!-- Challenge List Formats -->
     <string name="best_score_format">Best: %d</string>
     <string name="attempts_format">Attempts: %d</string>
+
+    <!-- Loading Dialog -->
+    <string name="generating_content">Generating Content</string>
+    <string name="loading_please_wait">Please wait…</string>
+    <string name="loading_processing_files">Processing files…</string>
+    <string name="loading_analyzing_content">Analyzing content…</string>
+    <string name="loading_creating_challenges">Creating challenges…</string>
 </resources>
