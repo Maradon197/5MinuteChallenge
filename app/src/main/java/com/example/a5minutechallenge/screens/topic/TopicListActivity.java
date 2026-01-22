@@ -1,4 +1,6 @@
-/**Dis*/
+/**
+ * Dis
+ */
 package com.example.a5minutechallenge.screens.topic;
 
 import android.content.Intent;
@@ -56,31 +58,33 @@ public class TopicListActivity extends AppCompatActivity {
 
         /// ///////////////////////////////////////////////////////
         topicList = subject.getTopics(getApplicationContext());
+
         if (topicList == null) {
             Toast.makeText(this, "No topics found for this subject.", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Topics located successfully.", Toast.LENGTH_SHORT).show();
         }
-        else {
-            Toast.makeText(this, "Topics loaded successfully.", Toast.LENGTH_SHORT).show();
-        }
-        /// ///////////////////////////////////////////////////////
 
         adapter = new TopicListAdapter(this, topicList);
         topicListView.setAdapter(adapter);
-        if( topicListView.getAdapter() == null) {
+
+        if (topicListView.getAdapter() == null) {
             Toast.makeText(this, "Adapter not found", Toast.LENGTH_SHORT).show();
-        }
-        else {
+        } else {
             Toast.makeText(this, "Adapter found", Toast.LENGTH_SHORT).show();
         }
+
+        //problems with updated list here
         adapter.updateTopics(topicList);
+        Toast.makeText(this, "List updated", Toast.LENGTH_SHORT).show();
+        /// ///////////////////////////////////////////////////////
 
 
-
-        // Setup search bar
         searchBar = findViewById(R.id.topic_search_bar);
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -88,7 +92,8 @@ public class TopicListActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         topicListView.setOnItemClickListener((parent, view, position, id) -> {
@@ -113,15 +118,17 @@ public class TopicListActivity extends AppCompatActivity {
 
         // Setup empty state overlay
         emptyTopicsOverlay = findViewById(R.id.empty_topics_overlay);
-        updateEmptyState();
+        updateIsEmptyOverlay();
     }
 
     /**
      * Shows or hides the empty state overlay based on whether there are topics.
      */
-    private void updateEmptyState() {
-        if (topicList == null || topicList.isEmpty()) {
-            emptyTopicsOverlay.setVisibility(View.VISIBLE);
+    private void updateIsEmptyOverlay() {
+        if (topicList.isEmpty()) {//always seems to return true
+            //WHY IS THIS LIST EMPTY HERE
+            emptyTopicsOverlay.setVisibility(View.GONE);
+            //Toast.makeText(this, topicList.get(0).getTitle(), Toast.LENGTH_SHORT).show();
         } else {
             emptyTopicsOverlay.setVisibility(View.GONE);
         }
@@ -134,7 +141,7 @@ public class TopicListActivity extends AppCompatActivity {
         topicList.clear();
         topicList.addAll(subject.getTopics(getApplicationContext()));
         adapter.updateTopics(topicList);
-        updateEmptyState();
+        updateIsEmptyOverlay();
     }
 
 
@@ -143,29 +150,26 @@ public class TopicListActivity extends AppCompatActivity {
      * @param position The position of the topic in the list to edit
      */
     private void showEditOptionsDialog(int position) {
-        Topic selectedTopic = adapter.getItem(position);
-        if (selectedTopic == null) {
-            return;
-        }
         final CharSequence[] options = {getString(R.string.rename), getString(R.string.delete)};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.choose_option));
         builder.setItems(options, (dialog, item) -> {
             if (options[item].equals(getString(R.string.rename))) {
-                showRenameDialog(selectedTopic);
+                showRenameDialog(position);
             } else if (options[item].equals(getString(R.string.delete))) {
-                showDeleteConfirmationDialog(selectedTopic);
+                showDeleteConfirmationDialog(position);
             }
         });
         builder.show();
     }
 
     /**
-     * Displays a dialog to rename the provided topic.
-     * @param topic The topic to rename
+     * Displays a dialog to rename a topic at the given position.
+     * @param position The position of the topic to rename
      */
-    private void showRenameDialog(Topic topic) {
+    private void showRenameDialog(int position) {
+        Topic topic = adapter.getItem(position);
         showEditDialog(getString(R.string.rename_topic), topic.getTitle(), getString(R.string.rename), (newName) -> {
             topic.setTitle(newName);
             adapter.notifyDataSetChanged();
@@ -174,16 +178,15 @@ public class TopicListActivity extends AppCompatActivity {
 
     /**
      * Displays a confirmation dialog before deleting a topic.
-     * @param topic The topic to delete
+     * @param position The position of the topic to delete
      */
-    private void showDeleteConfirmationDialog(Topic topic) {
+    private void showDeleteConfirmationDialog(int position) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.delete_topic))
                 .setMessage(getString(R.string.confirm_delete_topic))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
-                    topicList.remove(topic);
-                    adapter.updateTopics(topicList);
-                    updateEmptyState();
+                    adapter.remove(adapter.getItem(position));
+                    adapter.notifyDataSetChanged();
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();

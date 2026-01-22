@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,23 +24,11 @@ import java.util.List;
 
 public class TopicListAdapter extends ArrayAdapter<Topic> {
 
-    private List<Topic> allTopics;
-    private List<Topic> filteredTopics;
+    private List<Topic> myTopics;
 
     public TopicListAdapter(@NonNull Context context, List<Topic> topics) {
-        super(context, 0, topics);
-        this.allTopics = new ArrayList<>(topics);
-        this.filteredTopics = new ArrayList<>(topics);
-    }
-
-    @Override
-    public int getCount() {
-        return filteredTopics.size();
-    }
-
-    @Override
-    public Topic getItem(int position) {
-        return filteredTopics.get(position);
+        super(context, 0, new ArrayList<>(topics));
+        this.myTopics = new ArrayList<>(topics);
     }
 
     @NonNull
@@ -60,7 +49,7 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
 
         titleTextView.setText(topic.getTitle());
 
-        // Update status indicator with color-coded outline
+        //Update status indicator with color-coded outline
         if (topic.isCompleted()) {
             statusTextView.setText("✓");
             statusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.success));
@@ -91,7 +80,7 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
     private void updateDotProgress(LinearLayout layout, Topic topic) {
         layout.removeAllViews();
         ArrayList<Challenge> challenges = topic.getChallenges();
-        
+
         if (challenges.isEmpty()) {
             return;
         }
@@ -101,28 +90,28 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
 
         // Limit dots to max 10 for visual clarity
         int maxDots = Math.min(challenges.size(), 10);
-        
+
         for (int i = 0; i < maxDots; i++) {
             TextView dot = new TextView(getContext());
             dot.setText("●");
             dot.setTextSize(12);
-            
+
             if (challenges.get(i).isCompleted()) {
                 dot.setTextColor(ContextCompat.getColor(getContext(), R.color.success));
             } else {
                 dot.setTextColor(ContextCompat.getColor(getContext(), R.color.text_disabled));
             }
-            
+
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
             params.setMargins(dotMargin, 0, dotMargin, 0);
             dot.setLayoutParams(params);
-            
+
             layout.addView(dot);
         }
 
-        // If there are more challenges than dots, show "..."
+        //If there are more challenges than dots, show "..."
         if (challenges.size() > maxDots) {
             TextView ellipsis = new TextView(getContext());
             ellipsis.setText("…");
@@ -137,15 +126,15 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
      * @param query The search query string
      */
     public void filter(String query) {
-        filteredTopics.clear();
+        clear();
         if (query == null || query.isEmpty()) {
-            filteredTopics.addAll(allTopics);
+            addAll(myTopics);
         } else {
             String lowerQuery = query.toLowerCase();
-            for (Topic topic : allTopics) {
+            for (Topic topic : myTopics) {
                 String title = topic.getTitle();
                 if (title != null && title.toLowerCase().contains(lowerQuery)) {
-                    filteredTopics.add(topic);
+                    add(topic);
                 }
             }
         }
@@ -156,18 +145,16 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
      * Resets filter to show all topics.
      */
     public void resetFilter() {
-        filteredTopics.clear();
-        filteredTopics.addAll(allTopics);
+        clear();
+        addAll(myTopics);
         notifyDataSetChanged();
     }
 
     public void updateTopics(List<Topic> newTopics) {
-        this.allTopics.clear();
-        this.filteredTopics.clear();
+        this.myTopics.clear();
         if (newTopics != null) {
-            this.allTopics.addAll(newTopics);
-            this.filteredTopics.addAll(newTopics);
+            this.myTopics.addAll(newTopics);
+            Toast.makeText(getContext(), "Topics updated", Toast.LENGTH_SHORT).show();
         }
-        notifyDataSetChanged();
     }
 }
