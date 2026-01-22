@@ -154,6 +154,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Transition time display (shown during swipe animation) -->
+    <TextView
+        android:id="@+id/transition_time_display"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:background="@drawable/card_elevated"
+        android:padding="@dimen/spacing_md"
+        android:text="4:59"
+        android:textColor="@color/text_primary"
+
+        android:textSize="@dimen/text_size_xxl"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:elevation="@dimen/elevation_xl"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Correct answer flash overlay -->
     <View
         android:id="@+id/correct_flash_overlay"

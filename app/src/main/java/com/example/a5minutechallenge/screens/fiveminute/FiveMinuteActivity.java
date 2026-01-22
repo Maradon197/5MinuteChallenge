@@ -49,6 +49,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private TextView streakIndicator;
     private TextView scorePopup;
     private TextView timeBonusPopup;
+    private TextView transitionTimeDisplay;
     private ProgressBar timerProgress;
     private View lowTimeOverlay;
     private View correctFlashOverlay;
@@ -89,6 +90,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         streakIndicator = findViewById(R.id.streak_indicator);
         scorePopup = findViewById(R.id.score_popup);
         timeBonusPopup = findViewById(R.id.time_bonus_popup);
+        transitionTimeDisplay = findViewById(R.id.transition_time_display);
         timerProgress = findViewById(R.id.timer_progress);
         lowTimeOverlay = findViewById(R.id.low_time_overlay);
         correctFlashOverlay = findViewById(R.id.correct_flash_overlay);
@@ -261,9 +263,18 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void onCheckButtonClicked() {
         ContentContainer currentContainerGeneric = contentContainers.get(currentContainerIndex);
         
+        // For RECAP containers, check the wrapped container type instead
+        ContentContainer containerToCheck = currentContainerGeneric;
+        if (currentContainerGeneric.getType() == ContentContainer.Types.RECAP) {
+            ContainerRecap recapContainer = (ContainerRecap) currentContainerGeneric;
+            if (recapContainer.getWrappedContainer() != null) {
+                containerToCheck = recapContainer.getWrappedContainer();
+            }
+        }
+        
         // Determine if this container requires user response
         boolean userResponseExpected = false;
-        switch (currentContainerGeneric.getType()) {
+        switch (containerToCheck.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
             case REVERSE_QUIZ:
             case FILL_IN_THE_GAPS:
@@ -296,12 +307,26 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         ContentContainer currentContainerGeneric = contentContainers.get(currentContainerIndex);
         View containerView = currentContainerLayout.getChildAt(0);
         
+        // For RECAP containers, check the wrapped container instead
+        ContentContainer containerToCheck = currentContainerGeneric;
+        if (currentContainerGeneric.getType() == ContentContainer.Types.RECAP) {
+            ContainerRecap recapContainer = (ContainerRecap) currentContainerGeneric;
+            if (recapContainer.getWrappedContainer() != null) {
+                containerToCheck = recapContainer.getWrappedContainer();
+                // For RECAP, the wrapped container view is inside the recap frame
+                View wrappedFrame = containerView.findViewById(R.id.wrapped_container_frame);
+                if (wrappedFrame instanceof FrameLayout && ((FrameLayout) wrappedFrame).getChildCount() > 0) {
+                    containerView = ((FrameLayout) wrappedFrame).getChildAt(0);
+                }
+            }
+        }
+        
         // For interactive containers (quizzes, etc.), validate the answer
         boolean isCorrect = false;
         
-        switch (currentContainerGeneric.getType()) {
+        switch (containerToCheck.getType()) {
             case MULTIPLE_CHOICE_QUIZ:
-                ContainerMultipleChoiceQuiz currentContainer = (ContainerMultipleChoiceQuiz)  currentContainerGeneric;
+                ContainerMultipleChoiceQuiz currentContainer = (ContainerMultipleChoiceQuiz) containerToCheck;
                 isCorrect = currentContainer.isCorrect();
                 
                 // Update UI with correct/incorrect colors
@@ -314,7 +339,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
                 break;
             case REVERSE_QUIZ:
-                ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) currentContainerGeneric;
+                ContainerReverseQuiz reverseQuizContainer = (ContainerReverseQuiz) containerToCheck;
                 isCorrect = (reverseQuizContainer.getUserSelectedIndex() == reverseQuizContainer.getCorrectQuestionIndex());
                 
                 // Update UI with correct/incorrect colors
@@ -330,16 +355,16 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
                 break;
             case FILL_IN_THE_GAPS:
-                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) currentContainerGeneric;
+                ContainerFillInTheGaps gapsContainer = (ContainerFillInTheGaps) containerToCheck;
                 isCorrect = gapsContainer.isCorrect();
                 break;
             case SORTING_TASK:
-                ContainerSortingTask sortingContainer = (ContainerSortingTask) currentContainerGeneric;
+                ContainerSortingTask sortingContainer = (ContainerSortingTask) containerToCheck;
                 isCorrect = sortingContainer.isCorrect();
                 // No visual feedback needed for sorting - the order itself is the feedback
                 break;
             case ERROR_SPOTTING:
-                ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) currentContainerGeneric;
+                ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) containerToCheck;
                 isCorrect = (errorSpottingContainer.getUserSelectedIndex() == errorSpottingContainer.getErrorIndex());
                 
                 // Update UI with correct/incorrect colors
@@ -355,7 +380,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 }
                 break;
             case WIRE_CONNECTING:
-                ContainerWireConnecting wireConnectingContainer = (ContainerWireConnecting) currentContainerGeneric;
+                ContainerWireConnecting wireConnectingContainer = (ContainerWireConnecting) containerToCheck;
                 isCorrect = wireConnectingContainer.isCorrect();
                 // No visual feedback needed for wire connecting - the arrangement itself is the feedback
                 break;
@@ -373,6 +398,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private void progressToNextContainer() {
         if (currentContainerIndex < contentContainers.size() - 1) {//if there are more containers to show
+            // Show transition time display during swipe animation
+            showTransitionTimeDisplay();
+            
             // Animate current container sliding up and fading out
             Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_out);
             slideUp.setAnimationListener(new Animation.AnimationListener() {
@@ -388,8 +416,21 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
                     // Animate new container sliding into our DMs
                     Animation slideIn = AnimationUtils.loadAnimation(FiveMinuteActivity.this, R.anim.slide_up_in);
+                    slideIn.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {}
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            // Hide transition time display when new container is fully shown
+                            hideTransitionTimeDisplay();
+                            checkButton.setEnabled(true);
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {}
+                    });
                     currentContainerLayout.startAnimation(slideIn);
-                    checkButton.setEnabled(true);
                 }
 
                 @Override
@@ -398,7 +439,37 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
             });
             currentContainerLayout.startAnimation(slideUp);
         } else { //last container, finish lesson
-            checkLessonComplete(false);
+            // Add delay to allow UI animations (progress, score updates) to complete before showing finished screen
+            checkButton.setEnabled(false);
+            currentContainerLayout.postDelayed(() -> checkLessonComplete(false), 800);
+        }
+    }
+
+    /**
+     * Shows the remaining time display in the center during container transition.
+     */
+    private void showTransitionTimeDisplay() {
+        if (transitionTimeDisplay != null && timerManager != null) {
+            transitionTimeDisplay.setText(timerManager.getFormattedTime());
+            transitionTimeDisplay.setAlpha(0f);
+            transitionTimeDisplay.setVisibility(View.VISIBLE);
+            transitionTimeDisplay.animate()
+                    .alpha(1f)
+                    .setDuration(150)
+                    .start();
+        }
+    }
+
+    /**
+     * Hides the transition time display with fade out animation.
+     */
+    private void hideTransitionTimeDisplay() {
+        if (transitionTimeDisplay != null) {
+            transitionTimeDisplay.animate()
+                    .alpha(0f)
+                    .setDuration(150)
+                    .withEndAction(() -> transitionTimeDisplay.setVisibility(View.GONE))
+                    .start();
         }
     }
 
@@ -440,21 +511,34 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
     /**
      * Adds the current container wrapped in a recap container to the end of the pipeline.
+     * For recap containers, adds a fresh copy of the wrapped container without nesting.
      */
     private void addCurrentContainerToRecap() {
         ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
         
-        // Create a new recap container wrapping a fresh copy of the current container
-        ContainerRecap recapContainer = new ContainerRecap(recapIdCounter++);
-        recapContainer.setRecapTitle(getString(R.string.recap) + ": " + getString(R.string.review_time));
+        // If the current container is already a recap, extract its wrapped container
+        // to avoid nesting recap containers
+        ContentContainer containerToRecap = currentContainer;
+        if (currentContainer.getType() == ContentContainer.Types.RECAP) {
+            ContainerRecap recapContainer = (ContainerRecap) currentContainer;
+            containerToRecap = recapContainer.getWrappedContainer();
+            if (containerToRecap == null) {
+                return; // No wrapped container to recap
+            }
+        }
+        
+        // Create a new recap container wrapping a fresh copy of the container
+        ContainerRecap newRecapContainer = new ContainerRecap(recapIdCounter++);
+        newRecapContainer.setRecapTitle(getString(R.string.recap) + ": " + getString(R.string.review_time));
         
         // Create a fresh copy of the container for recap (resets user selections)
-        ContentContainer freshContainer = createFreshContainerCopy(currentContainer);
+        ContentContainer freshContainer = createFreshContainerCopy(containerToRecap);
         if (freshContainer != null) {
-            recapContainer.setWrappedContainer(freshContainer);
-            contentContainers.add(recapContainer);
+            newRecapContainer.setWrappedContainer(freshContainer);
+            contentContainers.add(newRecapContainer);
         }
     }
+
 
     /**
      * Creates a fresh copy of a container with user selections reset.

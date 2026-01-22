@@ -152,9 +152,11 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
 
     public void updateTopics(List<Topic> newTopics) {
         this.myTopics.clear();
+        clear(); // Also clear the ArrayAdapter's internal list
         if (newTopics != null) {
             this.myTopics.addAll(newTopics);
-            Toast.makeText(getContext(), "Topics updated", Toast.LENGTH_SHORT).show();
+            addAll(newTopics); // Sync the ArrayAdapter's internal list
         }
+        notifyDataSetChanged();
     }
 }
