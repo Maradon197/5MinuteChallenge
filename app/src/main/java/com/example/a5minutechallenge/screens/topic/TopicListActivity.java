@@ -57,7 +57,7 @@ public class TopicListActivity extends AppCompatActivity {
         subject = new Subject(subjectId);
 
         /// ///////////////////////////////////////////////////////
-        topicList = subject.getTopics(getApplicationContext());
+        topicList = subject.getTopics(getApplicationContext());//this list contains items, which is validated.
 
         if (topicList == null) {
             Toast.makeText(this, "No topics found for this subject.", Toast.LENGTH_SHORT).show();
@@ -74,8 +74,7 @@ public class TopicListActivity extends AppCompatActivity {
             Toast.makeText(this, "Adapter found", Toast.LENGTH_SHORT).show();
         }
 
-        //problems with updated list here
-        adapter.updateTopics(topicList);
+        adapter.updateTopics(topicList);//maybe some data is lost here
         Toast.makeText(this, "List updated", Toast.LENGTH_SHORT).show();
         /// ///////////////////////////////////////////////////////
 
@@ -127,7 +126,7 @@ public class TopicListActivity extends AppCompatActivity {
     private void updateIsEmptyOverlay() {
         if (topicList.isEmpty()) {//always seems to return true
             //WHY IS THIS LIST EMPTY HERE
-            emptyTopicsOverlay.setVisibility(View.GONE);
+            emptyTopicsOverlay.setVisibility(View.VISIBLE);
             //Toast.makeText(this, topicList.get(0).getTitle(), Toast.LENGTH_SHORT).show();
         } else {
             emptyTopicsOverlay.setVisibility(View.GONE);

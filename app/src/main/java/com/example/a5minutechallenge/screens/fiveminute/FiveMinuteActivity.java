@@ -638,6 +638,8 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         intent.putExtra("CHALLENGE_POSITION", challengePosition);
         
         startActivity(intent);
+
+
         finish();
     }
 
