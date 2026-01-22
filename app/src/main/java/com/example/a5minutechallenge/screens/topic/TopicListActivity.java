@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -55,10 +56,25 @@ public class TopicListActivity extends AppCompatActivity {
 
         /// ///////////////////////////////////////////////////////
         topicList = subject.getTopics(getApplicationContext());
+        if (topicList == null) {
+            Toast.makeText(this, "No topics found for this subject.", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(this, "Topics loaded successfully.", Toast.LENGTH_SHORT).show();
+        }
         /// ///////////////////////////////////////////////////////
 
         adapter = new TopicListAdapter(this, topicList);
         topicListView.setAdapter(adapter);
+        if( topicListView.getAdapter() == null) {
+            Toast.makeText(this, "Adapter not found", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(this, "Adapter found", Toast.LENGTH_SHORT).show();
+        }
+        adapter.updateTopics(topicList);
+
+
 
         // Setup search bar
         searchBar = findViewById(R.id.topic_search_bar);
