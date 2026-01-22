@@ -143,15 +143,19 @@ public class TopicListActivity extends AppCompatActivity {
      * @param position The position of the topic in the list to edit
      */
     private void showEditOptionsDialog(int position) {
+        Topic selectedTopic = adapter.getItem(position);
+        if (selectedTopic == null) {
+            return;
+        }
         final CharSequence[] options = {getString(R.string.rename), getString(R.string.delete)};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.choose_option));
         builder.setItems(options, (dialog, item) -> {
             if (options[item].equals(getString(R.string.rename))) {
-                showRenameDialog(position);
+                showRenameDialog(selectedTopic);
             } else if (options[item].equals(getString(R.string.delete))) {
-                showDeleteConfirmationDialog(position);
+                showDeleteConfirmationDialog(selectedTopic);
             }
         });
         builder.show();
@@ -161,8 +165,7 @@ public class TopicListActivity extends AppCompatActivity {
      * Displays a dialog to rename a topic at the given position.
      * @param position The position of the topic to rename
      */
-    private void showRenameDialog(int position) {
-        Topic topic = topicList.get(position);
+    private void showRenameDialog(Topic topic) {
         showEditDialog(getString(R.string.rename_topic), topic.getTitle(), getString(R.string.rename), (newName) -> {
             topic.setTitle(newName);
             adapter.notifyDataSetChanged();
@@ -173,13 +176,14 @@ public class TopicListActivity extends AppCompatActivity {
      * Displays a confirmation dialog before deleting a topic.
      * @param position The position of the topic to delete
      */
-    private void showDeleteConfirmationDialog(int position) {
+    private void showDeleteConfirmationDialog(Topic topic) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.delete_topic))
                 .setMessage(getString(R.string.confirm_delete_topic))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
-                    topicList.remove(position);
-                    adapter.notifyDataSetChanged();
+                    topicList.remove(topic);
+                    adapter.updateTopics(topicList);
+                    updateEmptyState();
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();
