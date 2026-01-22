@@ -41,6 +41,7 @@ import java.util.List;
 public class FiveMinuteActivity extends AppCompatActivity implements TimerManager.TimerListener, ContainerInflater.OnContainerItemSelectedListener {
 
     private static final long MIN_ANSWER_TIME_MS = 1000;
+    private static final long COMPLETION_DELAY_MS = 800; // Delay before showing "finished" screen
 
     private FrameLayout currentContainerLayout;
     private Button checkButton;
@@ -441,7 +442,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         } else { //last container, finish lesson
             // Add delay to allow UI animations (progress, score updates) to complete before showing finished screen
             checkButton.setEnabled(false);
-            currentContainerLayout.postDelayed(() -> checkLessonComplete(false), 800);
+            currentContainerLayout.postDelayed(() -> checkLessonComplete(false), COMPLETION_DELAY_MS);
         }
     }
 
@@ -624,6 +625,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private void showTimeBonusPopup(int bonusSeconds) {
         if (timeBonusPopup != null) {
             timeBonusPopup.setText("+" + bonusSeconds + "s");
+            timeBonusPopup.setAlpha(1f); // Reset alpha in case previous animation left it at 0
             timeBonusPopup.setVisibility(View.VISIBLE);
 
             Animation popupAnim = AnimationUtils.loadAnimation(this, R.anim.score_popup);
@@ -651,6 +653,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         String text = "+" + points;
         
         scorePopup.setText(text);
+        scorePopup.setAlpha(1f); // Reset alpha in case previous animation left it at 0
         scorePopup.setVisibility(View.VISIBLE);
 
         //animate score popup

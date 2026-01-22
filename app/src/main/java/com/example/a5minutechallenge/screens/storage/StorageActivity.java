@@ -36,6 +36,10 @@ import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
 
+    // Loading animation configuration
+    private static final long LOADING_STEP_DELAY_MS = 2500; // Delay between loading status updates
+    private static final int[] LOADING_PROGRESS_VALUES = {10, 35, 60, 85}; // Progress bar percentages for each step
+
     private ArrayList<StorageListItem> storageList;
     private StorageListManager storageListAdapter;
     private ActivityResultLauncher<Intent> filePickerLauncher;
@@ -287,6 +291,9 @@ public class StorageActivity extends AppCompatActivity {
     /**
      * Starts the loading animation with simulated progress stages.
      * This provides user feedback during the generation process.
+     * Note: The backend (SubjectGenerationService) doesn't currently provide progress callbacks,
+     * so progress is simulated. When/if the backend exposes a GenerationProgressListener interface,
+     * replace this simulation with actual progress updates.
      */
     private void startLoadingAnimation() {
         loadingAnimationHandler = new Handler(Looper.getMainLooper());
@@ -299,18 +306,16 @@ public class StorageActivity extends AppCompatActivity {
                 getString(R.string.loading_please_wait)
         };
 
-        int[] progressValues = {10, 35, 60, 85};
-
         Runnable animationRunnable = new Runnable() {
             @Override
             public void run() {
                 if (loadingProgress != null && loadingStatus != null && loadingAnimationStep < statusMessages.length) {
                     loadingStatus.setText(statusMessages[loadingAnimationStep]);
-                    loadingProgress.setProgress(progressValues[loadingAnimationStep]);
+                    loadingProgress.setProgress(LOADING_PROGRESS_VALUES[loadingAnimationStep]);
                     loadingAnimationStep++;
                     // Schedule next step
                     if (loadingAnimationStep < statusMessages.length) {
-                        loadingAnimationHandler.postDelayed(this, 2500);
+                        loadingAnimationHandler.postDelayed(this, LOADING_STEP_DELAY_MS);
                     }
                 }
             }
