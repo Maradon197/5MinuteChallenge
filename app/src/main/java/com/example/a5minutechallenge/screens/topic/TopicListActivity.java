@@ -162,8 +162,8 @@ public class TopicListActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays a dialog to rename a topic at the given position.
-     * @param position The position of the topic to rename
+     * Displays a dialog to rename the provided topic.
+     * @param topic The topic to rename
      */
     private void showRenameDialog(Topic topic) {
         showEditDialog(getString(R.string.rename_topic), topic.getTitle(), getString(R.string.rename), (newName) -> {
@@ -174,7 +174,7 @@ public class TopicListActivity extends AppCompatActivity {
 
     /**
      * Displays a confirmation dialog before deleting a topic.
-     * @param position The position of the topic to delete
+     * @param topic The topic to delete
      */
     private void showDeleteConfirmationDialog(Topic topic) {
         new AlertDialog.Builder(this)
