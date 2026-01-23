@@ -151,10 +151,10 @@ public class TopicListAdapter extends ArrayAdapter<Topic> {
     }
 
     public void updateTopics(List<Topic> newTopics) {
-        this.myTopics.clear();
-        clear(); // Also clear the ArrayAdapter's internal list
+        myTopics.clear();
+        clear(); //Also clear the ArrayAdapter's internal list
         if (newTopics != null) {
-            this.myTopics.addAll(newTopics);
+            myTopics.addAll(newTopics);
             addAll(newTopics); // Sync the ArrayAdapter's internal list
         }
         notifyDataSetChanged();

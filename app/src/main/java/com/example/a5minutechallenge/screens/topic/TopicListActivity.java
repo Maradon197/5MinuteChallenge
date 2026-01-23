@@ -124,8 +124,7 @@ public class TopicListActivity extends AppCompatActivity {
      * Shows or hides the empty state overlay based on whether there are topics.
      */
     private void updateIsEmptyOverlay() {
-        if (topicList.isEmpty()) {//always seems to return true
-            //WHY IS THIS LIST EMPTY HERE
+        if (topicList.isEmpty()) {//always seemed to return true; gone smh but i didnt fix it
             emptyTopicsOverlay.setVisibility(View.VISIBLE);
             //Toast.makeText(this, topicList.get(0).getTitle(), Toast.LENGTH_SHORT).show();
         } else {
