@@ -250,6 +250,7 @@ public class GeminiContentProcessor {
     private String buildDocumentAnalysisPrompt(String subjectTitle) {
         return """
                 Analyze the structure of the provided document(s) for the subject: "%s".
+                Output MUST be in English, regardless of the document's language.
 
                 Identify LOGICAL SECTIONS such as:
                 - Chapters
@@ -270,7 +271,7 @@ public class GeminiContentProcessor {
                 ]
 
                 Keys:
-                - "s": Section title (descriptive name)
+                - "s": Section title (descriptive name, MUST BE IN ENGLISH)
                 - "f": Exact filename from the document headers
                 - "sp": Start page number
                 - "ep": End page number
@@ -390,6 +391,7 @@ public class GeminiContentProcessor {
         StringBuilder sb = new StringBuilder();
         sb.append("""
                 Based on the provided documents for subject: "%s", identify the main LEARNING TOPICS.
+                Output MUST be in English, regardless of the document's language.
 
                 The document has been analyzed and contains these semantic sections:
                 """.formatted(subjectTitle));
@@ -417,7 +419,7 @@ public class GeminiContentProcessor {
                 ]
 
                 Keys:
-                - "t": Topic title (learning-focused, not just section names)
+                - "t": Topic title (learning-focused, MUST BE IN ENGLISH)
                 - "refs": Array of page references
                   - "f": filename
                   - "sp": start page
@@ -560,6 +562,7 @@ public class GeminiContentProcessor {
                 """
                         Generate detailed learning content for the Topic: "%s".
                         Use ONLY the provided document context.
+                        ALL generated text MUST BE IN ENGLISH, even if the source document is in another language.
 
                         Output a JSON object using TOON (Token Oriented Object Notation):
 
@@ -586,37 +589,37 @@ public class GeminiContentProcessor {
                           ]
                         }
 
-                        TOON Key Reference:
-                        - t: title
-                        - d: description
+                        TOON Key Reference (ALL TEXT FIELDS MUST BE IN ENGLISH):
+                        - t: title (MUST BE IN ENGLISH)
+                        - d: description (MUST BE IN ENGLISH)
                         - cs: challenges array
                         - cn: containers array
                         - ty: type (TITLE, TEXT, MULTIPLE_CHOICE_QUIZ, FILL_IN_THE_GAPS, SORTING_TASK, ERROR_SPOTTING, REVERSE_QUIZ, WIRE_CONNECTING)
-                        - tx: text content
-                        - q: question
-                        - os: options array
+                        - tx: text content (MUST BE IN ENGLISH)
+                        - q: question (MUST BE IN ENGLISH)
+                        - os: options array (ALL OPTIONS MUST BE IN ENGLISH)
                         - ci: correctAnswerIndices array
-                        - e: explanationText
+                        - e: explanationText (MUST BE IN ENGLISH)
                         - am: allowMultipleAnswers
-                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {0}, {1} for gaps)
-                        - cw: correctWords array
-                        - wo: wordOptions array
-                        - in: instructions
+                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {0}, {1} for gaps. TEMPLATE MUST BE IN ENGLISH)
+                        - cw: correctWords array (MUST BE IN ENGLISH)
+                        - wo: wordOptions array (MUST BE IN ENGLISH)
+                        - in: instructions (MUST BE IN ENGLISH)
                         - co: correctOrder array
-                        - is: items array
+                        - is: items array (MUST BE IN ENGLISH)
                         - ei: errorIndex
-                        - a: answer
-                        - qo: questionOptions array
+                        - a: answer (MUST BE IN ENGLISH)
+                        - qo: questionOptions array (MUST BE IN ENGLISH)
                         - cqi: correctQuestionIndex
-                        - li: leftItems array
-                        - ri: rightItems array
+                        - li: leftItems array (MUST BE IN ENGLISH)
+                        - ri: rightItems array (MUST BE IN ENGLISH)
                         - cm: correctMatches object {"0": 0, "1": 1}
 
                         Requirements:
                         1. Generate 3-5 challenges per topic.
                         2. Each challenge should have 4-7 containers.
                         3. Use diverse container types for engagement.
-                        4. All content must come from the provided context.
+                        4. All content must come from the provided context but MUST BE TRANSLATED TO ENGLISH if the context is in another language.
                         5. Output valid JSON only.
                         """,
                 topicTitle, topicTitle);
