@@ -156,12 +156,14 @@ public class ContainerFillInTheGaps extends ContentContainer {
         String displayText = textTemplate;
         
         // Check if the template uses numbered markers ({0}, {1}, etc.)
-        boolean hasNumberedMarkers = textTemplate.contains("{0}");
+        boolean hasZeroBased = textTemplate.contains("{0}");
+        boolean hasOneBased = textTemplate.contains("{1}");
         
-        if (hasNumberedMarkers) {
-            // Handle numbered gap markers ({0}, {1}, etc.)
+        if (hasZeroBased || hasOneBased) {
+            int offset = hasZeroBased ? 0 : 1;
+            // Handle numbered gap markers ({0}, {1}, etc. or {1}, {2}, etc.)
             for (int i = 0; i < correctWords.size(); i++) {
-                String marker = "{" + i + "}";
+                String marker = "{" + (i + offset) + "}";
                 if (i < userFilledWords.size()) {
                     // Gap is filled with a word
                     displayText = displayText.replace(marker, "[" + userFilledWords.get(i) + "]");
@@ -184,8 +186,21 @@ public class ContainerFillInTheGaps extends ContentContainer {
     
     public String getDisplayText() {
         String displayText = textTemplate;
-        for (String word : userFilledWords) {
-            displayText = displayText.replaceFirst("\\{\\}", word);
+
+        // Check if the template uses numbered markers ({0}, {1}, etc.)
+        boolean hasZeroBased = textTemplate.contains("{0}");
+        boolean hasOneBased = textTemplate.contains("{1}");
+
+        if (hasZeroBased || hasOneBased) {
+            int offset = hasZeroBased ? 0 : 1;
+            for (int i = 0; i < userFilledWords.size(); i++) {
+                String marker = "{" + (i + offset) + "}";
+                displayText = displayText.replace(marker, userFilledWords.get(i));
+            }
+        } else {
+            for (String word : userFilledWords) {
+                displayText = displayText.replaceFirst("\\{\\}", word);
+            }
         }
         return displayText;
     }

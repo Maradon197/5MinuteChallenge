@@ -36,9 +36,7 @@ import java.util.ArrayList;
 
 public class StorageActivity extends AppCompatActivity {
 
-    // Loading animation configuration
     private static final long LOADING_STEP_DELAY_MS = 2500; // Delay between loading status updates
-    private static final int[] LOADING_PROGRESS_VALUES = {10, 35, 60, 85}; // Progress bar percentages for each step
 
     private ArrayList<StorageListItem> storageList;
     private StorageListManager storageListAdapter;
@@ -65,7 +63,7 @@ public class StorageActivity extends AppCompatActivity {
         storageRecyclerView.setAdapter(storageListAdapter);
 
         ArrayList<SubjectFile> subjectfiles = subject.getFiles(getApplicationContext());
-        for(SubjectFile currentFile: subjectfiles) {
+        for (SubjectFile currentFile : subjectfiles) {
             subject.addStorageItem(currentFile);
         }
         storageListAdapter.notifyItemsChanged();
@@ -74,7 +72,8 @@ public class StorageActivity extends AppCompatActivity {
         searchBar = findViewById(R.id.storage_search_bar);
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -82,7 +81,8 @@ public class StorageActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         filePickerLauncher = registerForActivityResult(
@@ -106,8 +106,7 @@ public class StorageActivity extends AppCompatActivity {
                             }
                         }
                     }
-                }
-        );
+                });
 
         FloatingActionButton addFileFab = findViewById(R.id.add_file_fab);
         addFileFab.setOnClickListener(v -> openFilePicker());
@@ -120,34 +119,49 @@ public class StorageActivity extends AppCompatActivity {
 
             // Instantiate and call the asynchronous service
             SubjectGenerationService generationService = new SubjectGenerationService();
-            generationService.generateContent(subject, StorageActivity.this, new SubjectGenerationService.GenerationCallback() {
-                @Override
-                public void onGenerationSuccess(Subject updatedSubject) {
-                    // This is executed on the main thread
-                    dismissLoadingDialog();
-                    genContentFab.setEnabled(true);
-                    Toast.makeText(StorageActivity.this, "Content generated successfully!", Toast.LENGTH_LONG).show();
+            generationService.generateContent(subject, StorageActivity.this,
+                    new SubjectGenerationService.GenerationCallback() {
+                        @Override
+                        public void onGenerationSuccess(Subject updatedSubject) {
+                            // This is executed on the main thread
+                            dismissLoadingDialog();
+                            genContentFab.setEnabled(true);
+                            Toast.makeText(StorageActivity.this, "Content generated successfully!", Toast.LENGTH_LONG)
+                                    .show();
 
-                    // Navigate to the next screen to show the generated content
-                    Intent intent = new Intent(StorageActivity.this, ChallengeListActivity.class);
-                    intent.putExtra("SUBJECT_ID", updatedSubject.getSubjectId());
-                    startActivity(intent);
-                    finish(); // Finish this activity
-                }
+                            // Navigate to the next screen to show the generated content
+                            Intent intent = new Intent(StorageActivity.this, ChallengeListActivity.class);
+                            intent.putExtra("SUBJECT_ID", updatedSubject.getSubjectId());
+                            startActivity(intent);
+                            finish(); // Finish this activity
+                        }
 
-                @Override
-                public void onGenerationFailure(Exception e) {
-                    // This is executed on the main thread
-                    dismissLoadingDialog();
-                    genContentFab.setEnabled(true);
-                    Log.e("GenerationFailed", "Error generating content", e);
-                    new AlertDialog.Builder(StorageActivity.this)
-                            .setTitle("Generation Failed")
-                            .setMessage("Could not generate content. Please check your connection and API key. Error: " + e.getMessage())
-                            .setPositiveButton(android.R.string.ok, null)
-                            .show();
-                }
-            });
+                        @Override
+                        public void onGenerationFailure(Exception e) {
+                            // This is executed on the main thread
+                            dismissLoadingDialog();
+                            genContentFab.setEnabled(true);
+                            Log.e("GenerationFailed", "Error generating content", e);
+                            new AlertDialog.Builder(StorageActivity.this)
+                                    .setTitle("Generation Failed")
+                                    .setMessage(
+                                            "Could not generate content. Please check your connection and API key. Error: "
+                                                    + e.getMessage())
+                                    .setPositiveButton(android.R.string.ok, null)
+                                    .show();
+                        }
+
+                        @Override
+                        public void onProgress(int progress, String message) {
+                            // This is executed on the main thread
+                            if (loadingProgress != null) {
+                                loadingProgress.setProgress(progress);
+                            }
+                            if (loadingStatus != null) {
+                                loadingStatus.setText(message);
+                            }
+                        }
+                    });
         });
     }
 
@@ -181,7 +195,7 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void showEditOptionsDialog(int position) {
-        final CharSequence[] options = {getString(R.string.rename), getString(R.string.delete)};
+        final CharSequence[] options = { getString(R.string.rename), getString(R.string.delete) };
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.choose_option));
@@ -231,7 +245,8 @@ public class StorageActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showEditDialog(String title, String currentName, String positiveButtonText, OnNameEnteredListener listener) {
+    private void showEditDialog(String title, String currentName, String positiveButtonText,
+            OnNameEnteredListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);
 
@@ -266,7 +281,6 @@ public class StorageActivity extends AppCompatActivity {
 
         loadingDialog = builder.create();
         loadingDialog.show();
-        startLoadingAnimation();
     }
 
     /**
@@ -285,40 +299,12 @@ public class StorageActivity extends AppCompatActivity {
     /**
      * Starts the loading animation with simulated progress stages.
      * This provides user feedback during the generation process.
-     * Note: The backend (SubjectGenerationService) doesn't currently provide progress callbacks,
-     * so progress is simulated. When/if the backend exposes a GenerationProgressListener interface,
+     * Note: The backend (SubjectGenerationService) doesn't currently provide
+     * progress callbacks,
+     * so progress is simulated. When/if the backend exposes a
+     * GenerationProgressListener interface,
      * replace this simulation with actual progress updates.
      */
-    private void startLoadingAnimation() {
-        loadingAnimationHandler = new Handler(Looper.getMainLooper());
-        loadingAnimationStep = 0;
-
-        String[] statusMessages = {
-                getString(R.string.loading_processing_files),
-                getString(R.string.loading_analyzing_content),
-                getString(R.string.loading_creating_challenges),
-                getString(R.string.loading_please_wait)
-        };
-
-        Runnable animationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if(loadingProgress != null && loadingStatus != null && loadingAnimationStep < statusMessages.length) {
-                    loadingStatus.setText(statusMessages[loadingAnimationStep]);
-                    loadingProgress.setProgress(LOADING_PROGRESS_VALUES[loadingAnimationStep]);
-
-                    if (loadingAnimationStep < statusMessages.length) {//backend hook needed
-                        loadingAnimationHandler.postDelayed(this, LOADING_STEP_DELAY_MS);
-                    }
-                    loadingAnimationStep++;
-                }
-            }
-        };
-
-        // Start immediately
-        loadingAnimationHandler.post(animationRunnable);
-    }
-
     /**
      * Stops the loading animation.
      */

@@ -40,6 +40,8 @@ public class SubjectGenerationService {
         void onGenerationSuccess(Subject subject);
 
         void onGenerationFailure(Exception e);
+
+        void onProgress(int progress, String message);
     }
 
     public SubjectGenerationService() {
@@ -64,7 +66,8 @@ public class SubjectGenerationService {
                 }
 
                 // Process files with Gemini (This runs in the background)
-                String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(context), context);
+                String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(context), context,
+                        (progress, message) -> handler.post(() -> callback.onProgress(progress, message)));
 
                 // Save the raw JSON into subject-specific storage (json/ folder)
                 try {

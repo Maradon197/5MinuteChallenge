@@ -58,6 +58,13 @@ public class GeminiContentProcessor {
     private final AtomicInteger activeThreads = new AtomicInteger(0);
     private final AtomicInteger rateLimitedThreads = new AtomicInteger(0);
 
+    /**
+     * Interface for tracking progress during content generation
+     */
+    public interface ProgressListener {
+        void onProgress(int progress, String message);
+    }
+
     public GeminiContentProcessor() {
         this.apiKey = BuildConfig.GEMINI_API_KEY;
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("null")) {
@@ -72,7 +79,7 @@ public class GeminiContentProcessor {
      * 2. Topic extraction with section references
      * 3. Detailed content generation per topic
      */
-    public String processFiles(List<SubjectFile> files, String subjectTitle, Context context)
+    public String processFiles(List<SubjectFile> files, String subjectTitle, Context context, ProgressListener listener)
             throws IOException, JSONException {
         try {
             PDFBoxResourceLoader.init(context);
@@ -84,6 +91,9 @@ public class GeminiContentProcessor {
             throw new IllegalArgumentException("No files provided for processing");
         }
 
+        if (listener != null)
+            listener.onProgress(5, "Extracting document content...");
+
         // 1. Extract full document content with page-level granularity
         Log.i(TAG, "Extracting document content...");
         List<DocumentContent> documents = extractDocumentContents(files);
@@ -91,23 +101,47 @@ public class GeminiContentProcessor {
             throw new IOException("No readable content found in files");
         }
 
+        if (listener != null)
+            listener.onProgress(15, "Analyzing document structure...");
+
         // 2. Stage 0: Semantic Document Analysis - Get logical sections from LLM
         Log.i(TAG, "Stage 0: Analyzing document structure...");
         List<SemanticSection> semanticSections = analyzeDocumentStructure(documents, subjectTitle);
         Log.i(TAG, "Found " + semanticSections.size() + " semantic sections.");
+
+        if (listener != null)
+            listener.onProgress(30, "Extracting topics...");
 
         // 3. Stage 1: Extract Topics mapped to semantic sections
         Log.i(TAG, "Stage 1: Extracting topics...");
         List<TopicOutline> topicOutlines = extractTopics(documents, semanticSections, subjectTitle);
         Log.i(TAG, "Found " + topicOutlines.size() + " topics.");
 
+        if (topicOutlines.isEmpty()) {
+            throw new IOException("No topics could be extracted from the documents");
+        }
+
         // 4. Stage 2: Generate Content for each Topic (Parallelized)
         Log.i(TAG, "Stage 2: Generating content for topics...");
         ExecutorService topicExecutor = Executors.newFixedThreadPool(Math.min(topicOutlines.size() + 1, 5));
         List<Future<JSONObject>> topicFutures = new ArrayList<>();
 
+        int baseProgress = 40;
+        int totalProgressRange = 55; // From 40 to 95
+        AtomicInteger completedTopics = new AtomicInteger(0);
+        int totalTopics = topicOutlines.size();
+
         for (TopicOutline outline : topicOutlines) {
-            topicFutures.add(topicExecutor.submit(() -> generateTopicContent(outline, documents)));
+            topicFutures.add(topicExecutor.submit(() -> {
+                JSONObject result = generateTopicContent(outline, documents);
+                int completed = completedTopics.incrementAndGet();
+                if (listener != null) {
+                    int progress = baseProgress + (completed * totalProgressRange / totalTopics);
+                    listener.onProgress(progress,
+                            String.format("Generated %d/%d topics: %s", completed, totalTopics, outline.title));
+                }
+                return result;
+            }));
         }
 
         JSONArray generatedTopics = new JSONArray();
@@ -124,11 +158,16 @@ public class GeminiContentProcessor {
             topicExecutor.shutdown();
         }
 
+        if (listener != null)
+            listener.onProgress(98, "Finalizing structure...");
+
         // 5. Wrap in final structure
         JSONObject finalResult = new JSONObject();
         finalResult.put("topics", generatedTopics);
 
         Log.i(TAG, String.format("Processing complete. Total tokens used: %d", totalTokensProcessed.get()));
+        if (listener != null)
+            listener.onProgress(100, "Generation complete");
         return finalResult.toString();
     }
 
@@ -601,7 +640,7 @@ public class GeminiContentProcessor {
                         - ci: correctAnswerIndices array
                         - e: explanationText (MUST BE IN ENGLISH)
                         - am: allowMultipleAnswers
-                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {0}, {1} for gaps. TEMPLATE MUST BE IN ENGLISH)
+                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {1}, {2} etc. for gaps. Indices MUST START WITH 1 and be consistent. Markers MUST NOT use underscores, normal brackets or be empty. ONLY {1}, {2}, etc. format. TEMPLATE MUST BE IN ENGLISH)
                         - cw: correctWords array (MUST BE IN ENGLISH)
                         - wo: wordOptions array (MUST BE IN ENGLISH)
                         - in: instructions (MUST BE IN ENGLISH)
@@ -620,7 +659,8 @@ public class GeminiContentProcessor {
                         2. Each challenge should have 4-7 containers.
                         3. Use diverse container types for engagement.
                         4. All content must come from the provided context but MUST BE TRANSLATED TO ENGLISH if the context is in another language.
-                        5. Output valid JSON only.
+                        5. IMPORTANT: For FILL_IN_THE_GAPS, the textTemplate MUST ALWAYS use indexed markers starting from {1}: "{1} is the {2} of the {3}". DO NOT use {}, [], (), or underscores.
+                        6. Output valid JSON only.
                         """,
                 topicTitle, topicTitle);
     }
