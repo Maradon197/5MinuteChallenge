@@ -155,24 +155,29 @@ public class ContainerFillInTheGaps extends ContentContainer {
     public String getDisplayTextWithPlaceholder(String placeholder) {
         String displayText = textTemplate;
         
-        // First, replace numbered gap markers ({0}, {1}, etc.) with filled words or placeholder
-        for (int i = 0; i < correctWords.size(); i++) {
-            String marker = "{" + i + "}";
-            if (i < userFilledWords.size()) {
-                // Gap is filled with a word
-                displayText = displayText.replace(marker, "[" + userFilledWords.get(i) + "]");
-            } else {
-                // Gap is not yet filled - show placeholder
-                displayText = displayText.replace(marker, placeholder);
-            }
-        }
+        // Check if the template uses numbered markers ({0}, {1}, etc.)
+        boolean hasNumberedMarkers = textTemplate.contains("{0}");
         
-        // Also handle simple {} markers for backward compatibility
-        for (String word : userFilledWords) {
-            displayText = displayText.replaceFirst("\\{\\}", "[" + word + "]");
+        if (hasNumberedMarkers) {
+            // Handle numbered gap markers ({0}, {1}, etc.)
+            for (int i = 0; i < correctWords.size(); i++) {
+                String marker = "{" + i + "}";
+                if (i < userFilledWords.size()) {
+                    // Gap is filled with a word
+                    displayText = displayText.replace(marker, "[" + userFilledWords.get(i) + "]");
+                } else {
+                    // Gap is not yet filled - show placeholder
+                    displayText = displayText.replace(marker, placeholder);
+                }
+            }
+        } else {
+            // Handle simple {} markers for backward compatibility
+            for (String word : userFilledWords) {
+                displayText = displayText.replaceFirst("\\{\\}", "[" + word + "]");
+            }
+            // Replace remaining simple {} gaps with placeholder
+            displayText = displayText.replace("{}", placeholder);
         }
-        // Replace remaining simple {} gaps with placeholder
-        displayText = displayText.replace("{}", placeholder);
         
         return displayText;
     }
