@@ -51,6 +51,14 @@ public class ContentContainerAdapter extends RecyclerView.Adapter<ContentContain
         this.onItemClickListener = onItemClickListener;
     }
 
+    /**
+     * Returns the items list. Subclasses can use this to access or modify the list.
+     * @return The items list
+     */
+    protected List<String> getItems() {
+        return items;
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

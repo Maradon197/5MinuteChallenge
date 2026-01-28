@@ -45,8 +45,8 @@ public class DraggableAdapter extends ContentContainerAdapter {
                 int fromPosition = viewHolder.getAdapterPosition();
                 int toPosition = target.getAdapterPosition();
                 
-                // Swap items in the list
-                Collections.swap(items, fromPosition, toPosition);
+                // Swap items in the list using the getter method
+                Collections.swap(getItems(), fromPosition, toPosition);
                 
                 // Notify adapter
                 notifyItemMoved(fromPosition, toPosition);
