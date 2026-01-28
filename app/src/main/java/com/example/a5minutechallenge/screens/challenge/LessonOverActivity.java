@@ -104,7 +104,7 @@ public class LessonOverActivity extends AppCompatActivity {
                         Challenge c = challenges.get(challengePosition);
                         c.setCompleted(true);
                         c.setBestScore(totalScore);
-                        c.incrementAttempts();
+                        // Note: Attempts are incremented when challenge is started in ChallengeListActivity
                     }
                     break;
                 }

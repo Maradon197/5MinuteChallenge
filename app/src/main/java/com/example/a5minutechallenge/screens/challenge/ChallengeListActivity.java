@@ -33,6 +33,7 @@ public class ChallengeListActivity extends AppCompatActivity {
 
     private ArrayList<Challenge> challengeList;
     private ChallengeListAdapter adapter;
+    private Subject subject;
     private String topicName;
     private int subjectId;
     private AlertDialog countdownDialog;
@@ -74,7 +75,7 @@ public class ChallengeListActivity extends AppCompatActivity {
      */
     private ArrayList<Challenge> loadChallengesForTopic(Context context, String topicName, int subjectId) {
 
-        Subject subject = new Subject(subjectId);
+        subject = new Subject(subjectId);
         ArrayList<Topic> topics = subject.getTopics(context);
 
         // match topic name because i was too dumb to implement an id in topic.java
@@ -183,6 +184,10 @@ public class ChallengeListActivity extends AppCompatActivity {
         }
 
         challenge.incrementAttempts();
+        // Save the attempt to storage
+        if (subject != null) {
+            subject.saveToStorage(getApplicationContext());
+        }
         adapter.notifyDataSetChanged();
 
         Intent intent = new Intent(ChallengeListActivity.this, FiveMinuteActivity.class);
