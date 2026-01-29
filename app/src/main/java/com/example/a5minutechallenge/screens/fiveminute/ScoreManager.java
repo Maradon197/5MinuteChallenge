@@ -115,10 +115,6 @@ public class ScoreManager {
         return (double) correctAnswers / totalAnswers;
     }
     
-    public boolean wasQuickAnswer(long answerTimeMs) {
-        return answerTimeMs < QUICK_ANSWER_THRESHOLD_MS;
-    }
-    
     public void reset() {
         totalScore = 0;
         currentStreak = 0;
