@@ -12,7 +12,7 @@ public class ScoreManager {
     private int correctAnswers;
     private int totalAnswers;
     private static final int QUICK_ANSWER_THRESHOLD_MS = 5000; // 5s
-    private static final int QUICK_ANSWER_BONUS = 50;
+    private static final int QUICK_ANSWER_BONUS = 5;
     private static final int STREAK_MULTIPLIER = 20;
     private static final int BASE_CORRECT_POINTS = 100;
     
@@ -62,15 +62,16 @@ public class ScoreManager {
     }
     
     /**
-     * Adds a time bonus when the lesson is completed before time runs out.
+     * Adds a time bonus when the lesson is completed before time runs out. No longer in use
+     * because quick answers were a stupid incentive
      * @param remainingSeconds Seconds remaining when lesson completed
      * @return Bonus points awarded
      */
-    public int addTimeBonus(int remainingSeconds) {
+    /*public int addTimeBonus(int remainingSeconds) {
         int bonus = remainingSeconds * 5;
         totalScore += bonus;
         return bonus;
-    }
+    }*/
     
     /**
      * Adds an accuracy bonus based on the percentage of correct answers.
@@ -83,7 +84,7 @@ public class ScoreManager {
         int bonus = (int) (accuracy * 100);//all correct makes +100%
         
         if (accuracy == 1.0) {
-            bonus += 200; // Perfect bonus
+            bonus += 200; // Perfect bonus; ideally there would be a popup for this
         }
         
         totalScore += bonus;
@@ -114,7 +115,8 @@ public class ScoreManager {
         if (totalAnswers == 0) return 0;
         return (double) correctAnswers / totalAnswers;
     }
-    
+
+    // Reset all scores and counters; no longer used
     public void reset() {
         totalScore = 0;
         currentStreak = 0;

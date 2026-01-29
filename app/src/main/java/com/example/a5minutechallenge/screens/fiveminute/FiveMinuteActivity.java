@@ -65,11 +65,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
     private int totalInteractiveContainers = 0;
     private int correctAnswersCount = 0;
     private boolean lastAnswerWasCorrect = false;
-    private int recapIdCounter = 10000; // Counter for generating unique recap container IDs
+    private int recapIdCounter = 10000; // init value for generating unique recap container IDs, 10k is kust random value
     
     private String topicName;
     private int subjectId;
-    private int challengePosition = -1; // Position of challenge in the list, -1 if not from challenge list
+    private int challengePosition = -1; //first challenge pos, -1 if not from challenge list
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -114,7 +114,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         timerManager = new TimerManager(this);
 
         
-        // Start timer after a short delay
+        //timer start w delay
         timerText.postDelayed(() -> timerManager.start(), 3000);
     }
 
@@ -146,7 +146,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 return false;
             }
 
-            //GestureDetector needs onDown: true to track gesture
+            //gestureDetector needs onDown: true to track gesture
             @Override
             public boolean onDown(MotionEvent e) {
                 return true;
@@ -155,7 +155,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
         View contentArea = findViewById(R.id.content_container_area);
         contentArea.setOnTouchListener((v, event) -> {
-            // Pass event to detector and return true to consume the touch
+            //throughput event to gesture detector, true : consume touch
             return gestureDetector.onTouchEvent(event);
         });
     }
@@ -165,10 +165,10 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * Loads and displays the content containers for this lesson.
      */
     private void loadContent() {
-        // Load content from ContentContainerDataLoader based on subject topic challenge and start index
+        //content from ContentContainerDataLoader based on subject topic challenge and start index
         contentContainers = ContentContainerDataLoader.loadContent(this, subjectId, topicName, challengePosition, 0);
 
-        // Count total interactive containers for progress bar
+        //total interactive containers for progress bar
         for (ContentContainer c : contentContainers) {
             switch (c.getType()) {
                 case MULTIPLE_CHOICE_QUIZ:
@@ -704,8 +704,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      */
     private void checkLessonComplete(boolean timeOver) {
         timerManager.stop();
-        
-        int timeBonus = scoreManager.addTimeBonus(timerManager.getRemainingTimeSeconds());
+
         int accuracyBonus = scoreManager.addAccuracyBonus();
         if(timeOver) {
             Toast.makeText(this, "Time's up!", Toast.LENGTH_SHORT).show();
@@ -718,7 +717,6 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
         intent.putExtra("TOTAL_SCORE", scoreManager.getTotalScore());
         intent.putExtra("ACCURACY", scoreManager.getAccuracy());
         intent.putExtra("MAX_STREAK", scoreManager.getMaxStreak());
-        intent.putExtra("TIME_BONUS", timeBonus);
         intent.putExtra("ACCURACY_BONUS", accuracyBonus);
         intent.putExtra("SUBJECT_ID", subjectId);
         intent.putExtra("TOPIC_NAME", topicName);
@@ -763,7 +761,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                     float warningAlpha = ((float) TimerManager.WARNING_TIME - remainingSeconds) / (float) TimerManager.WARNING_TIME * 0.3f;
                     lowTimeOverlay.setAlpha(warningAlpha);
                 }
-            } else {
+            } else {// lowTimeOverlay = null
                 timerText.setTextColor(getColor(R.color.text_primary));
                 if (lowTimeOverlay != null) {
                     lowTimeOverlay.setVisibility(View.GONE);
@@ -780,7 +778,7 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
     @Override
     public void onTimerStateChanged(boolean isRunning) {
-        //pause/resume UI feedback here?
+        //pause/resume UI feedback here? -> not implemented due to timely limitations
     }
 
     @Override
