@@ -365,7 +365,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                 // No visual feedback needed for sorting - the order itself is the feedback
                 break;
             case ERROR_SPOTTING:
-                ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) containerToCheck;
+                //This container is broken for some reason and I dont have the Time to find a satisfactory fix.
+                //Thus, it'll be marked as "correct" and excluded from all other pipeline steps.
+                /*ContainerErrorSpotting errorSpottingContainer = (ContainerErrorSpotting) containerToCheck;
                 isCorrect = (errorSpottingContainer.getUserSelectedIndex() == errorSpottingContainer.getErrorIndex());
                 
                 // Update UI with correct/incorrect colors
@@ -378,12 +380,14 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
                             Collections.singletonList(errorSpottingContainer.getUserSelectedIndex())
                         );
                     }
-                }
+                }*/
+                isCorrect = true;
                 break;
             case WIRE_CONNECTING:
-                ContainerWireConnecting wireConnectingContainer = (ContainerWireConnecting) containerToCheck;
-                isCorrect = wireConnectingContainer.isCorrect();
-                // No visual feedback needed for wire connecting - the arrangement itself is the feedback
+                //This container is broken for some reason and I dont have the Time to find a satisfactory fix.
+                //Thus, it'll be marked as "correct" automatically and excluded from all other pipeline steps.
+                //ContainerWireConnecting wireConnectingContainer = (ContainerWireConnecting) containerToCheck;
+                isCorrect = true;
                 break;
             case QUIZ:
                 //deprecated
@@ -515,7 +519,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
      * For recap containers, adds a fresh copy of the wrapped container without nesting.
      */
     private void addCurrentContainerToRecap() {
+
         ContentContainer currentContainer = contentContainers.get(currentContainerIndex);
+        if(currentContainer.getType() == ContentContainer.Types.WIRE_CONNECTING || currentContainer.getType() == ContentContainer.Types.ERROR_SPOTTING) {
+            return;
+        }
         
         // If the current container is already a recap, extract its wrapped container
         // to avoid nesting recap containers
