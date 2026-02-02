@@ -57,7 +57,8 @@ public class TopicListActivity extends AppCompatActivity {
         subject = new Subject(subjectId);
 
         /// ///////////////////////////////////////////////////////
-        topicList = subject.getTopics(getApplicationContext());//this list contains items, which is validated.
+        subject.reloadTopics(getApplicationContext());
+        topicList = subject.getTopics(getApplicationContext());//this list contains items, which is validated
 
         if (topicList == null) {
             Toast.makeText(this, "No topics found for this subject.", Toast.LENGTH_SHORT).show();
