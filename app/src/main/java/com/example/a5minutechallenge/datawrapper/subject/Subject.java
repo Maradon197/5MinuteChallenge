@@ -5,6 +5,7 @@
 package com.example.a5minutechallenge.datawrapper.subject;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
@@ -425,8 +426,15 @@ public class Subject {
                 jsonDir.mkdirs();
 
             File file = new File(jsonDir, "content.json");
+            String jsonOutput = root.toString();
+            Log.d("Subject",
+                    "Writing content.json for subject_" + subjectId + ". Content length: " + jsonOutput.length());
+            // Log a snippet for debugging (don't log the whole thing if it's huge)
+            Log.d("Subject",
+                    "JSON Snippet: " + (jsonOutput.length() > 500 ? jsonOutput.substring(0, 500) + "..." : jsonOutput));
+
             try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(root.toString().getBytes(StandardCharsets.UTF_8));
+                fos.write(jsonOutput.getBytes(StandardCharsets.UTF_8));
             }
 
             return true;
@@ -483,6 +491,11 @@ public class Subject {
                 return -1;
             return f1.getName().compareTo(f2.getName());
         });
+
+        Log.d("Subject", "Loading generated content for subject_" + subjectId + ". Found " + files.length + " files.");
+        for (File f : files) {
+            Log.d("Subject", "Processing file: " + f.getName());
+        }
 
         // Use a Map to de-duplicate topics by title while preserving order
         java.util.LinkedHashMap<String, Topic> uniqueTopics = new java.util.LinkedHashMap<>();
