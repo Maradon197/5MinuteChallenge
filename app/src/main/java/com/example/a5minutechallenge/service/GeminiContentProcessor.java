@@ -656,7 +656,7 @@ public class GeminiContentProcessor {
 
                         Requirements:
                         1. Generate 3-5 challenges per topic.
-                        2. Each challenge should have 4-7 containers.
+                        2. Each challenge should have roughly 20 containers.
                         3. Use diverse container types for engagement.
                         4. All content must come from the provided context but MUST BE TRANSLATED TO ENGLISH if the context is in another language.
                         5. IMPORTANT: For FILL_IN_THE_GAPS, the textTemplate MUST ALWAYS use indexed markers starting from {1}: "{1} is the {2} of the {3}". DO NOT use {}, [], (), or underscores.
