@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh subject data when returning to this activity
+        // Refresh subject data when returning to this activit
         // Re-load topics to update gamification data (progress, scores, attempts)
         for (Subject subject : subjectList) {
             subject.reloadTopics(this); // Force reload topics from storage
