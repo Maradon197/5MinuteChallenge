@@ -137,14 +137,18 @@ public class GeminiContentProcessor {
             TopicOutline outline = topicOutlines.get(i);
             int topicIndex = i;
             topicFutures.add(topicExecutor.submit(() -> {
-                int topicBaseProgress = baseProgress + (topicIndex * totalProgressRange / totalTopics);
-                int topicProgressRange = totalProgressRange / totalTopics;
+                try {
+                    int topicBaseProgress = baseProgress + (topicIndex * totalProgressRange / totalTopics);
+                    int topicProgressRange = totalProgressRange / totalTopics;
 
-                JSONObject result = generateTopicContent(outline, documents, listener, topicBaseProgress,
-                        topicProgressRange);
-
-                completedTopics.incrementAndGet();
-                return result;
+                    return generateTopicContent(outline, documents, listener, topicBaseProgress,
+                            topicProgressRange);
+                } catch (Exception e) {
+                    Log.e(TAG, "Topic generation failed for: " + outline.title, e);
+                    return null;
+                } finally {
+                    completedTopics.incrementAndGet();
+                }
             }));
         }
 
@@ -157,7 +161,7 @@ public class GeminiContentProcessor {
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
-            throw new IOException("Failed to generate topic content: " + e.getMessage(), e);
+            Log.e(TAG, "Error gathering topic results: " + e.getMessage());
         } finally {
             topicExecutor.shutdown();
         }
@@ -570,13 +574,19 @@ public class GeminiContentProcessor {
         JSONArray generatedChallenges = new JSONArray();
         try {
             for (Future<JSONObject> future : challengeFutures) {
-                JSONObject challengeContent = future.get();
-                if (challengeContent != null) {
-                    generatedChallenges.put(challengeContent);
+                try {
+                    JSONObject challengeContent = future.get();
+                    if (challengeContent != null) {
+                        generatedChallenges.put(challengeContent);
+                    }
+                } catch (ExecutionException e) {
+                    Log.e(TAG,
+                            "Challenge failed: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
                 }
             }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new IOException("Failed to generate challenge content: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Topic content generation interrupted: " + topic.title);
+            Thread.currentThread().interrupt();
         } finally {
             challengeExecutor.shutdown();
         }
@@ -631,13 +641,22 @@ public class GeminiContentProcessor {
             try {
                 String jsonResponse = callGemini(promptParts);
                 JSONObject toonData = new JSONObject(jsonResponse);
+
+                // Validate against guidelines
+                if (!validateToonChallenge(toonData)) {
+                    throw new JSONException(
+                            "Generated content does not meet guidelines (e.g. empty wordOptions or missing markers)");
+                }
+
                 return expandChallenge(toonData);
             } catch (JSONException | IOException e) {
                 attempts++;
                 if (attempts > MAX_STRUCTURE_RETRIES) {
-                    throw e;
+                    Log.e(TAG, "Stage 2b: FINAL content failure for challenge '" + outline.title + "' after " + attempts
+                            + " attempts: " + e.getMessage());
+                    return null; // Return null to skip this challenge silently
                 }
-                Log.w(TAG, "Stage 2b: Malformed structure for challenge '" + outline.title + "' (" + e.getMessage()
+                Log.w(TAG, "Stage 2b: Content error for challenge '" + outline.title + "' (" + e.getMessage()
                         + "), retrying... (Attempt " + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
                 try {
                     Thread.sleep(1000);
@@ -758,58 +777,194 @@ public class GeminiContentProcessor {
                         Use ONLY the provided document context.
                         ALL generated text MUST BE IN ENGLISH, even if the source document is in another language.
 
-                        Output a JSON object for the challenge using TOON (Token Oriented Object Notation):
+                        Requirement: Output a JSON object for the challenge using TOON (Token Oriented Object Notation).
+
+                        STRUCTURE DEFINITION & GUIDELINES (FOLLOW STRICTLY):
                         {
-                          "t": "%s",
-                          "d": "%s",
+                          "t": "Challenge Title (MUST BE IN ENGLISH)",
+                          "d": "Challenge Description (MUST BE IN ENGLISH)",
                           "cn": [
                             {
+                              "ty": "TITLE",
+                              "t": "Title text (Non-empty)"
+                            },
+                            {
                               "ty": "TEXT",
-                              "tx": "Explanatory content..."
+                              "tx": "Detailed explanatory text (Non-empty)"
                             },
                             {
                               "ty": "MULTIPLE_CHOICE_QUIZ",
-                              "q": "Question?",
-                              "os": ["Option A", "Option B", "Option C", "Option D"],
+                              "q": "Question text?",
+                              "os": ["Opt A", "Opt B", "Opt C", "Opt D"],
                               "ci": [0],
-                              "e": "Explanation..."
+                              "am": false,
+                              "e": "Detailed explanation why answers are correct"
+                            },
+                            {
+                              "ty": "FILL_IN_THE_GAPS",
+                              "tt": "Template text with indexed markers: {1} is a {2}.",
+                              "cw": ["word1", "word2"],
+                              "wo": ["word1", "word2", "distractor1", "distractor2"]
+                            },
+                            {
+                              "ty": "SORTING_TASK",
+                              "co": ["First", "Second", "Third", "Fourth"],
+                              "in": "Instructions on what to sort"
+                            },
+                            {
+                              "ty": "ERROR_SPOTTING",
+                              "is": ["Correct1", "Correct2", "ERROR_ITEM", "Correct3"],
+                              "ei": 2,
+                              "in": "Instructions to find the error",
+                              "e": "Why this item is the error"
+                            },
+                            {
+                              "ty": "REVERSE_QUIZ",
+                              "a": "The Answer",
+                              "qo": ["Question1?", "Question2?", "Question3?"],
+                              "cqi": 0,
+                              "e": "Why this question matches the answer"
+                            },
+                            {
+                              "ty": "WIRE_CONNECTING",
+                              "li": ["Left1", "Left2", "Left3"],
+                              "ri": ["Right1", "Right2", "Right3"],
+                              "cm": {"0": 1, "1": 0, "2": 2},
+                              "in": "Instructions for matching"
+                            },
+                            {
+                              "ty": "RECAP",
+                              "rt": "Recap Title",
+                              "wc": { "ty": "TITLE", "t": "Inner Title" }
                             }
                           ]
                         }
 
-                        TOON Key Reference (ALL TEXT FIELDS MUST BE IN ENGLISH):
-                        - t: title (MUST BE IN ENGLISH)
-                        - d: description (MUST BE IN ENGLISH)
-                        - cn: containers array
-                        - ty: type (TITLE, TEXT, MULTIPLE_CHOICE_QUIZ, FILL_IN_THE_GAPS, SORTING_TASK, ERROR_SPOTTING, REVERSE_QUIZ, WIRE_CONNECTING)
-                        - tx: text content (MUST BE IN ENGLISH)
-                        - q: question (MUST BE IN ENGLISH)
-                        - os: options array (ALL OPTIONS MUST BE IN ENGLISH)
-                        - ci: correctAnswerIndices array
-                        - e: explanationText (MUST BE IN ENGLISH)
-                        - am: allowMultipleAnswers
-                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {1}, {2} etc. for gaps. Indices MUST START WITH 1 and be consistent. Markers MUST NOT use underscores, normal brackets or be empty. ONLY {1}, {2}, etc. format. TEMPLATE MUST BE IN ENGLISH)
-                        - cw: correctWords array (MUST BE IN ENGLISH)
-                        - wo: wordOptions array (MUST BE IN ENGLISH)
-                        - in: instructions (MUST BE IN ENGLISH)
-                        - co: correctOrder array
-                        - is: items array (MUST BE IN ENGLISH)
-                        - ei: errorIndex
-                        - a: answer (MUST BE IN ENGLISH)
-                        - qo: questionOptions array (MUST BE IN ENGLISH)
-                        - cqi: correctQuestionIndex
-                        - li: leftItems array (MUST BE IN ENGLISH)
-                        - ri: rightItems array (MUST BE IN ENGLISH)
-                        - cm: correctMatches object {"0": 0, "1": 1}
-
-                        Requirements:
-                        1. Each challenge should have roughly 10 containers.
-                        2. Use diverse container types for engagement.
-                        3. All content must come from the provided context but MUST BE TRANSLATED TO ENGLISH if the context is in another language.
-                        4. IMPORTANT: For FILL_IN_THE_GAPS, the textTemplate MUST ALWAYS use indexed markers starting from {1}: "{1} is the {2} of the {3}". DO NOT use {}, [], (), or underscores.
-                        5. Output valid JSON only.
+                        STRICT RULES:
+                        1. ALL TEXT MUST BE IN ENGLISH.
+                        2. FILL_IN_THE_GAPS: `wo` (wordOptions) MUST NOT be empty. It must contain ALL `cw` (correctWords) plus 2-4 distractors. `tt` must use {1}, {2}, etc.
+                        3. MULTIPLE_CHOICE_QUIZ: Minimum 2 options. `ci` must contain valid indices into `os`.
+                        4. SORTING_TASK: Minimum 3 items in `co`.
+                        5. ERROR_SPOTTING: Minimum 3 items in `is`. `ei` must be the index of the incorrect item.
+                        6. WIRE_CONNECTING: `li` and `ri` must have the same length (min 3). `cm` must map EVERY left index to its matching right index.
+                        7. Diversify container types. Use roughly 10 containers per challenge.
+                        8. Output valid JSON only, no other text.
                         """,
-                topicTitle, outline.title, outline.description, outline.title, outline.description);
+                topicTitle, outline.title, outline.description);
+    }
+
+    // --- Validation and Regeneration ---
+
+    private boolean validateToonChallenge(JSONObject toonC) {
+        if (toonC == null)
+            return false;
+        try {
+            if (toonC.optString("t", "").isEmpty())
+                return false;
+
+            JSONArray cn = toonC.optJSONArray("cn");
+            if (cn == null || cn.length() == 0)
+                return false;
+
+            for (int i = 0; i < cn.length(); i++) {
+                JSONObject container = cn.getJSONObject(i);
+                String type = container.optString("ty", "");
+
+                switch (type) {
+                    case "TITLE":
+                        if (container.optString("t", "").isEmpty())
+                            return false;
+                        break;
+                    case "TEXT":
+                        if (container.optString("tx", "").isEmpty())
+                            return false;
+                        break;
+                    case "MULTIPLE_CHOICE_QUIZ":
+                        if (container.optString("q", "").isEmpty())
+                            return false;
+                        JSONArray os = container.optJSONArray("os");
+                        JSONArray ci = container.optJSONArray("ci");
+                        if (os == null || os.length() < 2)
+                            return false;
+                        if (ci == null || ci.length() == 0)
+                            return false;
+                        for (int j = 0; j < ci.length(); j++) {
+                            int idx = ci.getInt(j);
+                            if (idx < 0 || idx >= os.length())
+                                return false;
+                        }
+                        break;
+                    case "FILL_IN_THE_GAPS":
+                        String tt = container.optString("tt", "");
+                        JSONArray cw = container.optJSONArray("cw");
+                        JSONArray wo = container.optJSONArray("wo");
+                        if (tt.isEmpty())
+                            return false;
+                        if (cw == null || cw.length() == 0)
+                            return false;
+                        if (wo == null || wo.length() == 0)
+                            return false;
+                        // Check if all correct words are in word options
+                        Set<String> optionsSet = new HashSet<>();
+                        for (int j = 0; j < wo.length(); j++)
+                            optionsSet.add(wo.getString(j).toLowerCase());
+                        for (int j = 0; j < cw.length(); j++) {
+                            if (!optionsSet.contains(cw.getString(j).toLowerCase()))
+                                return false;
+                        }
+                        // Check if markers {1}, {2}, etc. exist in template
+                        for (int j = 1; j <= cw.length(); j++) {
+                            if (!tt.contains("{" + j + "}"))
+                                return false;
+                        }
+                        break;
+                    case "SORTING_TASK":
+                        JSONArray co = container.optJSONArray("co");
+                        if (co == null || co.length() < 3)
+                            return false;
+                        break;
+                    case "ERROR_SPOTTING":
+                        JSONArray is = container.optJSONArray("is");
+                        if (is == null || is.length() < 3)
+                            return false;
+                        int ei = container.optInt("ei", -1);
+                        if (ei < 0 || ei >= is.length())
+                            return false;
+                        break;
+                    case "REVERSE_QUIZ":
+                        if (container.optString("a", "").isEmpty())
+                            return false;
+                        JSONArray qo = container.optJSONArray("qo");
+                        if (qo == null || qo.length() < 2)
+                            return false;
+                        int cqi = container.optInt("cqi", -1);
+                        if (cqi < 0 || cqi >= qo.length())
+                            return false;
+                        break;
+                    case "WIRE_CONNECTING":
+                        JSONArray li = container.optJSONArray("li");
+                        JSONArray ri = container.optJSONArray("ri");
+                        JSONObject cm = container.optJSONObject("cm");
+                        if (li == null || ri == null || cm == null)
+                            return false;
+                        if (li.length() != ri.length() || li.length() < 3)
+                            return false;
+                        // Check if all left indices are present in cm and map to valid right indices
+                        for (int j = 0; j < li.length(); j++) {
+                            if (!cm.has(String.valueOf(j)))
+                                return false;
+                            int rIdx = cm.getInt(String.valueOf(j));
+                            if (rIdx < 0 || rIdx >= ri.length())
+                                return false;
+                        }
+                        break;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            Log.w(TAG, "Validation error: " + e.getMessage());
+            return false;
+        }
     }
 
     // --- TOON Expansion ---
