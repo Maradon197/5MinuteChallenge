@@ -85,11 +85,11 @@ public class MainActivity extends AppCompatActivity {
         addSubjectFab.setOnClickListener(v -> showAddSubjectDialog());
 
         // Setup light mode toggle (functionality not yet implemented)
-        lightModeSwitch = findViewById(R.id.light_mode_switch);
+        /*lightModeSwitch = findViewById(R.id.light_mode_switch);
         lightModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             // Light mode functionality will be implemented in a future update
             Toast.makeText(this, "Light mode coming soon!", Toast.LENGTH_SHORT).show();
-        });
+        });*/
     }
 
     @Override

@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class GeminiContentProcessor {
 
     private static final String TAG = "GeminiContentProcessor";
-    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
     private static final int MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     private static final long MAX_RETRY_DURATION_MS = 30 * 60 * 1000; // 30 minutes
     private static final long INITIAL_RETRY_DELAY_MS = 2000; // 2 seconds
@@ -1012,6 +1012,19 @@ public class GeminiContentProcessor {
     private String extractJsonFromResponse(String response) throws IOException {
         try {
             JSONObject jsonResponse = new JSONObject(response);
+
+            // Extract and log token usage
+            if (jsonResponse.has("usageMetadata")) {
+                JSONObject usage = jsonResponse.getJSONObject("usageMetadata");
+                int promptTokens = usage.optInt("promptTokenCount", 0);
+                int candidateTokens = usage.optInt("candidatesTokenCount", 0);
+                int totalTokens = usage.optInt("totalTokenCount", 0);
+
+                totalTokensProcessed.addAndGet(totalTokens);
+                Log.i(TAG, String.format("Token Usage - Prompt: %d, Candidates: %d, Total: %d",
+                        promptTokens, candidateTokens, totalTokens));
+            }
+
             String text = jsonResponse.getJSONArray("candidates").getJSONObject(0)
                     .getJSONObject("content").getJSONArray("parts").getJSONObject(0).getString("text");
             // Clean markdown code blocks if present
