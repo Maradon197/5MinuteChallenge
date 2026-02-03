@@ -212,29 +212,30 @@
                 android:elevation="@dimen/elevation_md" />
 
 
-            <!-- Next Content Preview (with fadeout) -->
-            <FrameLayout
-                android:id="@+id/next_container_preview"
 
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            <!-- Next Content Preview (an idea but ultimately not in use) -->
+<!--            <FrameLayout-->
+<!--                android:id="@+id/next_container_preview"-->
 
-                android:alpha="0.3">
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
 
-                <FrameLayout
-                    android:id="@+id/next_container"
+<!--                android:alpha="0.3">-->
 
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+<!--                <FrameLayout-->
+<!--                    android:id="@+id/next_container"-->
 
-                <View
-                    android:id="@+id/fadeout_overlay"
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent" />-->
 
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/fadeout_gradient" />
+<!--                <View-->
+<!--                    android:id="@+id/fadeout_overlay"-->
 
-            </FrameLayout>
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:background="@drawable/fadeout_gradient" />-->
+
+<!--            </FrameLayout>-->
 
         </FrameLayout>
 

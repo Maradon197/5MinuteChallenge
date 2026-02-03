@@ -155,10 +155,9 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
         View contentArea = findViewById(R.id.content_container_area);
         contentArea.setOnTouchListener((v, event) -> {
-            // Pass event to gesture detector for swipe-up detection.
-            // Always return false to allow NestedScrollView to handle scrolling.
-            // The gesture detector still tracks events and triggers onFling() as a side effect
-            // when a valid swipe-up is detected, calling onCheckButtonClicked() directly.
+            //throughput event to gesture detector,
+            // dont consume touch so the nested container view can work with it
+            // as well
             gestureDetector.onTouchEvent(event);
             return false;
         });
