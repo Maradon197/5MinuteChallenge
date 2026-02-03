@@ -155,8 +155,11 @@ public class FiveMinuteActivity extends AppCompatActivity implements TimerManage
 
         View contentArea = findViewById(R.id.content_container_area);
         contentArea.setOnTouchListener((v, event) -> {
-            //throughput event to gesture detector, true : consume touch
-            return gestureDetector.onTouchEvent(event);
+            //throughput event to gesture detector,
+            // dont consume touch so the nested container view can work with it
+            // as well
+            gestureDetector.onTouchEvent(event);
+            return false;
         });
     }
 
