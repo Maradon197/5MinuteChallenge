@@ -5,6 +5,7 @@
 package com.example.a5minutechallenge.datawrapper.subject;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.a5minutechallenge.datawrapper.topic.Topic;
 import com.example.a5minutechallenge.datawrapper.challenge.Challenge;
@@ -342,6 +343,26 @@ public class Subject {
     }
 
     /**
+     * Clears all generated content JSON files for this subject.
+     * Use this before a new generation to ensure a fresh start.
+     */
+    public boolean clearGeneratedContent(Context context) {
+        if (context == null)
+            return false;
+        File subjectDir = new File(context.getFilesDir(), "subject_" + subjectId);
+        File jsonDir = new File(subjectDir, "json");
+        if (jsonDir.exists() && jsonDir.isDirectory()) {
+            File[] files = jsonDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    f.delete();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Saves the current subject state (including all topics, challenges, and
      * progress)
      * to internal storage. This overwrites the existing content.json file.
@@ -405,8 +426,15 @@ public class Subject {
                 jsonDir.mkdirs();
 
             File file = new File(jsonDir, "content.json");
+            String jsonOutput = root.toString();
+            Log.d("Subject",
+                    "Writing content.json for subject_" + subjectId + ". Content length: " + jsonOutput.length());
+            // Log a snippet for debugging (don't log the whole thing if it's huge)
+            Log.d("Subject",
+                    "JSON Snippet: " + (jsonOutput.length() > 500 ? jsonOutput.substring(0, 500) + "..." : jsonOutput));
+
             try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(root.toString().getBytes(StandardCharsets.UTF_8));
+                fos.write(jsonOutput.getBytes(StandardCharsets.UTF_8));
             }
 
             return true;
@@ -454,7 +482,23 @@ public class Subject {
         if (files == null || files.length == 0)
             return false;
 
-        ArrayList<Topic> loadedTopics = new ArrayList<>();
+        // Sort files so that "content.json" comes last (it should hold the most
+        // up-to-date progress)
+        java.util.Arrays.sort(files, (f1, f2) -> {
+            if (f1.getName().equals("content.json"))
+                return 1;
+            if (f2.getName().equals("content.json"))
+                return -1;
+            return f1.getName().compareTo(f2.getName());
+        });
+
+        Log.d("Subject", "Loading generated content for subject_" + subjectId + ". Found " + files.length + " files.");
+        for (File f : files) {
+            Log.d("Subject", "Processing file: " + f.getName());
+        }
+
+        // Use a Map to de-duplicate topics by title while preserving order
+        java.util.LinkedHashMap<String, Topic> uniqueTopics = new java.util.LinkedHashMap<>();
 
         for (File f : files) {
             try (BufferedReader reader = new BufferedReader(
@@ -474,6 +518,9 @@ public class Subject {
                 for (int i = 0; i < topicsArray.length(); i++) {
                     org.json.JSONObject topicJson = topicsArray.getJSONObject(i);
                     String title = topicJson.optString("title", "");
+                    if (title.isEmpty())
+                        continue;
+
                     Topic topic = new Topic(title);
 
                     if (topicJson.has("challenges")) {
@@ -491,17 +538,10 @@ public class Subject {
                                 challenge.setCompleted(challengeJson.getBoolean("completed"));
                             }
                             if (challengeJson.has("bestScore")) {
-                                // Use direct field setting to allow loading any score
-                                int savedScore = challengeJson.getInt("bestScore");
-                                if (savedScore > 0) {
-                                    challenge.setBestScore(savedScore);
-                                }
+                                challenge.setBestScore(challengeJson.getInt("bestScore"));
                             }
                             if (challengeJson.has("attempts")) {
-                                int savedAttempts = challengeJson.getInt("attempts");
-                                for (int a = 0; a < savedAttempts; a++) {
-                                    challenge.incrementAttempts();
-                                }
+                                challenge.setAttempts(challengeJson.getInt("attempts"));
                             }
 
                             if (challengeJson.has("containers")) {
@@ -526,7 +566,8 @@ public class Subject {
                         topic.setChallenges(challenges);
                     }
 
-                    loadedTopics.add(topic);
+                    // Map-based de-duplication: titles are keys. content.json processed last wins.
+                    uniqueTopics.put(title, topic);
                 }
 
             } catch (Exception e) {
@@ -534,8 +575,8 @@ public class Subject {
             }
         }
 
-        if (!loadedTopics.isEmpty()) {
-            this.topics = loadedTopics;
+        if (!uniqueTopics.isEmpty()) {
+            this.topics = new ArrayList<>(uniqueTopics.values());
             return true;
         }
 
@@ -857,7 +898,8 @@ public class Subject {
      */
     public int getProgressPercentage() {
         int total = getTotalChallenges();
-        if (total == 0) return 0;
+        if (total == 0)
+            return 0;
         return (getCompletedChallenges() * 100) / total;
     }
 
@@ -895,9 +937,12 @@ public class Subject {
     }
 
     /**
-     * Returns a short description string listing topic names, e.g. "Algebra • Geometry • ..."
-     * @param context The application context for loading topics if needed
-     * @param maxTopics Maximum number of topics to show before truncating with "..."
+     * Returns a short description string listing topic names, e.g. "Algebra •
+     * Geometry • ..."
+     * 
+     * @param context   The application context for loading topics if needed
+     * @param maxTopics Maximum number of topics to show before truncating with
+     *                  "..."
      */
     public String getTopicsPreview(Context context, int maxTopics) {
         ArrayList<Topic> topicsList = getTopics(context);
