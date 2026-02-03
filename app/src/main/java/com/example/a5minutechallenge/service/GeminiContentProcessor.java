@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class GeminiContentProcessor {
 
     private static final String TAG = "GeminiContentProcessor";
-    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
+    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     private static final int MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     private static final long MAX_RETRY_DURATION_MS = 30 * 60 * 1000; // 30 minutes
     private static final long INITIAL_RETRY_DELAY_MS = 2000; // 2 seconds
@@ -123,9 +123,7 @@ public class GeminiContentProcessor {
 
         // 4. Stage 2: Generate Content for each Topic (Parallelized)
         Log.i(TAG, "Stage 2: Generating content for topics...");
-        // Increased thread pool size to handle more parallel requests (especially with
-        // individual challenges)
-        ExecutorService topicExecutor = Executors.newFixedThreadPool(15);
+        ExecutorService topicExecutor = Executors.newFixedThreadPool(Math.min(topicOutlines.size() + 1, 5));
         List<Future<JSONObject>> topicFutures = new ArrayList<>();
 
         int baseProgress = 40;
@@ -133,22 +131,16 @@ public class GeminiContentProcessor {
         AtomicInteger completedTopics = new AtomicInteger(0);
         int totalTopics = topicOutlines.size();
 
-        for (int i = 0; i < totalTopics; i++) {
-            TopicOutline outline = topicOutlines.get(i);
-            int topicIndex = i;
+        for (TopicOutline outline : topicOutlines) {
             topicFutures.add(topicExecutor.submit(() -> {
-                try {
-                    int topicBaseProgress = baseProgress + (topicIndex * totalProgressRange / totalTopics);
-                    int topicProgressRange = totalProgressRange / totalTopics;
-
-                    return generateTopicContent(outline, documents, listener, topicBaseProgress,
-                            topicProgressRange);
-                } catch (Exception e) {
-                    Log.e(TAG, "Topic generation failed for: " + outline.title, e);
-                    return null;
-                } finally {
-                    completedTopics.incrementAndGet();
+                JSONObject result = generateTopicContent(outline, documents);
+                int completed = completedTopics.incrementAndGet();
+                if (listener != null) {
+                    int progress = baseProgress + (completed * totalProgressRange / totalTopics);
+                    listener.onProgress(progress,
+                            String.format("Generated %d/%d topics: %s", completed, totalTopics, outline.title));
                 }
+                return result;
             }));
         }
 
@@ -161,7 +153,7 @@ public class GeminiContentProcessor {
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
-            Log.e(TAG, "Error gathering topic results: " + e.getMessage());
+            throw new IOException("Failed to generate topic content: " + e.getMessage(), e);
         } finally {
             topicExecutor.shutdown();
         }
@@ -245,17 +237,6 @@ public class GeminiContentProcessor {
         }
     }
 
-    /** Outline for a single challenge within a topic */
-    private static class ChallengeOutline {
-        String title;
-        String description;
-
-        ChallengeOutline(String title, String description) {
-            this.title = title;
-            this.description = description;
-        }
-    }
-
     // --- Stage 0: Semantic Document Analysis ---
 
     private List<SemanticSection> analyzeDocumentStructure(List<DocumentContent> documents, String subjectTitle)
@@ -306,7 +287,7 @@ public class GeminiContentProcessor {
     }
 
     private String buildDocumentAnalysisPrompt(String subjectTitle) {
-        return String.format("""
+        return """
                 Analyze the structure of the provided document(s) for the subject: "%s".
                 Output MUST be in English, regardless of the document's language.
 
@@ -339,7 +320,7 @@ public class GeminiContentProcessor {
                 2. Cover ALL pages of the document.
                 3. Use the page numbers shown in "--- PAGE X ---" markers.
                 4. Output valid JSON array only, no other text.
-                """, subjectTitle);
+                """.formatted(subjectTitle);
     }
 
     private List<SemanticSection> parseSemanticSections(String jsonResponse, List<DocumentContent> documents)
@@ -447,12 +428,12 @@ public class GeminiContentProcessor {
 
     private String buildTopicExtractionPrompt(String subjectTitle, List<SemanticSection> sections) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("""
+        sb.append("""
                 Based on the provided documents for subject: "%s", identify the main LEARNING TOPICS.
                 Output MUST be in English, regardless of the document's language.
 
                 The document has been analyzed and contains these semantic sections:
-                """, subjectTitle));
+                """.formatted(subjectTitle));
 
         for (int i = 0; i < sections.size(); i++) {
             SemanticSection s = sections.get(i);
@@ -531,145 +512,13 @@ public class GeminiContentProcessor {
 
     // --- Stage 2: Content Generation ---
 
-    private JSONObject generateTopicContent(TopicOutline topic, List<DocumentContent> documents,
-            ProgressListener listener, int baseProgress, int progressRange)
+    private JSONObject generateTopicContent(TopicOutline topic, List<DocumentContent> documents)
             throws IOException, JSONException {
-        // Stage 2a: Extract Challenge Outlines for the topic
-        if (listener != null) {
-            listener.onProgress(baseProgress, "Generating topic: " + topic.title + " (Extracting structure...)");
-        }
-
-        Log.i(TAG, "Stage 2a: Extracting challenge outlines for topic: " + topic.title);
-        List<ChallengeOutline> challengeOutlines = extractChallengeOutlines(topic, documents);
-        Log.i(TAG, "Found " + challengeOutlines.size() + " challenges for topic: " + topic.title);
-
-        if (challengeOutlines.isEmpty()) {
-            return new JSONObject().put("title", topic.title).put("challenges", new JSONArray());
-        }
-
-        // Stage 2b: Generate Content for each Challenge (Parallelized)
-        Log.i(TAG, "Stage 2b: Generating individual challenge content for topic: " + topic.title);
-        ExecutorService challengeExecutor = Executors.newFixedThreadPool(Math.min(challengeOutlines.size(), 10));
-        List<Future<JSONObject>> challengeFutures = new ArrayList<>();
-
-        AtomicInteger completedChallenges = new AtomicInteger(0);
-        int totalChallenges = challengeOutlines.size();
-
-        for (ChallengeOutline outline : challengeOutlines) {
-            challengeFutures.add(challengeExecutor.submit(() -> {
-                JSONObject result = generateChallengeContent(topic, outline, documents);
-                int completed = completedChallenges.incrementAndGet();
-
-                if (listener != null) {
-                    // Split the topic's progress range among its challenges
-                    int progress = baseProgress + (completed * progressRange / totalChallenges);
-                    listener.onProgress(progress,
-                            String.format("Topic '%s': Generated %d/%d challenges", topic.title, completed,
-                                    totalChallenges));
-                }
-                return result;
-            }));
-        }
-
-        JSONArray generatedChallenges = new JSONArray();
-        try {
-            for (Future<JSONObject> future : challengeFutures) {
-                try {
-                    JSONObject challengeContent = future.get();
-                    if (challengeContent != null) {
-                        generatedChallenges.put(challengeContent);
-                    }
-                } catch (ExecutionException e) {
-                    Log.e(TAG,
-                            "Challenge failed: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
-                }
-            }
-        } catch (InterruptedException e) {
-            Log.e(TAG, "Topic content generation interrupted: " + topic.title);
-            Thread.currentThread().interrupt();
-        } finally {
-            challengeExecutor.shutdown();
-        }
-
-        JSONObject expandedTopic = new JSONObject();
-        expandedTopic.put("title", topic.title);
-        expandedTopic.put("challenges", generatedChallenges);
-        return expandedTopic;
-    }
-
-    private List<ChallengeOutline> extractChallengeOutlines(TopicOutline topic, List<DocumentContent> documents)
-            throws IOException, JSONException {
+        // Filter document pages based on topic refs
         List<JSONObject> promptParts = new ArrayList<>();
-        promptParts.add(new JSONObject().put("text", buildChallengeOutlinesPrompt(topic.title)));
+        promptParts.add(new JSONObject().put("text", buildTopicContentPrompt(topic.title)));
 
-        // Add relevant content
-        addRelevantContentToPrompt(topic, documents, promptParts);
-
-        int attempts = 0;
-        while (true) {
-            try {
-                String jsonResponse = callGemini(promptParts);
-                return parseChallengeOutlines(jsonResponse);
-            } catch (JSONException | IOException e) {
-                attempts++;
-                if (attempts > MAX_STRUCTURE_RETRIES) {
-                    throw e;
-                }
-                Log.w(TAG, "Stage 2a: Malformed challenge outlines for topic '" + topic.title + "' (" + e.getMessage()
-                        + "), retrying... (Attempt " + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new IOException("Interrupted during retry wait", ie);
-                }
-            }
-        }
-    }
-
-    private JSONObject generateChallengeContent(TopicOutline topic, ChallengeOutline outline,
-            List<DocumentContent> documents)
-            throws IOException, JSONException {
-        List<JSONObject> promptParts = new ArrayList<>();
-        promptParts.add(new JSONObject().put("text", buildChallengeContainersPrompt(topic.title, outline)));
-
-        // Add relevant content
-        addRelevantContentToPrompt(topic, documents, promptParts);
-
-        int attempts = 0;
-        while (true) {
-            try {
-                String jsonResponse = callGemini(promptParts);
-                JSONObject toonData = new JSONObject(jsonResponse);
-
-                // Validate against guidelines
-                if (!validateToonChallenge(toonData)) {
-                    throw new JSONException(
-                            "Generated content does not meet guidelines (e.g. empty wordOptions or missing markers)");
-                }
-
-                return expandChallenge(toonData);
-            } catch (JSONException | IOException e) {
-                attempts++;
-                if (attempts > MAX_STRUCTURE_RETRIES) {
-                    Log.e(TAG, "Stage 2b: FINAL content failure for challenge '" + outline.title + "' after " + attempts
-                            + " attempts: " + e.getMessage());
-                    return null; // Return null to skip this challenge silently
-                }
-                Log.w(TAG, "Stage 2b: Content error for challenge '" + outline.title + "' (" + e.getMessage()
-                        + "), retrying... (Attempt " + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new IOException("Interrupted during retry wait", ie);
-                }
-            }
-        }
-    }
-
-    private void addRelevantContentToPrompt(TopicOutline topic, List<DocumentContent> documents,
-            List<JSONObject> promptParts) throws JSONException {
+        // Add only relevant pages
         Set<String> addedContent = new HashSet<>();
         for (SectionRef ref : topic.sectionRefs) {
             for (DocumentContent doc : documents) {
@@ -706,6 +555,7 @@ public class GeminiContentProcessor {
 
         // If no refs matched, include all content as fallback
         if (addedContent.isEmpty()) {
+            Log.w(TAG, "No pages matched for topic: " + topic.title + ". Using all content.");
             for (DocumentContent doc : documents) {
                 if (doc.isImage) {
                     promptParts.add(doc.imageData);
@@ -720,254 +570,137 @@ public class GeminiContentProcessor {
                 }
             }
         }
+
+        int attempts = 0;
+        while (true) {
+            try {
+                String jsonResponse = callGemini(promptParts);
+                // Parse TOON response and convert to full JSON
+                JSONObject toonData = new JSONObject(jsonResponse);
+                return expandToonObject(toonData);
+            } catch (JSONException | IOException e) {
+                attempts++;
+                if (attempts > MAX_STRUCTURE_RETRIES) {
+                    throw e;
+                }
+                Log.w(TAG, "Stage 2: Malformed structure for topic '" + topic.title + "' (" + e.getMessage()
+                        + "), retrying... (Attempt " + (attempts + 1) + "/" + (MAX_STRUCTURE_RETRIES + 1) + ")");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Interrupted during retry wait", ie);
+                }
+            }
+        }
     }
 
-    private String buildChallengeOutlinesPrompt(String topicTitle) {
+    private String buildTopicContentPrompt(String topicTitle) {
+        // Use String.format() for compatibility with API level 24
         return String.format(
                 """
-                        Based on the provided documents for the Topic: "%s", identify 3-5 individual learning challenges.
-                        Output MUST be in English, regardless of the document's language.
-
-                        For each challenge, provide a title and a brief description of what will be covered.
-
-                        Return a JSON array:
-                        [
-                          {
-                            "t": "Challenge Title",
-                            "d": "Brief description of the learning objectives for this challenge."
-                          }
-                        ]
-
-                        Rules:
-                        1. Challenges should be cohesive and progress logically.
-                        2. Titles and descriptions MUST BE IN ENGLISH.
-                        3. Output valid JSON array only.
-                        """,
-                topicTitle);
-    }
-
-    private List<ChallengeOutline> parseChallengeOutlines(String jsonResponse) throws JSONException {
-        List<ChallengeOutline> outlines = new ArrayList<>();
-        JSONArray array;
-        if (jsonResponse.trim().startsWith("[")) {
-            array = new JSONArray(jsonResponse);
-        } else {
-            JSONObject obj = new JSONObject(jsonResponse);
-            array = obj.optJSONArray("challenges");
-            if (array == null)
-                array = new JSONArray();
-        }
-
-        for (int i = 0; i < array.length(); i++) {
-            JSONObject item = array.getJSONObject(i);
-            outlines.add(new ChallengeOutline(
-                    item.optString("t", "Challenge " + (i + 1)),
-                    item.optString("d", "")));
-        }
-        return outlines;
-    }
-
-    private String buildChallengeContainersPrompt(String topicTitle, ChallengeOutline outline) {
-        return String.format(
-                """
-                        Generate detailed learning content for a specific Challenge within the Topic: "%s".
-                        Challenge Title: "%s"
-                        Challenge Description: "%s"
-
+                        Generate detailed learning content for the Topic: "%s".
                         Use ONLY the provided document context.
                         ALL generated text MUST BE IN ENGLISH, even if the source document is in another language.
 
-                        Requirement: Output a JSON object for the challenge using TOON (Token Oriented Object Notation).
+                        Output a JSON object using TOON (Token Oriented Object Notation):
 
-                        STRUCTURE DEFINITION & GUIDELINES (FOLLOW STRICTLY):
                         {
-                          "t": "Challenge Title (MUST BE IN ENGLISH)",
-                          "d": "Challenge Description (MUST BE IN ENGLISH)",
-                          "cn": [
+                          "t": "%s",
+                          "cs": [
                             {
-                              "ty": "TITLE",
-                              "t": "Title text (Non-empty)"
-                            },
-                            {
-                              "ty": "TEXT",
-                              "tx": "Detailed explanatory text (Non-empty)"
-                            },
-                            {
-                              "ty": "MULTIPLE_CHOICE_QUIZ",
-                              "q": "Question text?",
-                              "os": ["Opt A", "Opt B", "Opt C", "Opt D"],
-                              "ci": [0],
-                              "am": false,
-                              "e": "Detailed explanation why answers are correct"
-                            },
-                            {
-                              "ty": "FILL_IN_THE_GAPS",
-                              "tt": "Template text with indexed markers: {1} is a {2}.",
-                              "cw": ["word1", "word2"],
-                              "wo": ["word1", "word2", "distractor1", "distractor2"]
-                            },
-                            {
-                              "ty": "SORTING_TASK",
-                              "co": ["First", "Second", "Third", "Fourth"],
-                              "in": "Instructions on what to sort"
-                            },
-                            {
-                              "ty": "ERROR_SPOTTING",
-                              "is": ["Correct1", "Correct2", "ERROR_ITEM", "Correct3"],
-                              "ei": 2,
-                              "in": "Instructions to find the error",
-                              "e": "Why this item is the error"
-                            },
-                            {
-                              "ty": "REVERSE_QUIZ",
-                              "a": "The Answer",
-                              "qo": ["Question1?", "Question2?", "Question3?"],
-                              "cqi": 0,
-                              "e": "Why this question matches the answer"
-                            },
-                            {
-                              "ty": "WIRE_CONNECTING",
-                              "li": ["Left1", "Left2", "Left3"],
-                              "ri": ["Right1", "Right2", "Right3"],
-                              "cm": {"0": 1, "1": 0, "2": 2},
-                              "in": "Instructions for matching"
-                            },
-                            {
-                              "ty": "RECAP",
-                              "rt": "Recap Title",
-                              "wc": { "ty": "TITLE", "t": "Inner Title" }
+                              "t": "Challenge Title",
+                              "d": "Brief description",
+                              "cn": [
+                                {
+                                  "ty": "TEXT",
+                                  "tx": "Explanatory content..."
+                                },
+                                {
+                                  "ty": "MULTIPLE_CHOICE_QUIZ",
+                                  "q": "Question?",
+                                  "os": ["Option A", "Option B", "Option C", "Option D"],
+                                  "ci": [0],
+                                  "e": "Explanation..."
+                                }
+                              ]
                             }
                           ]
                         }
 
-                        STRICT RULES:
-                        1. ALL TEXT MUST BE IN ENGLISH.
-                        2. FILL_IN_THE_GAPS: `wo` (wordOptions) MUST NOT be empty. It must contain ALL `cw` (correctWords) plus 2-4 distractors. `tt` must use {1}, {2}, etc.
-                        3. MULTIPLE_CHOICE_QUIZ: Minimum 2 options. `ci` must contain valid indices into `os`.
-                        4. SORTING_TASK: Minimum 3 items in `co`.
-                        5. ERROR_SPOTTING: Minimum 3 items in `is`. `ei` must be the index of the incorrect item.
-                        6. WIRE_CONNECTING: `li` and `ri` must have the same length (min 3). `cm` must map EVERY left index to its matching right index.
-                        7. Diversify container types. Use roughly 10 containers per challenge.
-                        8. Output valid JSON only, no other text.
+                        TOON Key Reference (ALL TEXT FIELDS MUST BE IN ENGLISH):
+                        - t: title (MUST BE IN ENGLISH)
+                        - d: description (MUST BE IN ENGLISH)
+                        - cs: challenges array
+                        - cn: containers array
+                        - ty: type (TITLE, TEXT, MULTIPLE_CHOICE_QUIZ, FILL_IN_THE_GAPS, SORTING_TASK, ERROR_SPOTTING, REVERSE_QUIZ, WIRE_CONNECTING)
+                        - tx: text content (MUST BE IN ENGLISH)
+                        - q: question (MUST BE IN ENGLISH)
+                        - os: options array (ALL OPTIONS MUST BE IN ENGLISH)
+                        - ci: correctAnswerIndices array
+                        - e: explanationText (MUST BE IN ENGLISH)
+                        - am: allowMultipleAnswers
+                        - tt: textTemplate (for FILL_IN_THE_GAPS, use {1}, {2} etc. for gaps. Indices MUST START WITH 1 and be consistent. Markers MUST NOT use underscores, normal brackets or be empty. ONLY {1}, {2}, etc. format. TEMPLATE MUST BE IN ENGLISH)
+                        - cw: correctWords array (MUST BE IN ENGLISH)
+                        - wo: wordOptions array (MUST BE IN ENGLISH)
+                        - in: instructions (MUST BE IN ENGLISH)
+                        - co: correctOrder array
+                        - is: items array (MUST BE IN ENGLISH)
+                        - ei: errorIndex
+                        - a: answer (MUST BE IN ENGLISH)
+                        - qo: questionOptions array (MUST BE IN ENGLISH)
+                        - cqi: correctQuestionIndex
+                        - li: leftItems array (MUST BE IN ENGLISH)
+                        - ri: rightItems array (MUST BE IN ENGLISH)
+                        - cm: correctMatches object {"0": 0, "1": 1}
+
+                        Requirements:
+                        1. Generate 3-5 challenges per topic.
+                        2. Each challenge should have roughly 20 containers.
+                        3. Use diverse container types for engagement.
+                        4. All content must come from the provided context but MUST BE TRANSLATED TO ENGLISH if the context is in another language.
+                        5. IMPORTANT: For FILL_IN_THE_GAPS, the textTemplate MUST ALWAYS use indexed markers starting from {1}: "{1} is the {2} of the {3}". DO NOT use {}, [], (), or underscores.
+                        6. Output valid JSON only.
                         """,
-                topicTitle, outline.title, outline.description);
-    }
-
-    // --- Validation and Regeneration ---
-
-    private boolean validateToonChallenge(JSONObject toonC) {
-        if (toonC == null)
-            return false;
-        try {
-            if (toonC.optString("t", "").isEmpty())
-                return false;
-
-            JSONArray cn = toonC.optJSONArray("cn");
-            if (cn == null || cn.length() == 0)
-                return false;
-
-            for (int i = 0; i < cn.length(); i++) {
-                JSONObject container = cn.getJSONObject(i);
-                String type = container.optString("ty", "");
-
-                switch (type) {
-                    case "TITLE":
-                        if (container.optString("t", "").isEmpty())
-                            return false;
-                        break;
-                    case "TEXT":
-                        if (container.optString("tx", "").isEmpty())
-                            return false;
-                        break;
-                    case "MULTIPLE_CHOICE_QUIZ":
-                        if (container.optString("q", "").isEmpty())
-                            return false;
-                        JSONArray os = container.optJSONArray("os");
-                        JSONArray ci = container.optJSONArray("ci");
-                        if (os == null || os.length() < 2)
-                            return false;
-                        if (ci == null || ci.length() == 0)
-                            return false;
-                        for (int j = 0; j < ci.length(); j++) {
-                            int idx = ci.getInt(j);
-                            if (idx < 0 || idx >= os.length())
-                                return false;
-                        }
-                        break;
-                    case "FILL_IN_THE_GAPS":
-                        String tt = container.optString("tt", "");
-                        JSONArray cw = container.optJSONArray("cw");
-                        JSONArray wo = container.optJSONArray("wo");
-                        if (tt.isEmpty())
-                            return false;
-                        if (cw == null || cw.length() == 0)
-                            return false;
-                        if (wo == null || wo.length() == 0)
-                            return false;
-                        // Check if all correct words are in word options
-                        Set<String> optionsSet = new HashSet<>();
-                        for (int j = 0; j < wo.length(); j++)
-                            optionsSet.add(wo.getString(j).toLowerCase());
-                        for (int j = 0; j < cw.length(); j++) {
-                            if (!optionsSet.contains(cw.getString(j).toLowerCase()))
-                                return false;
-                        }
-                        // Check if markers {1}, {2}, etc. exist in template
-                        for (int j = 1; j <= cw.length(); j++) {
-                            if (!tt.contains("{" + j + "}"))
-                                return false;
-                        }
-                        break;
-                    case "SORTING_TASK":
-                        JSONArray co = container.optJSONArray("co");
-                        if (co == null || co.length() < 3)
-                            return false;
-                        break;
-                    case "ERROR_SPOTTING":
-                        JSONArray is = container.optJSONArray("is");
-                        if (is == null || is.length() < 3)
-                            return false;
-                        int ei = container.optInt("ei", -1);
-                        if (ei < 0 || ei >= is.length())
-                            return false;
-                        break;
-                    case "REVERSE_QUIZ":
-                        if (container.optString("a", "").isEmpty())
-                            return false;
-                        JSONArray qo = container.optJSONArray("qo");
-                        if (qo == null || qo.length() < 2)
-                            return false;
-                        int cqi = container.optInt("cqi", -1);
-                        if (cqi < 0 || cqi >= qo.length())
-                            return false;
-                        break;
-                    case "WIRE_CONNECTING":
-                        JSONArray li = container.optJSONArray("li");
-                        JSONArray ri = container.optJSONArray("ri");
-                        JSONObject cm = container.optJSONObject("cm");
-                        if (li == null || ri == null || cm == null)
-                            return false;
-                        if (li.length() != ri.length() || li.length() < 3)
-                            return false;
-                        // Check if all left indices are present in cm and map to valid right indices
-                        for (int j = 0; j < li.length(); j++) {
-                            if (!cm.has(String.valueOf(j)))
-                                return false;
-                            int rIdx = cm.getInt(String.valueOf(j));
-                            if (rIdx < 0 || rIdx >= ri.length())
-                                return false;
-                        }
-                        break;
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            Log.w(TAG, "Validation error: " + e.getMessage());
-            return false;
-        }
+                topicTitle, topicTitle);
     }
 
     // --- TOON Expansion ---
+
+    private JSONObject expandToonObject(JSONObject toon) throws JSONException {
+        if (toon == null) {
+            Log.w(TAG, "Null TOON object received for expansion");
+            return new JSONObject().put("title", "Empty Topic").put("challenges", new JSONArray());
+        }
+
+        JSONObject expanded = new JSONObject();
+
+        // Use optString for title
+        expanded.put("title", toon.optString("t", "Untitled Topic"));
+
+        if (toon.has("cs")) {
+            JSONArray challenges = new JSONArray();
+            JSONArray csArray = toon.getJSONArray("cs");
+            for (int i = 0; i < csArray.length(); i++) {
+                try {
+                    JSONObject challengeObj = csArray.optJSONObject(i);
+                    JSONObject expandedChallenge = expandChallenge(challengeObj);
+                    if (expandedChallenge != null) {
+                        challenges.put(expandedChallenge);
+                    } else {
+                        Log.w(TAG, "Skipping null challenge at index " + i);
+                    }
+                } catch (JSONException e) {
+                    Log.w(TAG, "Error expanding challenge " + i + ": " + e.getMessage());
+                }
+            }
+            expanded.put("challenges", challenges);
+        } else {
+            // Ensure challenges array exists even if empty
+            expanded.put("challenges", new JSONArray());
+        }
+        return expanded;
+    }
 
     private JSONObject expandChallenge(JSONObject toonC) throws JSONException {
         if (toonC == null) {
@@ -1279,19 +1012,6 @@ public class GeminiContentProcessor {
     private String extractJsonFromResponse(String response) throws IOException {
         try {
             JSONObject jsonResponse = new JSONObject(response);
-
-            // Extract and log token usage
-            if (jsonResponse.has("usageMetadata")) {
-                JSONObject usage = jsonResponse.getJSONObject("usageMetadata");
-                int promptTokens = usage.optInt("promptTokenCount", 0);
-                int candidateTokens = usage.optInt("candidatesTokenCount", 0);
-                int totalTokens = usage.optInt("totalTokenCount", 0);
-
-                totalTokensProcessed.addAndGet(totalTokens);
-                Log.i(TAG, String.format("Token Usage - Prompt: %d, Candidates: %d, Total: %d",
-                        promptTokens, candidateTokens, totalTokens));
-            }
-
             String text = jsonResponse.getJSONArray("candidates").getJSONObject(0)
                     .getJSONObject("content").getJSONArray("parts").getJSONObject(0).getString("text");
             // Clean markdown code blocks if present

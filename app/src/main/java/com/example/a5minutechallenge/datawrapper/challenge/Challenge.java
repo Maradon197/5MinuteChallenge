@@ -12,7 +12,7 @@ public class Challenge {
     private int bestScore;
     private int attempts;
     private ArrayList<ContentContainer> containerlist;
-
+    
     public Challenge(String title, String description) {
         this.title = title;
         this.description = description;
@@ -20,38 +20,37 @@ public class Challenge {
         this.bestScore = 0;
         this.attempts = 0;
     }
-
+    
     public String getTitle() {
         return title;
     }
-
+    
     public void setTitle(String title) {
         this.title = title;
     }
-
+    
     public String getDescription() {
         return description;
     }
-
+    
     public void setDescription(String description) {
         this.description = description;
     }
-
+    
     public boolean isCompleted() {
         return completed;
     }
-
+    
     public void setCompleted(boolean completed) {
         this.completed = completed;
     }
-
+    
     public int getBestScore() {
         return bestScore;
     }
-
+    
     /**
      * Updates the best score if the new score is higher than the current best.
-     * 
      * @param bestScore The new score to consider
      */
     public void setBestScore(int bestScore) {
@@ -59,19 +58,15 @@ public class Challenge {
             this.bestScore = bestScore;
         }
     }
-
+    
     public int getAttempts() {
         return attempts;
     }
-
+    
     public void incrementAttempts() {
         this.attempts++;
     }
-
-    public void setAttempts(int attempts) {
-        this.attempts = attempts;
-    }
-
+    
     public int getProgressPercentage() {
         // Simple binary progress: 0 if not completed, 100 if completed
         // In a more sophisticated implementation, this could track partial progress

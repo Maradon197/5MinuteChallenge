@@ -117,7 +117,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/timer_container" />
 
-    <!--Time bonus popup -->
+    <!-- Time bonus popup -->
     <TextView
         android:id="@+id/time_bonus_popup"
 
@@ -154,7 +154,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!--Transition time display (show during swipe animation) -->
+    <!-- Transition time display (shown during swipe animation) -->
     <TextView
         android:id="@+id/transition_time_display"
 
@@ -192,10 +192,8 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="16dp"
-
         android:fillViewport="true"
         android:clipToPadding="false"
-
         app:layout_constraintBottom_toTopOf="@+id/check_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -205,29 +203,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-        <!-- Next Content Preview (was an idea but ultimately not in use) -->
-<!--        <FrameLayout-->
-<!--            android:id="@+id/next_container_preview"-->
+            <!-- Current Content Container -->
+            <FrameLayout
+                android:id="@+id/current_container"
 
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:elevation="@dimen/elevation_md" />
 
-<!--            android:alpha="0.3">-->
 
-<!--            <FrameLayout-->
-<!--                android:id="@+id/next_container"-->
+            <!-- Next Content Preview (with fadeout) -->
+            <FrameLayout
+                android:id="@+id/next_container_preview"
 
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" />-->
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
 
-<!--            <View-->
-<!--                android:id="@+id/fadeout_overlay"-->
+                android:alpha="0.3">
 
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent"-->
-<!--                android:background="@drawable/fadeout_gradient" />-->
+                <FrameLayout
+                    android:id="@+id/next_container"
 
-<!--        </FrameLayout>-->
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
 
                 <View
                     android:id="@+id/fadeout_overlay"

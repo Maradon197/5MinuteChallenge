@@ -69,21 +69,16 @@ public class SubjectGenerationService {
                 String jsonResponse = geminiProcessor.processFiles(files, subject.getTitle(context), context,
                         (progress, message) -> handler.post(() -> callback.onProgress(progress, message)));
 
-                // Clear old generated content before saving new results
-                subject.clearGeneratedContent(context);
-
-                // Save the raw JSON as content.json (single source of truth)
+                // Save the raw JSON into subject-specific storage (json/ folder)
                 try {
-                    subject.saveGeneratedJson(context, jsonResponse, "content.json");
+                    String fileName = "generated_" + System.currentTimeMillis() + ".json";
+                    subject.saveGeneratedJson(context, jsonResponse, fileName);
                 } catch (Exception e) {
                     Log.w(TAG, "Failed to save generated JSON: " + e.getMessage());
                 }
 
                 // Parse and populate subject
                 parseAndPopulateSubject(subject, jsonResponse);
-
-                // Save formatted progress structure
-                subject.saveToStorage(context);
 
                 // Post success result back to the main thread
                 handler.post(() -> callback.onGenerationSuccess(subject));

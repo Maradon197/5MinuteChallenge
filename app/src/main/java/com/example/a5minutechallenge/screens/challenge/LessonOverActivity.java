@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -75,8 +74,7 @@ public class LessonOverActivity extends AppCompatActivity {
         accuracyBonus = getIntent().getIntExtra("ACCURACY_BONUS", 0);
         // Calculate base points (total minus bonuses)
         basePoints = totalScore - timeBonus - accuracyBonus;
-        if (basePoints < 0)
-            basePoints = 0;
+        if (basePoints < 0) basePoints = 0;
     }
 
     /**
@@ -95,55 +93,35 @@ public class LessonOverActivity extends AppCompatActivity {
 
         // Save progress to storage
         if (topicName != null && challengePosition >= 0) {
-            Log.d("LessonOverActivity", "Saving progress for Subject: " + subjectId + ", Topic: " + topicName
-                    + ", Challenge Pos: " + challengePosition + ", Score: " + totalScore);
             Subject subject = new Subject(subjectId);
             ArrayList<Topic> topics = subject.getTopics(getApplicationContext());
 
-            boolean topicFound = false;
             // Find topic by name (primary key)
             for (Topic topic : topics) {
                 if (topicName.equals(topic.getTitle())) {
-                    topicFound = true;
                     ArrayList<Challenge> challenges = topic.getChallenges();
                     if (challenges != null && challengePosition < challenges.size()) {
                         Challenge c = challenges.get(challengePosition);
                         c.setCompleted(true);
                         c.setBestScore(totalScore);
-                        Log.i("LessonOverActivity",
-                                "Updated challenge '" + c.getTitle() + "' with best score: " + c.getBestScore());
-                        // Note: Attempts are incremented when challenge is started in
-                        // ChallengeListActivity
-                    } else {
-                        Log.w("LessonOverActivity",
-                                "Challenge position " + challengePosition + " out of bounds or challenges null");
+                        // Note: Attempts are incremented when challenge is started in ChallengeListActivity
                     }
                     break;
                 }
             }
 
-            if (!topicFound) {
-                Log.w("LessonOverActivity", "Topic '" + topicName + "' not found in subject " + subjectId);
-            }
-
             // Save updated progress
-            boolean saved = subject.saveToStorage(getApplicationContext());
-            Log.i("LessonOverActivity", "Progress save result: " + saved);
-        } else {
-            Log.w("LessonOverActivity",
-                    "Missing data for saving: topicName=" + topicName + ", challengePosition=" + challengePosition);
+            subject.saveToStorage(getApplicationContext());
         }
     }
 
     /**
-     * Animates the settlement score like a "settlement" - shows base then adds
-     * bonuses.
+     * Animates the settlement score like a "settlement" - shows base then adds bonuses.
      */
     private void animateSettlementScore() {
         // Initial state - hide everything
         scoreText.setAlpha(0f);
-        if (basePointsText != null)
-            basePointsText.setAlpha(0f);
+        if (basePointsText != null) basePointsText.setAlpha(0f);
         accuracyText.setAlpha(0f);
         streakText.setAlpha(0f);
         timeBonusText.setAlpha(0f);
@@ -162,21 +140,21 @@ public class LessonOverActivity extends AppCompatActivity {
                 basePointsText.setText("Base Points: 0");
                 basePointsText.animate().alpha(1f).setDuration(300).start();
             }
-
+            
             scoreText.setVisibility(View.VISIBLE);
             animateCountUp(scoreText, 0, basePoints, "Score: %d", 600, () -> {
                 // Step 2: Show accuracy and streak
                 animationHandler.postDelayed(() -> {
                     accuracyText.animate().alpha(1f).setDuration(300).start();
                     streakText.animate().alpha(1f).setDuration(300).start();
-
+                    
                     // Step 3: Add time bonus if any
                     if (timeBonus > 0) {
                         animationHandler.postDelayed(() -> {
                             timeBonusText.setText(getString(R.string.time_bonus, timeBonus));
                             timeBonusText.setVisibility(View.VISIBLE);
                             timeBonusText.animate().alpha(1f).setDuration(300).start();
-
+                            
                             // Count up score with time bonus
                             animateCountUp(scoreText, basePoints, basePoints + timeBonus, "Score: %d", 400, () -> {
                                 // Step 4: Add accuracy bonus if any
@@ -185,10 +163,9 @@ public class LessonOverActivity extends AppCompatActivity {
                                         accuracyBonusText.setText(getString(R.string.accuracy_bonus, accuracyBonus));
                                         accuracyBonusText.setVisibility(View.VISIBLE);
                                         accuracyBonusText.animate().alpha(1f).setDuration(300).start();
-
+                                        
                                         // Count up final score
-                                        animateCountUp(scoreText, basePoints + timeBonus, totalScore, "Score: %d", 400,
-                                                null);
+                                        animateCountUp(scoreText, basePoints + timeBonus, totalScore, "Score: %d", 400, null);
                                     }, 300);
                                 }
                             });
@@ -199,7 +176,7 @@ public class LessonOverActivity extends AppCompatActivity {
                             accuracyBonusText.setText(getString(R.string.accuracy_bonus, accuracyBonus));
                             accuracyBonusText.setVisibility(View.VISIBLE);
                             accuracyBonusText.animate().alpha(1f).setDuration(300).start();
-
+                            
                             animateCountUp(scoreText, basePoints, totalScore, "Score: %d", 400, null);
                         }, 400);
                     }
@@ -211,8 +188,7 @@ public class LessonOverActivity extends AppCompatActivity {
     /**
      * Animates a count-up effect on a TextView.
      */
-    private void animateCountUp(TextView textView, int from, int to, String format, long duration,
-            Runnable onComplete) {
+    private void animateCountUp(TextView textView, int from, int to, String format, long duration, Runnable onComplete) {
         textView.setAlpha(1f);
         ValueAnimator animator = ValueAnimator.ofInt(from, to);
         animator.setDuration(duration);
